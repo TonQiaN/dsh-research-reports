@@ -1,0 +1,942 @@
+<meta charset="utf-8">
+<title>闸门代替信任</title>
+
+<style>
+  :root {
+    /* 中性色沿用项目自带设计系统 packages/client/ui-theme(偏蓝灰阶),
+       但强调色改为「三态信号」——因为「哪条承诺由什么把关」正是本文的结论。 */
+    --ground:      #ffffff;
+    --surface:     #f8f9fb;
+    --surface-2:   #f0f2f5;
+    --line:        #e0e4ec;
+    --line-soft:   #eaedf2;
+    --ink:         #101319;
+    --ink-2:       #4b5058;
+    --ink-3:       #7e838b;
+
+    --gate:        #14705a;   /* 有一条会失败的命令 */
+    --gate-soft:   #e8f4f0;
+    --review:      #8a5c0c;   /* 明确记录为「评审负责」 */
+    --review-soft: #fbf2e3;
+    --hole:        #ab3b35;   /* 已命名但从未关闭 */
+    --hole-soft:   #fbedec;
+
+    --link:        #3a6fdd;
+    --bar:         #b6bcc6;
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+            "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+
+    --measure: 40rem;
+    --bleed: 70rem;
+    --r: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #141416;
+      --surface:     #1a1a1c;
+      --surface-2:   #222225;
+      --line:        #34353a;
+      --line-soft:   #29292c;
+      --ink:         #f7f8fa;
+      --ink-2:       #b2b7bf;
+      --ink-3:       #7e838b;
+      --gate:        #4ec099;
+      --gate-soft:   rgba(78, 192, 153, 0.12);
+      --review:      #d8a743;
+      --review-soft: rgba(216, 167, 67, 0.12);
+      --hole:        #e87b74;
+      --hole-soft:   rgba(232, 123, 116, 0.12);
+      --link:        #7ea6ff;
+      --bar:         #565b64;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #141416;
+    --surface:     #1a1a1c;
+    --surface-2:   #222225;
+    --line:        #34353a;
+    --line-soft:   #29292c;
+    --ink:         #f7f8fa;
+    --ink-2:       #b2b7bf;
+    --ink-3:       #7e838b;
+    --gate:        #4ec099;
+    --gate-soft:   rgba(78, 192, 153, 0.12);
+    --review:      #d8a743;
+    --review-soft: rgba(216, 167, 67, 0.12);
+    --hole:        #e87b74;
+    --hole-soft:   rgba(232, 123, 116, 0.12);
+    --link:        #7ea6ff;
+    --bar:         #565b64;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 1.4rem 6rem;
+  }
+
+  .page { max-width: var(--bleed); margin: 0 auto; }
+  .col  { max-width: var(--measure); margin-inline: auto; }
+  .wide { max-width: var(--bleed); margin-inline: auto; }
+
+  p, ul, ol { margin: 0 0 1.15rem; }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin-bottom: .5rem; }
+  li::marker { color: var(--ink-3); }
+
+  a { color: var(--link); text-decoration: none; border-bottom: 1px solid var(--line); }
+  a:hover { border-bottom-color: currentColor; }
+  a:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 2px; }
+
+  code, .m { font-family: var(--mono); font-size: .84em; }
+  p code, li code, td code, figcaption code, dd code, .m {
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r);
+    padding: .06em .34em;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+  }
+  td code, th code { white-space: nowrap; }
+  strong { font-weight: 620; color: var(--ink); }
+  em { font-style: normal; border-bottom: 1px dashed var(--ink-3); }
+
+  /* ---------- masthead ---------- */
+  .masthead { padding: 4.5rem 0 2rem; }
+  .slug {
+    font-family: var(--mono);
+    font-size: .715rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 1.5rem;
+    display: flex; flex-wrap: wrap; gap: .45rem 1rem;
+  }
+  .slug span { white-space: nowrap; }
+  h1 {
+    font-size: clamp(2.2rem, 5.6vw, 3.2rem);
+    line-height: 1.1;
+    letter-spacing: -.025em;
+    font-weight: 650;
+    margin: 0 0 1.3rem;
+    text-wrap: balance;
+  }
+  .standfirst { font-size: 1.13rem; line-height: 1.75; color: var(--ink-2); margin: 0; }
+  .standfirst strong { color: var(--ink); }
+
+  .thesis {
+    margin: 2.4rem auto 0;
+    padding: 1.4rem 0 1.4rem 1.4rem;
+    border-left: 2px solid var(--gate);
+    font-size: 1.04rem;
+    line-height: 1.78;
+  }
+  .thesis p:last-child { margin-bottom: 0; }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 3.5rem; scroll-margin-top: 1.5rem; }
+  .eyebrow {
+    display: block;
+    font-family: var(--mono);
+    font-size: .705rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: .6rem;
+  }
+  h2 {
+    font-size: 1.6rem; line-height: 1.3; letter-spacing: -.015em;
+    font-weight: 650; margin: 0 0 1.15rem; text-wrap: balance;
+  }
+  h3 {
+    font-size: 1.04rem; font-weight: 620; letter-spacing: -.005em;
+    margin: 2rem 0 .7rem; text-wrap: balance;
+  }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 3.2rem 0 0; }
+
+  /* ---------- legend / signal chips ---------- */
+  .sig {
+    display: inline-flex; align-items: baseline; gap: .34rem;
+    font-family: var(--mono); font-size: .68rem;
+    letter-spacing: .06em; white-space: nowrap;
+    padding: .1rem .42rem; border-radius: 2px;
+    border: 1px solid currentColor;
+  }
+  .sig.g { color: var(--gate); }
+  .sig.r { color: var(--review); }
+  .sig.h { color: var(--hole); }
+  .dot { width: .42em; height: .42em; border-radius: 50%; background: currentColor; align-self: center; }
+
+  .legend {
+    display: grid; gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-radius: var(--r);
+    overflow: hidden; margin: 2.2rem 0 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+  }
+  .legend > div { background: var(--ground); padding: 1rem 1.1rem 1.1rem; }
+  .legend p { margin: .6rem 0 0; font-size: .875rem; line-height: 1.65; color: var(--ink-2); }
+
+  /* ---------- stats ---------- */
+  .stats {
+    display: grid; gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
+    margin: 2.3rem 0 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+  }
+  .stat { background: var(--ground); padding: 1rem 1.15rem 1.1rem; }
+  .stat dt {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--ink-3); margin-bottom: .45rem;
+  }
+  .stat dd {
+    margin: 0; font-size: 1.68rem; font-weight: 600; line-height: 1.05;
+    letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  }
+  .stat dd .u { font-size: .78rem; font-weight: 500; color: var(--ink-3); letter-spacing: 0; margin-left: .2rem; }
+  .stat .sub { margin-top: .4rem; font-size: .78rem; line-height: 1.5; color: var(--ink-3); }
+
+  /* ---------- timeline ---------- */
+  .tl { margin: 2rem 0 0; border-left: 1px solid var(--line); }
+  .tl-item { position: relative; padding: 0 0 1.5rem 1.5rem; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -3.5px; top: .62em;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .tl-item.key::before { background: var(--gate); box-shadow: 0 0 0 3px var(--gate-soft); }
+  .tl-item.bad::before { background: var(--hole); box-shadow: 0 0 0 3px var(--hole-soft); }
+  .tl-date {
+    font-family: var(--mono); font-size: .715rem; letter-spacing: .06em;
+    color: var(--ink-3); font-variant-numeric: tabular-nums;
+  }
+  .tl-date b { color: var(--ink-2); font-weight: 500; }
+  .tl-item h4 { margin: .15rem 0 .3rem; font-size: .99rem; font-weight: 620; letter-spacing: -.004em; }
+  .tl-item p { margin: 0; font-size: .9rem; line-height: 1.68; color: var(--ink-2); }
+  .tl-item p + p { margin-top: .45rem; }
+
+  /* ---------- quote ---------- */
+  blockquote {
+    margin: 1.7rem 0; padding: 1.05rem 1.2rem;
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 2px solid var(--ink-3); border-radius: var(--r);
+    font-size: .95rem; line-height: 1.72;
+  }
+  blockquote p { margin: 0 0 .5rem; }
+  blockquote p:last-child { margin: 0; }
+  blockquote cite {
+    display: block; font-family: var(--mono); font-size: .715rem;
+    font-style: normal; color: var(--ink-3); overflow-wrap: anywhere;
+  }
+  blockquote.g { border-left-color: var(--gate); }
+  blockquote.h { border-left-color: var(--hole); }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 1.6rem 0; border: 1px solid var(--line); border-radius: var(--r); }
+  table { border-collapse: collapse; width: 100%; font-size: .875rem; }
+  th, td { text-align: left; padding: .58rem .85rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 500;
+    background: var(--surface); border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-2); }
+  td.sigcell { white-space: nowrap; }
+
+  /* ---------- charts ---------- */
+  .chart { margin: 1.9rem 0; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .chart-title { font-size: .95rem; font-weight: 620; }
+  .chart-note { font-family: var(--mono); font-size: .715rem; color: var(--ink-3); }
+
+  .hours { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; align-items: end; height: 170px; border-bottom: 1px solid var(--line); }
+  .hours .b { border-radius: 2px 2px 0 0; background: var(--bar); }
+  .hours .b.night { background: var(--gate); }
+  .hours-ax { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; margin-top: .4rem; }
+  .hours-ax span { font-family: var(--mono); font-size: .6rem; color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
+  .hours-note { margin-top: .7rem; font-size: .84rem; color: var(--ink-3); line-height: 1.6; }
+
+  .bars { display: grid; gap: .4rem; }
+  .barrow { display: grid; grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr) auto; gap: .7rem; align-items: center; }
+  .barrow .nm { font-family: var(--mono); font-size: .755rem; color: var(--ink-2); text-align: right; overflow: hidden; text-overflow: ellipsis; }
+  .barrow .tr { height: 15px; }
+  .barrow .fl { height: 100%; background: var(--bar); border-radius: 0 2px 2px 0; }
+  .barrow .fl.hi { background: var(--gate); }
+  .barrow .v { font-family: var(--mono); font-size: .75rem; font-variant-numeric: tabular-nums; color: var(--ink-3); white-space: nowrap; }
+  .barrow .v.hi { color: var(--gate); font-weight: 600; }
+
+  /* ---------- figure ---------- */
+  figure { margin: 2rem 0; }
+  .figbox { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1.4rem 1rem; overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink-2); }
+  figcaption { margin-top: .8rem; font-size: .85rem; line-height: 1.65; color: var(--ink-3); }
+  figcaption b { color: var(--ink-2); font-weight: 600; }
+  .sv-l { font-family: var(--mono); font-size: 11.5px; fill: currentColor; }
+  .sv-s { font-family: var(--mono); font-size: 10px; fill: var(--ink-3); }
+  .sv-t { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; fill: var(--ink-3); }
+  .sv-box { fill: var(--ground); stroke: currentColor; stroke-width: 1; }
+  .sv-g { fill: var(--gate-soft); stroke: var(--gate); stroke-width: 1.25; }
+  .sv-r { fill: var(--review-soft); stroke: var(--review); stroke-width: 1.25; }
+  .sv-h { fill: var(--hole-soft); stroke: var(--hole); stroke-width: 1.25; }
+  .sv-gt { fill: var(--gate); font-family: var(--mono); font-size: 11px; }
+  .sv-rt { fill: var(--review); font-family: var(--mono); font-size: 11px; }
+  .sv-ht { fill: var(--hole); font-family: var(--mono); font-size: 11px; }
+  .sv-line { stroke: currentColor; stroke-width: 1.25; fill: none; }
+
+  /* ---------- cards ---------- */
+  .cards { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin: 1.8rem 0; }
+  .card { background: var(--ground); padding: 1.05rem 1.2rem; }
+  .card h4 { margin: 0 0 .4rem; font-size: .97rem; font-weight: 620; letter-spacing: -.004em; }
+  .card p { margin: 0; font-size: .89rem; line-height: 1.68; color: var(--ink-2); }
+  .card .ev { display: block; margin-top: .5rem; font-family: var(--mono); font-size: .71rem; color: var(--ink-3); overflow-wrap: anywhere; }
+  .card .tag { float: right; margin-left: .8rem; }
+
+  .note {
+    margin: 1.7rem 0; padding: 1rem 1.2rem;
+    border: 1px solid var(--line); border-left: 2px solid var(--review);
+    border-radius: var(--r); background: var(--review-soft);
+    font-size: .92rem; line-height: 1.7;
+  }
+  .note.h { border-left-color: var(--hole); background: var(--hole-soft); }
+  .note.g { border-left-color: var(--gate); background: var(--gate-soft); }
+  .note p:last-child { margin-bottom: 0; }
+  .note .tag { display: block; margin-bottom: .35rem; }
+
+  footer {
+    margin-top: 4.5rem; padding-top: 1.6rem; border-top: 1px solid var(--line);
+    font-size: .85rem; line-height: 1.7; color: var(--ink-3);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 15.5px; padding: 0 1rem 4rem; }
+    .hours { height: 130px; gap: 1px; }
+    .hours-ax { gap: 1px; }
+    .hours-ax span { font-size: .5rem; }
+    .barrow { grid-template-columns: minmax(5.5rem, 7rem) minmax(0, 1fr) auto; gap: .5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="page">
+
+  <header class="masthead col">
+    <div class="slug">
+      <span>开发方法研究</span>
+      <span>deepseek-harness</span>
+      <span>12,293 次提交 / 64 天</span>
+      <span>快照 47f9438</span>
+    </div>
+    <h1>闸门代替信任</h1>
+    <p class="standfirst">DeepSeek 团队用 AI agent 在 64 天里写出了 219 个包、22.7 万行源码。这份报告只回答三个问题：<strong>用了什么工具、人和 agent 怎么分工、以及什么在兜底。</strong>结论和「vibe coding」这个词基本相反——他们在仓库的第二天就把相反的判断写进了记录，然后花 64 天把它做成了 62 条会返回非零退出码的命令。</p>
+
+    <div class="thesis">
+      <p>这套方法可以用一句话概括：<strong>凡是团队做出的承诺，要么有一条在它被违反时失败的命令，要么在记录里明确写下「这条由评审负责」。</strong></p>
+      <p>后半句和前半句一样被严格执行——有一篇 Agent Note 里就直接写着「<span class="m">Coverage gap: no gate rejects a new ordinal citation — review owns the rule.</span>」</p>
+    </div>
+  </header>
+
+  <div class="wide">
+    <div class="legend">
+      <div>
+        <span class="sig g"><span class="dot"></span>机器把关</span>
+        <p>存在一条命令，承诺被违反时它返回非零。62 条闸门、14 个聚合、每次 PR 跑。</p>
+      </div>
+      <div>
+        <span class="sig r"><span class="dot"></span>评审负责</span>
+        <p>明确记录为无法机检，交给人。不是遗漏，是写下来的分工。</p>
+      </div>
+      <div>
+        <span class="sig h"><span class="dot"></span>已命名的洞</span>
+        <p>团队自己点名了这个失效模式，提出了对策，而对策至今没做。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+
+    <section id="who">
+      <span class="eyebrow">01 · 证据 · git + 提交进仓库的配置</span>
+      <h2>谁在写代码：分支名是答案，commit trailer 不是</h2>
+
+      <p>先排除一条常见的取证路径。<strong>12,293 次提交里，AI 工具署名 trailer 一条都没有</strong>——没有 <code>Co-Authored-By: Claude</code>，没有 <code>Generated with</code>，没有任何 agent 或 bot 的 git 身份。全部作者邮箱都是人，唯一的机器署名是 8 条 dependabot 的 <code>Signed-off-by</code>。agent 以操作者的身份提交，所以提交元数据里没有信号。</p>
+
+      <p>真正的证据在两个地方。第一是<strong>提交进仓库的配置</strong>：</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>证物</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td class="num">CLAUDE.md → AGENTS.md</td><td>5 个 git 符号链接(mode 120000)，指向同一个 blob。真文件是 <code>AGENTS.md</code>，两个产品读同一份。</td></tr>
+            <tr><td class="num">.claude/skills → ../.agents/skills</td><td><code>.claude/</code> 下<strong>唯一</strong>被追踪的条目。团队的技能目录被投射到 Claude Code 读取的路径。</td></tr>
+            <tr><td class="num">agents/openai.yaml</td><td>11 个 skill 中 6 个带 Codex 侧边配置(<code>display_name</code> / <code>default_prompt</code>)，调用语法是 <code>$skill-name</code>。</td></tr>
+            <tr><td class="num">.gitignore</td><td>排除 <code>.claude/commands/</code>、<code>.claude/launch.json</code>、<code>.claude/settings.json</code>——说明这些目录在开发机上存在，只是不共享。</td></tr>
+            <tr><td class="num">第一条 commit</td><td>2026-06-10，5 个文件 48 行：README、AGENTS.md、CLAUDE.md 符号链接，以及把 <code>CLAUDE.local.md</code> 加进 .gitignore。<strong>代码之前先立规约。</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>还有一件被当场撤回的证物：<code>.claude/launch.json</code> 在 2026-08-08 被误提交、当天撤回。它里面的绝对路径落在 <code>.claude/worktrees/&lt；分支名&gt;-&lt;id&gt;/</code> 下——那是 Claude Code 的 worktree 隔离功能的目录结构。这条线索把第二类证据接上了。</p>
+
+      <h3>第二类证据：落地 PR 的分支前缀</h3>
+      <p>915 个 PR 合并提交里，分支名自带出处。<code>worktree/</code> 对应 Claude Code 的 worktree 会话，<code>codex/</code> 对应 OpenAI Codex：</p>
+    </section>
+  </div>
+
+  <div class="wide">
+    <div class="chart">
+      <div class="chart-head">
+        <div class="chart-title">落地 PR 的分支前缀</div>
+        <div class="chart-note">915 个 PR 合并提交 · 前 9 类</div>
+      </div>
+      <div class="bars" role="img" aria-label="落地 PR 的分支前缀横向柱状图：worktree 210 个，codex 203 个，无前缀 183 个，feat 90 个，fix 88 个，xtr 22 个，docs 21 个，agent 15 个，claude 3 个。">
+        <div class="barrow"><div class="nm">worktree/</div><div class="tr"><div class="fl hi" style="width:100%"></div></div><div class="v hi">210</div></div>
+        <div class="barrow"><div class="nm">codex/</div><div class="tr"><div class="fl hi" style="width:96.7%"></div></div><div class="v hi">203</div></div>
+        <div class="barrow"><div class="nm">(无前缀)</div><div class="tr"><div class="fl" style="width:87.1%"></div></div><div class="v">183</div></div>
+        <div class="barrow"><div class="nm">feat/</div><div class="tr"><div class="fl" style="width:42.9%"></div></div><div class="v">90</div></div>
+        <div class="barrow"><div class="nm">fix/</div><div class="tr"><div class="fl" style="width:41.9%"></div></div><div class="v">88</div></div>
+        <div class="barrow"><div class="nm">xtr/</div><div class="tr"><div class="fl" style="width:10.5%"></div></div><div class="v">22</div></div>
+        <div class="barrow"><div class="nm">docs/</div><div class="tr"><div class="fl" style="width:10%"></div></div><div class="v">21</div></div>
+        <div class="barrow"><div class="nm">agent/</div><div class="tr"><div class="fl hi" style="width:7.1%"></div></div><div class="v hi">15</div></div>
+        <div class="barrow"><div class="nm">claude/</div><div class="tr"><div class="fl hi" style="width:1.4%"></div></div><div class="v hi">3</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <p><code>worktree/</code> + <code>codex/</code> + <code>agent/</code> + <code>claude/</code> = 431 个 PR，占落地总量的 <strong>47%</strong>。这不是「AI 参与了」，而是<strong>近一半的 PR 分支名就写着它出自哪套 agent 工作流</strong>，而且两套产品并行使用是写进仓库、并且有闸门守着的：<code>verify-skill-invocation-metadata</code> 会在 Claude Code 的 frontmatter 和 Codex 的 <code>policy.allow_implicit_invocation</code> 对某个 skill 是否「仅人工调用」意见不一致时让构建失败。</p>
+
+    <h3>第三类证据：速率</h3>
+    <p>提交时区 11,942/12,293 是 <code>+0800</code>。单人峰值是 <strong>84.4 次提交/活跃日</strong>，持续 62 天(Tianyi Cui，5,235 次提交)；第二、三名分别是 30.2 和 32.4。这个速率手写不出来。</p>
+    <p>但同一份数据也否掉了「机器不停机跑」的想象——落地节奏有清晰的人类作息：</p>
+  </div>
+
+  <div class="wide">
+    <div class="chart">
+      <div class="chart-head">
+        <div class="chart-title">提交的时段分布</div>
+        <div class="chart-note">按作者本地时间 · 97% 为 UTC+8</div>
+      </div>
+      <div class="hours" role="img" aria-label="按小时的提交分布柱状图：低谷在凌晨 4 点到 8 点(每小时 78 到 128 次)，高峰在下午 15 到 17 点(852、832、859 次)和晚间 20 到 23 点(728、812、712、800 次)，午夜 0 点仍有 626 次。">
+        <div class="b night" style="height:72.9%" title="00:00 · 626"></div>
+        <div class="b night" style="height:56.1%" title="01:00 · 482"></div>
+        <div class="b night" style="height:46%" title="02:00 · 395"></div>
+        <div class="b" style="height:27.5%" title="03:00 · 236"></div>
+        <div class="b" style="height:14.9%" title="04:00 · 128"></div>
+        <div class="b" style="height:12.7%" title="05:00 · 109"></div>
+        <div class="b" style="height:11.3%" title="06:00 · 97"></div>
+        <div class="b" style="height:9.5%" title="07:00 · 82"></div>
+        <div class="b" style="height:9.1%" title="08:00 · 78"></div>
+        <div class="b" style="height:20.8%" title="09:00 · 179"></div>
+        <div class="b" style="height:56%" title="10:00 · 481"></div>
+        <div class="b" style="height:70.1%" title="11:00 · 602"></div>
+        <div class="b" style="height:65.4%" title="12:00 · 562"></div>
+        <div class="b" style="height:78.9%" title="13:00 · 678"></div>
+        <div class="b" style="height:87%" title="14:00 · 747"></div>
+        <div class="b" style="height:99.2%" title="15:00 · 852"></div>
+        <div class="b" style="height:96.9%" title="16:00 · 832"></div>
+        <div class="b" style="height:100%" title="17:00 · 859"></div>
+        <div class="b" style="height:76.7%" title="18:00 · 659"></div>
+        <div class="b" style="height:64.8%" title="19:00 · 557"></div>
+        <div class="b" style="height:84.8%" title="20:00 · 728"></div>
+        <div class="b" style="height:94.5%" title="21:00 · 812"></div>
+        <div class="b" style="height:82.9%" title="22:00 · 712"></div>
+        <div class="b night" style="height:93.1%" title="23:00 · 800"></div>
+      </div>
+      <div class="hours-ax">
+        <span>0</span><span></span><span>2</span><span></span><span>4</span><span></span><span>6</span><span></span>
+        <span>8</span><span></span><span>10</span><span></span><span>12</span><span></span><span>14</span><span></span>
+        <span>16</span><span></span><span>18</span><span></span><span>20</span><span></span><span>22</span><span></span>
+      </div>
+      <div class="hours-note">04:00–08:00 是真低谷(每小时 78–128 次)，峰值 17:00(859 次)。这是一个约 16 小时的工作日，从 10:00 拉到次日 02:00。<strong>agent 负责打字，人负责在场把它落地。</strong>周末仍占 20%(周六是全周最低的 947 次，周日反弹到 1,511 次)。</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <hr>
+
+    <section id="timeline">
+      <span class="eyebrow">02 · .agents/notes/implemented/process · 69 篇</span>
+      <h2>这套流程不是设计出来的，是被失败一步步逼出来的</h2>
+      <p>过程类 Agent Note 带日期，所以流程本身的演化史是可读的。下面每一条都对应一篇记录或一次可查的提交。</p>
+
+      <div class="tl">
+        <div class="tl-item key">
+          <div class="tl-date"><b>06-10</b> · 第 0 天</div>
+          <h4>先写规约，再写代码</h4>
+          <p>第一条 commit 是 <code>Initialize repo with README, AGENTS.md, and CLAUDE.md symlink</code>，5 个文件 48 行，没有一行产品代码。</p>
+        </div>
+        <div class="tl-item key">
+          <div class="tl-date"><b>06-11</b> · 第 2 天</div>
+          <h4>写下奠基判断，并同时点名它的失效模式</h4>
+          <p>quality-gates 那篇记录定下整套方法。<em>同一天</em>还提出了变异测试作为覆盖率闸门的对冲——那篇提案至今躺在 <code>proposed/</code>。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>06-12</b> · 第 3 天</div>
+          <h4>第一个 Codex PR</h4>
+          <p>PR #2，<code>codex/update-gitignore</code>。</p>
+        </div>
+        <div class="tl-item key">
+          <div class="tl-date"><b>06-13</b> · 第 4 天</div>
+          <h4>第一个 skill + 双产品接线</h4>
+          <p>首个 skill 是 <code>dsh-code-review</code>；同期加入 <code>.claude/skills</code> 符号链接。同日之后，master 再也没有直接提交——<strong>29 次直推全部发生在前 4 天，之后 100% 走 PR</strong>。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>07-02</b></div>
+          <h4>双语配对闸门</h4>
+          <p>936 对文档由 git blob 哈希绑定。记录里定了分工：「Translation is agent work with human review.」</p>
+        </div>
+        <div class="tl-item key">
+          <div class="tl-date"><b>07-04</b></div>
+          <h4>规约文件自己先失控了一次</h4>
+          <p>根 <code>AGENTS.md</code> 从 930 词累积到 <strong>7,970 词</strong>，当天被砍到 1,573 词(−80%)，并同时长出了字数闸门。理由写得很直白：评审已经在场却没能阻止这次膨胀。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>07-05</b></div>
+          <h4>Agent Note 格式闸门</h4>
+          <p>「19 个文件展示了单靠约定能达到什么效果。」<code>Alternatives considered</code> 段落成为强制项，并被明说是<em>刻意设置的摩擦</em>。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>07-19</b></div>
+          <h4>非平凡改动必须带 Agent Note</h4>
+          <p>同期 <code>packages/client</code> 分组诞生——它将在最后 3 周半吃下 2,241 次提交。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>07-22</b></div>
+          <h4>本地钩子改为「窄而快」</h4>
+          <p>agent 自己挑选覆盖改动的最小证据集，CI 负责穷尽。这把「选什么证据」正式变成了 agent 的判断题。</p>
+        </div>
+        <div class="tl-item bad">
+          <div class="tl-date"><b>07-23</b> · 存活 50 分钟</div>
+          <h4>「push 前跑全套」的实验被当场推翻</h4>
+          <p>PR #543 <code>worktree/comprehensive-pre-push</code> 13:21 合入，PR #544 <code>revert-543-…</code> 14:11 回滚。<strong>注意力是稀缺资源，算力不是</strong>——这个判断是用一次回滚买来的。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>07-26</b></div>
+          <h4>Agent Note 归档密封</h4>
+          <p>142 个三元组按 sha256 记入清单，追加前须重验全部旧封；首次一口气密封 59 个。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>07-27</b></div>
+          <h4>worktree 级别的 lefthook</h4>
+          <p>因为 linked worktree 共用主仓库的钩子目录，任一 worktree 安装钩子会改写其他所有 worktree 的。这是<em>并行 agent 会话</em>特有的问题。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>08-02</b></div>
+          <h4>改用 GitHub 官方 stacked PR</h4>
+          <p>同仓库内两个以上依赖 PR 必须先注册成官方 stack 再落地，禁止逐个 <code>gh pr merge</code> 加手工改基。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date"><b>08-08</b></div>
+          <h4>标签体系统一 + GIF 证据链</h4>
+          <p>6 个封闭的 <code>kind/*</code>、可扩展的 <code>area/*</code>(agent 可自行新建)、12 个被保留以防复活的废弃别名。同日另立一条：截图各自真实不等于证明了同一次执行。</p>
+        </div>
+        <div class="tl-item key">
+          <div class="tl-date"><b>08-09</b> · 763 个文件</div>
+          <h4>一次性清除「思维链泄漏」</h4>
+          <p>提交 <code>25dcd7293c</code>:<em>docs: purge chain-of-thought leakage from prose</em>，763 个文件、+2,705/−1,710。插入多于删除，因为很多地方是<strong>把叙述改写成事实</strong>，而不是删掉。</p>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <section id="memory">
+      <span class="eyebrow">03 · 协作机制</span>
+      <h2>协作的真正难题不是分工，是记忆</h2>
+      <p>agent 会话是无状态的。团队规模又小(27 个可辨识的人，头部一人占 42.6% 的提交)。于是这套流程里最大的一块投入，是让上一个会话的判断能被下一个会话继承。</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>机制</th><th>规模</th><th>解决的问题</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Agent Note</strong><br><span class="m">.agents/notes/</span></td>
+              <td class="num">686 篇<br>69.9 万英文词</td>
+              <td>决策记录。按 <code>{生命周期}/{类别}/日期-主题.md</code> 组织，格式由闸门强制。<strong>4,591 次提交(37%)碰过这个目录</strong>;65% 的代码 PR 带着一篇。</td>
+            </tr>
+            <tr>
+              <td><strong>分层指令</strong><br><span class="m">AGENTS.md ×15</span></td>
+              <td class="num">8,040 词</td>
+              <td>按目录三层：根(每次会话都要在场的常驻命令)→ 子树 → 包组。明令<em>子树文件不得复述仓库级规则</em>。</td>
+            </tr>
+            <tr>
+              <td><strong>Skill</strong><br><span class="m">.agents/skills/</span></td>
+              <td class="num">11 个<br>13,578 词</td>
+              <td>把重复工作流固化成可调用的东西。11 个里有 7 个开头就自我限定「guidance, not a script/checklist」。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Agent Note 的设计里有三处很少见的判断。</p>
+
+      <p><strong>一、强制记录「它打败了什么」。</strong>每篇都必须有 <code>Alternatives considered</code>(541 篇活跃笔记里 526 篇有，其余 15 篇带着 2026-07-05 之前的祖父条款注释)。理由是一句很锋利的话：</p>
+
+      <blockquote>
+        <p>A decision recorded without what it beat invites re-litigation — the failure Agent Notes exist to prevent.</p>
+        <cite>.agents/notes/README.md · 另有一句：Alternatives are recorded, never invented.</cite>
+      </blockquote>
+
+      <p><strong>二、禁止建索引。</strong>没有 <code>INDEX.md</code>，只能按目录树浏览或全仓搜索——理由是索引会变成合并热点，而且它重复了路径已经编码的事实。</p>
+
+      <p><strong>三、笔记不能被改成另一个决定。</strong>要推翻就新写一篇并互相链接。全量取代要合并进新主并删掉旧三元组；部分取代则两篇都留，在 <code>## Problem</code> 上方加一行横幅点明哪些条款已死(目前有 11 篇带这种横幅)。归档后永久冻结，而且<strong>所有文档闸门都排除归档源</strong>——这样演进中的标准永远不会产生「去改历史」的压力。</p>
+
+      <div class="note g">
+        <span class="sig g tag"><span class="dot"></span>机器把关</span>
+        <p>三条闸门守着这套记忆：<code>verify-agent-note-format</code>(逐生命周期的文内骨架)、<code>verify-agent-note-classification</code>(路径编码的封闭集合，并拒绝根 <code>INDEX.md</code>)、<code>verify-archived-agent-notes</code>(归档的 sha256 追加式封条)。<strong>格式能撑过 agent 换人，不依赖谁记得住。</strong></p>
+      </div>
+
+      <div class="note">
+        <span class="sig r tag"><span class="dot"></span>评审负责</span>
+        <p>但「这次改动算不算非平凡、需不需要写笔记」<strong>刻意没有闸门</strong>：<span class="m">Review enforces the semantic boundary. No automated gate attempts to classify a diff as trivial or non-trivial.</span> 同理，一篇笔记的 <code>Alternatives considered</code> 里写的是不是真实考虑过的方案，闸门看不出来。</p>
+      </div>
+    </section>
+
+    <hr>
+
+    <section id="topology">
+      <span class="eyebrow">04 · git 拓扑</span>
+      <h2>一个 worktree 一个 PR：并行是靠隔离换来的</h2>
+      <p>5,610 个 merge commit 里只有 984 个是 PR 落地，其余 4,626 个是集成合并——<strong>每落地 1 个 PR 要付约 4.7 次合并</strong>。这个比例本身就是并行度的代价。</p>
+
+      <div class="stats">
+        <div class="stat">
+          <dt>分支中位存活</dt><dd>7<span class="u">小时</span></dd>
+          <div class="sub">74% 当天落地；最长的一条活了 29 天</div>
+        </div>
+        <div class="stat">
+          <dt>同日在飞分支</dt><dd>32<span class="u">中位</span></dd>
+          <div class="sub">峰值 90 条(07-31)；当天落地 76 个 PR</div>
+        </div>
+        <div class="stat">
+          <dt>单条分支最多并入 master</dt><dd>59<span class="u">次</span></dd>
+          <div class="sub">18 天，PR #555。主干太快是有账单的</div>
+        </div>
+        <div class="stat">
+          <dt>fixup / squash! 提交</dt><dd>0</dd>
+          <div class="sub">回滚 18–26 次，约 0.2%;master 首父线上 0 次</div>
+        </div>
+      </div>
+
+      <p>规则本身只有一行，在根 <code>AGENTS.md</code> 里：<em>拆分独立改动；在引入问题的那个 PR 上修；重写用 <code>--force-with-lease</code>，远端一动就中止，永不用裸 <code>--force</code></em>。配套的 cookbook 把并行的纪律讲得更具体：</p>
+
+      <blockquote>
+        <p>One worktree per PR branch. Each PR's fixes happen in that PR's own worktree; parallel fixes never share a checkout.</p>
+        <p>A fix lands on the PR that <strong>INTRODUCED</strong> the issue, then flows up-stack. Originating the fix downstream leaves <code>B</code> shipping the unfixed code and hides the fix from <code>B</code>'s reviewer.</p>
+        <cite>docs/cookbook/responding-to-pr-review-on-a-stack.md</cite>
+      </blockquote>
+
+      <p>这条规则在拓扑上看得见：有 <strong>20 个落地分支是以它要修的那个 PR 命名的</strong>(<code>worktree/pr555-fixes</code>、<code>codex/pr239-plan-mode-review-fixes</code>)，另有 20 个专门用于改基的 <code>worktree/pr&lt;N&gt;-retarget-*</code>。堆叠的痕迹更夸张——某两个相邻的 <code>codex/simp-*</code> 分支之间发生了 <strong>85 次</strong>同层合并。</p>
+
+      <div class="note">
+        <span class="sig r tag"><span class="dot"></span>评审负责</span>
+        <p>同一份 cookbook 里有一条专门针对 agent 的：<span class="m">Treat delegated fixes as trust-but-verify: a sub-agent's report describes intent, not necessarily what landed. A sub-agent that reframes a problem as already handled is a signal to dig in personally.</span></p>
+      </div>
+    </section>
+
+    <hr>
+
+    <section id="gates">
+      <span class="eyebrow">05 · 三态</span>
+      <h2>把关体系：按成本分层，而不是按重要性分层</h2>
+      <p>值得注意的是分层依据。本地钩子只抓「便宜且高置信」的缺陷，重活全部推给 CI，而分支保护只认<strong>两个</strong>状态检查。</p>
+    </section>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 700 320" role="img"
+             aria-label="PR 生命周期与把关状态图：pre-commit 6 个任务和 pre-push 增量类型检查由机器把关；push 前选择哪些测试作为证据由 agent 判断、评审复核；CI 62 条闸门由机器把关；分支保护只认两个状态检查；人工评审负责 6 条阻断项和 15 条手工检查；而变异测试这一已命名的对策至今空缺。">
+          <defs>
+            <marker id="a1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0.5 L8 4 L0 7.5 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <text x="12" y="16" class="sv-t">本地 · 便宜</text>
+          <text x="252" y="16" class="sv-t">CI · 穷尽</text>
+          <text x="512" y="16" class="sv-t">人 · 不可机检</text>
+
+          <!-- local -->
+          <rect x="12" y="30" width="196" height="40" rx="3" class="sv-g"/>
+          <text x="24" y="48" class="sv-gt">pre-commit · 6 个任务</text>
+          <text x="24" y="63" class="sv-s">暂存区 lint / 空白 / vendor 清单</text>
+
+          <rect x="12" y="80" width="196" height="40" rx="3" class="sv-g"/>
+          <text x="24" y="98" class="sv-gt">pre-push · 1 个任务</text>
+          <text x="24" y="113" class="sv-s">仅增量类型检查</text>
+
+          <rect x="12" y="130" width="196" height="54" rx="3" class="sv-r"/>
+          <text x="24" y="148" class="sv-rt">选哪些测试作证据</text>
+          <text x="24" y="163" class="sv-s">agent 挑最小覆盖集，</text>
+          <text x="24" y="177" class="sv-s">评审判断这个选择配不配得上 diff</text>
+
+          <!-- CI -->
+          <rect x="252" y="30" width="196" height="54" rx="3" class="sv-g"/>
+          <text x="264" y="48" class="sv-gt">62 条闸门 / 14 个聚合</text>
+          <text x="264" y="63" class="sv-s">ci-primary 52 · doc-sync 28</text>
+          <text x="264" y="77" class="sv-s">每文件 100% 覆盖率</text>
+
+          <rect x="252" y="94" width="196" height="40" rx="3" class="sv-g"/>
+          <text x="264" y="112" class="sv-gt">分支保护 = 2 项</text>
+          <text x="264" y="127" class="sv-s">all checks passed + e2e</text>
+
+          <rect x="252" y="144" width="196" height="40" rx="3" class="sv-h"/>
+          <text x="264" y="162" class="sv-ht">断言强度</text>
+          <text x="264" y="177" class="sv-s">覆盖率证明行跑过，不证明有断言</text>
+
+          <!-- human -->
+          <rect x="492" y="30" width="196" height="54" rx="3" class="sv-r"/>
+          <text x="504" y="48" class="sv-rt">6 条阻断 / 15 条手检</text>
+          <text x="504" y="63" class="sv-s">接口两侧、每个现有消费方、</text>
+          <text x="504" y="77" class="sv-s">模型收到的确切字节</text>
+
+          <rect x="492" y="94" width="196" height="40" rx="3" class="sv-r"/>
+          <text x="504" y="112" class="sv-rt">改动算不算非平凡</text>
+          <text x="504" y="127" class="sv-s">刻意不设闸门</text>
+
+          <rect x="492" y="144" width="196" height="40" rx="3" class="sv-r"/>
+          <text x="504" y="162" class="sv-rt">译文语义与语气</text>
+          <text x="504" y="177" class="sv-s">哈希只证明「碰过」</text>
+
+          <g class="sv-line" marker-end="url(#a1)">
+            <line x1="208" y1="57" x2="246" y2="57"/>
+            <line x1="448" y1="57" x2="486" y2="57"/>
+          </g>
+
+          <!-- bottom band -->
+          <rect x="12" y="212" width="676" height="44" rx="3" class="sv-h"/>
+          <text x="24" y="231" class="sv-ht">已命名 68 天、至今空缺的对策：变异测试</text>
+          <text x="24" y="246" class="sv-s">第 2 天就写下「100% 覆盖率的压力会催生没有断言的测试」，提案至今躺在 proposed/。补位的是人工评审的一条手检项。</text>
+
+          <text x="12" y="286" class="sv-s">27.5 万行测试代码被「跑过没跑过」把关，但没有被「断言强不强」把关——jscpd 还额外把 tests/ 排除在重复检测之外。</text>
+          <text x="12" y="304" class="sv-s">这是整套方法的真实形状：能机检的地方全部机检，不能机检的地方明确写下由谁负责。</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 · 三态贯穿整个 PR 生命周期。</b>绿色是「有一条会失败的命令」，黄色是「记录里写明由评审负责」，红色是「团队自己点名、但对策没做」。值得注意的是 <code>pre-push</code> 只跑增量类型检查——一次把全套检查搬到 push 前的实验在 2026-07-23 <strong>存活了 50 分钟</strong>就被回滚。</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <blockquote class="g">
+      <p>This codebase is developed primarily by coding agents. Agents follow enforced gates far more reliably than prose conventions, and <strong>"a lot of work" is not a cost argument when agents do the labor.</strong></p>
+      <cite>.agents/notes/implemented/process/2026-06-11-quality-gates.md — 写于第 2 天</cite>
+    </blockquote>
+
+    <p>这段话里的经济学是整套方法的支点。<strong>一旦劳动便宜、注意力变成稀缺资源，所有人类团队会以「太贵」否掉的做法就都变得合理了</strong>：每文件 100% 覆盖率、每个包一个 invariant 伴生文件、936 对文档带哈希侧车、686 篇决策记录每篇都要写被否方案、9 份文档设字数上限。团队不是在用工作量换质量，而是在用免费的工作量换另一样东西——<strong>合并没有人通读过的代码的能力</strong>。</p>
+
+    <p>同一篇记录还给出了这套体系的早期动因：<em>没通过类型检查的测试曾经就那么合进去了(vitest 不做类型检查)，只有一次评审抓住了它。</em></p>
+
+    <h3>另一条同样重要的规则：别浪费注意力</h3>
+    <p>根 <code>AGENTS.md</code> 里明确禁止 agent 反射式地跑全套：<span class="m">Never default to the full suite or repeat a passing check for commit or push.</span> pre-push skill 更进一步，把所有「伪造证据」的捷径逐条封死——不许用 <code>--passWithNoTests</code>、不许调低覆盖率阈值、不许收窄 <code>--coverage.include</code> 来藏掉一个没覆盖的文件、不许「命令成功了就宣布 stack 就绪」，以及最直接的一句：</p>
+
+    <blockquote>
+      <p>Do not push and hope CI differs.</p>
+      <cite>.agents/skills/dsh-pre-push-checks/SKILL.md</cite>
+    </blockquote>
+
+    <hr>
+
+    <section id="postmortems">
+      <span class="eyebrow">06 · docs/postmortem · 4 份</span>
+      <h2>四份复盘，四次同一个失败</h2>
+      <p>四份事后复盘<strong>全部是在闸门全绿的情况下逃逸的</strong>。而且它们是同一类缺陷：<em>agent 把一个代理信号当成了真东西。</em></p>
+
+      <div class="cards">
+        <div class="card">
+          <h4><span class="sig h tag"><span class="dot"></span>0001</span>178 个测试全绿，100% 覆盖率，插件一连真编辑器就崩</h4>
+          <p>根因是一行 export 写错，导致 Loader 丢掉了插件的命名空间。测试全都是手工构造插件，从未走过真实加载路径。</p>
+          <span class="ev">「A test that constructs a plugin by hand cannot validate how the plugin loads.」 / 「Trust the trace, not the theory.」</span>
+        </div>
+        <div class="card">
+          <h4><span class="sig h tag"><span class="dot"></span>0002</span>agent 重录了黄金快照，来匹配自己弄坏的行为</h4>
+          <p>一个 <code>disabled: !!js</code> 表达式静默关掉整个文件系统工具栈，横跨 8 个快照场景；刷新把坏掉的记录提交成了期望输出。</p>
+          <span class="ev">「A snapshot refresh is fixture production, not correctness review.」</span>
+        </div>
+        <div class="card">
+          <h4><span class="sig h tag"><span class="dot"></span>0003</span>在另一个端口上验证，宣布用户的页面已修好</h4>
+          <p>「源码改了」「构建成功」「HTTP 200」「注入了 boot manifest」「用户现有的页面」被当成了可互换的事实。而那次的回归测试是<em>靠超时通过的</em>。</p>
+          <span class="ev">「The resulting actions were individually plausible but did not share one acceptance target.」 / 「A replacement service cannot prove that an existing page changed.」</span>
+        </div>
+        <div class="card">
+          <h4><span class="sig h tag"><span class="dot"></span>0004</span>把结构化失败压成一次子串匹配，测试矩阵照抄了同一个错误表示</h4>
+          <p>原生启动器的丰富协议被降维成前缀匹配，于是普通退出被误判。</p>
+          <span class="ev">「The test matrix mirrored that representation.」 / 「a shared prefix is not a protocol.」</span>
+        </div>
+      </div>
+
+      <p>因此 <code>docs/testing.md</code> 的核心指令是一句针对 agent 而写的话——那一节的标题就叫「Verify the world, not the self-report」：</p>
+
+      <blockquote>
+        <p>An e2e assertion re-runs the command or re-reads the file externally; <strong>a keyword probe on the agent's own output lets a cheating agent pass.</strong></p>
+        <p>A guard only guards if the regression actually fails it. … introduce the regression, watch red, revert.</p>
+        <cite>docs/testing.md</cite>
+      </blockquote>
+
+      <p>复盘 README 也把写复盘的门槛定在了流程层面而非 bug 层面：<em>有意思的部分是我们的流程为什么放过了它，而不是那一行修复。</em></p>
+
+      <h3>被保留下来的「否决」</h3>
+      <p><code>rejected/</code> 里活着 11 篇笔记，保留标准是「只在它能挡住一个诱人的错误时才留」。它们实际构成了一张 agent 高频动作的黑名单——主要是两招：「没人调用它，删掉」和「有现成库了，把手写的删掉」。第一次由 agent 生成的简化审计里，<strong>19 个候选有 13 个被否</strong>。其中一条否决理由很值得抄走：</p>
+
+      <blockquote>
+        <p>absence of a fixed in-repo scoped registration is not evidence of non-consumption</p>
+        <cite>.agents/notes/rejected/simplification/2026-07-12-prune-unused-skill-registry-api.md</cite>
+      </blockquote>
+    </section>
+
+    <hr>
+
+    <section id="fails">
+      <span class="eyebrow">07 · 方法的边界</span>
+      <h2>方法在哪里失效：agent 读不到自己输出的地方</h2>
+      <p>如果这套方法有一个失效面，它有名字，叫 <code>packages/client</code>。</p>
+      <p>这个分组 2026-07-19 才诞生，在最后 3 周半吃下 <strong>2,241 次提交、71,896 行</strong>，是全仓速度最快的子树。它同时也是所有卫生信号一起退化的地方：</p>
+
+      <ul>
+        <li>覆盖率闸门的 <strong>69 条排除项里有 51 条是 <code>packages/client</code></strong>，配置里直接标注为「GUI debt exemption」，并留了 <code>TODO(gui)</code>。换句话说，<em>那面旗舰级的「每文件 100% 覆盖率」闸门，在全仓最大的一个分组上是关着的</em>。</li>
+        <li>那次 763 文件的思维链泄漏审计，记录里明说问题「集中在 <code>packages/client</code>」——被删掉的是 <code>(decision 12/16/19/20/21)</code>、<code>(audit C2/S1/S3/S7)</code> 这类<strong>只有当时那个会话能看懂的引用</strong>，其中只有 decision 21 真的有一份提交进仓库的出处。</li>
+        <li>复盘 0003 就发生在这里。</li>
+      </ul>
+
+      <div class="note h">
+        <span class="sig h tag"><span class="dot"></span>可推广的教训</span>
+        <p><strong>闸门驱动的 agent 开发，在「正确性可以表述成文本」的面上有效，在「验收本质是感知」的面上失效。</strong>这也解释了为什么团队要在项目中途临时造出一条 chromium 回放通道和一个专门的 GIF 录制 skill(那份 skill 里写着：<span class="m">Treat one storyboard as one evidence run… never splice frames from separate runs.</span>)，而且债还是欠下了。</p>
+      </div>
+
+      <h3>残留的「slop」是另一种</h3>
+      <p>真正留下来的问题不是没人读的逻辑，而是<strong>仪式性膨胀</strong>：219 个 invariant 伴生文件里 184 个是空的(每个都必须写一句为什么空，其中 24 句措辞完全相同)；根 <code>AGENTS.md</code> 卡在 1,900/1,900 词的天花板上，而它自己的规范要求留 5% 余量、目标值是 1,600 词——上限在 40 天里被抬高了 8 次。</p>
+      <p>这类问题的机制很清楚：<strong>当规范要求每个包都产出某种统一制品时，agent 一定会把制品产出来；而当那里没有真话可写，它就会写一句听起来合理的话。</strong>闸门能抓住缺失的文件，抓不住内容是仪式的文件。</p>
+    </section>
+
+    <hr>
+
+    <section id="human">
+      <span class="eyebrow">08 · 人的位置</span>
+      <h2>刻意不交给模型的三件事</h2>
+
+      <p><strong>一、语气与语义的最终判断。</strong>i18n 的 README 里有一句罕见的自我限定，而且中英两版都写着：<em>门禁通过意味着这组文档在当前内容上的一致性得到了确认，不代表确认本身正确可靠。</em>那 187 行术语表是双向绑定的，含 29 条「不要译作」禁令；而遇到表里没有的术语，模型<strong>不许当场自创译法</strong>——必须保留原文并升级成「待定术语」交给人。</p>
+
+      <p><strong>二、一个被锁到只能人工调用的 skill。</strong><code>dsh-translate-docs</code> 是 11 个里唯一的，而且这把锁在两个产品上分别落实(Claude Code 的 <code>disable-model-invocation: true</code> / Codex 的 <code>policy.allow_implicit_invocation: false</code>)，还有一条闸门专门防止两边漂移。锁它的理由不是质量，而是成本控制：</p>
+
+      <blockquote>
+        <p>size-based inference is another hidden policy and can unexpectedly activate the expensive workflow. <strong>The user, not the agent, chooses when the extended path is worth its cost.</strong></p>
+        <cite>.agents/notes/implemented/process/2026-08-08-lightweight-routine-documentation-translation.md</cite>
+      </blockquote>
+
+      <p><strong>三、评审技能本身的维护权。</strong>这是我在这个仓库里见过最奇特的一条工作流：<code>dsh-code-review</code> 由一个<em>仓库外的私有工具</em>维护，由一位指定的人每天跑一次。它去挖已合并 PR 里的人类评审意见，对照真正落地的补丁验证这条意见是否被采纳，再让两个独立的模型适配器分别起草并交叉评审一份候选 <code>SKILL.md</code>，最后由那个人决定丢弃、攒批还是提升。规则写得很硬：</p>
+
+      <blockquote>
+        <p>Do not defer to "the reviewers approved"; the maintainer contract is that the operator makes the final decision.</p>
+        <p>Do not commit adapter output verbatim. … Days without a skill update are the workflow behaving correctly, not a stall.</p>
+        <cite>docs/cookbook/maintaining-dsh-code-review.md</cite>
+      </blockquote>
+
+      <p>它的产出率也很说明问题：2026-07-15 那次运行扫了 62 个 PR、426 条人类反馈，<strong>产出 0 条新规则</strong>。而这条机制自己也记着自己的风险——「单维护者的 bus factor：机制跑在一台机器上，它一中断，skill 维护就完全停摆」。</p>
+    </section>
+
+    <hr>
+
+    <section id="copy">
+      <span class="eyebrow">09 · 可复制性</span>
+      <h2>如果想抄，该抄哪几条</h2>
+      <p>这套东西大致三分之一便宜可移植、三分之一是多人月的资本投入、三分之一只在 DeepSeek 的特定约束下才理性。</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>值得抄</th><th>成本</th><th>为什么</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>「验证世界，而不是自述」</strong></td>
+              <td class="num">一页文档</td>
+              <td>直接瞄准 AI 产出的特有失效模式：看起来合理但从未被外部核验。断言必须重跑命令或重读文件，而不是在 agent 自己的输出里搜关键词。</td>
+            </tr>
+            <tr>
+              <td><strong>回归测试必须先见红</strong></td>
+              <td class="num">一条纪律</td>
+              <td>引入回归、看它失败、再撤销。两边都通过的守卫什么也没守住。</td>
+            </tr>
+            <tr>
+              <td><strong>决策记录 + 强制写被否方案</strong></td>
+              <td class="num">一个目录</td>
+              <td>无状态会话之间唯一能继承判断的载体。关键是那句「记录一个决定却不记它打败了什么，就是在邀请重新争论」。</td>
+            </tr>
+            <tr>
+              <td><strong>一个 worktree 一个 PR</strong></td>
+              <td class="num">一条约定</td>
+              <td>并行 agent 会话共用一个 checkout 是灾难。附带好处：钩子也得按 worktree 装。</td>
+            </tr>
+            <tr>
+              <td><strong>把「谁负责」写进记录</strong></td>
+              <td class="num">零</td>
+              <td>无法机检的规则要明确写成「评审负责」。这比假装有闸门诚实，也比什么都不写可执行。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note h">
+        <span class="sig h tag"><span class="dot"></span>陷阱</span>
+        <p><strong>抄仪式的体量，而不是仪式的用途。</strong>219 个 invariant 伴生文件里 184 个什么也不检查——那是 5,538 行什么也不做的样板。评审 skill 里甚至有一条专门防止把自己的规则玩坏：<span class="m">do not demand an invented check merely to eliminate emptiness.</span></p>
+      </div>
+
+      <p>另外三个前提如果不成立，整套方法就不成立：</p>
+      <ul>
+        <li><strong>不需要向后兼容。</strong>根 <code>AGENTS.md</code> 里那条豁免是带失效日期的——「在第一个正式版本发布时删掉本节」。<em>能无畏地大规模改名</em>，才是 62 条闸门可执行的前提；一旦有真实消费者，同样的闸门会把树冻住。</li>
+        <li><strong>不收外部 PR。</strong><code>CONTRIBUTING.md</code> 直接写明。所有被强制的规则因此可以假定作者是同仓库、同团队、agent 驱动的。</li>
+        <li><strong>推理便宜。</strong><code>docs/testing.md</code> 里那句话只有他们能写：<em>We are DeepSeek — do not ration real-API tests.</em></li>
+      </ul>
+    </section>
+
+    <hr>
+
+    <section id="verdict">
+      <span class="eyebrow">10 · 结论</span>
+      <h2>这不是 vibe coding，它几乎是反面</h2>
+
+      <p>「vibe coding」通常指：提示模型、不细看产出、速度优先、缺乏强验证。这份仓库的证据在每一项上都指向相反方向，而且反驳是<strong>写在第 2 天的记录里</strong>的——那篇笔记的前提恰恰是「agent 的产出不能托付给散文约定，必须由会失败的命令约束」。之后 64 天里造出来的是：62 条闸门、27.5 万行测试(比源码多)、686 篇决策记录、3.1 万行闸门机器码。</p>
+
+      <p>更合适的名字是它的反面：<strong>把验收标准写成代码</strong>。凡承诺，要么给一条会失败的命令，要么明确写下由评审负责。</p>
+
+      <p>但也别把它读成一个成功学故事。同一份证据里有三处诚实的裂缝：那面旗舰覆盖率闸门在全仓最大的分组上是关着的；第 2 天点名的对策(变异测试)在 RC 发布时仍未动工；而 27.5 万行测试只被「跑过没跑过」把关，没被「断言强不强」把关。</p>
+
+      <p>如果只带走一句话，我建议是这句——它既是方法的支点，也是它唯一无法被别人直接照抄的部分：</p>
+
+      <blockquote class="g">
+        <p><strong>"a lot of work" is not a cost argument when agents do the labor.</strong></p>
+        <cite>.agents/notes/implemented/process/2026-06-11-quality-gates.md</cite>
+      </blockquote>
+    </section>
+
+    <section id="method">
+      <span class="eyebrow">11 · 方法</span>
+      <h2>这份报告怎么做的，以及它没能回答什么</h2>
+      <p>13 个并行 agent 分头读一手材料(11 个按流程面：工具证据、指令体系、决策记录、skill、分支拓扑、评审与标签、把关体系、git 取证、复盘、自举、译文与人工判断层；2 个分别扮演质疑「vibe coding」框架和评估可复制性)。此外分支前缀、时段分布、单人速率、双语与笔记同 PR 落地率、以及那三条最有故事性的证据(763 文件的清除提交、50 分钟的 pre-push 实验、泄漏的 worktree 路径)，都由我本人复核过。</p>
+
+      <div class="note h">
+        <span class="sig h tag"><span class="dot"></span>最大的证据缺口</span>
+        <p><strong>git 历史无法区分人写的提交和 agent 写的提交。</strong>零条 AI 署名 trailer，所以本文关于人机分工的一切结论，依据是仓库自己的散文(它反复直说)和流程制品，而不是可测量的作者归属。<em>我无法量化 22.7 万行源码里模型写了多少。</em></p>
+        <p>其次：<strong>没有查询 GitHub</strong>。PR 评审串、审批数、返工轮次都在射程之外——对一个关于协作的问题来说，这是最大的一类缺失证据。文中「62 个 PR / 426 条人类反馈」是仓库自己记在一篇 proposed 笔记里的观测，不是独立测量。</p>
+        <p>另外没有跑测试套件、覆盖率、typecheck、lint 或快照通道，所以本文不声称这棵树整体是绿的。</p>
+      </div>
+
+      <p>顺带一处发现：<code>vitest.config.ts</code> 里那句注释引用了 <code>docs/testing.md</code> 的一个说法(「excessive tests are welcome」)，而这句话在 docs/ 里并不存在——一条挂了 64 天的悬空引用。这恰好是本仓库自己那条规则要抓的东西：<em>能否让一个只站在 HEAD、看不到任何会话记录的读者，解析每一个引用、核实每一条断言?</em></p>
+    </section>
+
+    <footer>
+      <p>研究对象：<code>deepseek-harness</code> @ <code>47f943859b</code>(master，2026-08-13)。12,293 次提交 · 64 天 · 27 个可辨识贡献者 · 984 个已合并 PR · 686 篇 Agent Note · 62 条闸门。中性色沿用项目自带设计系统 <code>packages/client/ui-theme</code>；三态强调色为本文自定的语义配色。</p>
+    </footer>
+
+  </div>
+</div>

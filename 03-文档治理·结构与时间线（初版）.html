@@ -1,0 +1,437 @@
+<title>DeepSeek Harness 文档治理考古</title>
+<style>
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#EDF0F4; --line:#D6DBE3; --line-soft:#E6EAF0;
+  --ink:#171E28; --ink-2:#4A5563; --ink-3:#7A8492;
+  --accent:#3A4FB8; --accent-soft:#E4E8F8; --accent-ink:#2C3D96;
+  --gate:#2E7D77; --gate-soft:#DFF0EE;
+  --ok:#2F7D4F; --ok-soft:#DFF1E5; --warn:#A8701A; --warn-soft:#F7ECD6; --mute:#6B7280; --mute-soft:#E9EBEE; --bad:#A83A3A; --bad-soft:#F6E1E1;
+  --code-bg:#EEF1F5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161D; --surface:#181E27; --surface-2:#1F2731; --line:#2E3946; --line-soft:#26303B;
+    --ink:#E6EAF0; --ink-2:#B4BDC9; --ink-3:#7F8A98;
+    --accent:#93A4F2; --accent-soft:#232C4A; --accent-ink:#B7C2F7;
+    --gate:#6FC4BB; --gate-soft:#183430;
+    --ok:#6FC58F; --ok-soft:#173424; --warn:#E0B060; --warn-soft:#3A2E14; --mute:#98A2AF; --mute-soft:#2A323C; --bad:#E08484; --bad-soft:#3E2020;
+    --code-bg:#1F2731;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161D; --surface:#181E27; --surface-2:#1F2731; --line:#2E3946; --line-soft:#26303B;
+  --ink:#E6EAF0; --ink-2:#B4BDC9; --ink-3:#7F8A98;
+  --accent:#93A4F2; --accent-soft:#232C4A; --accent-ink:#B7C2F7;
+  --gate:#6FC4BB; --gate-soft:#183430;
+  --ok:#6FC58F; --ok-soft:#173424; --warn:#E0B060; --warn-soft:#3A2E14; --mute:#98A2AF; --mute-soft:#2A323C; --bad:#E08484; --bad-soft:#3E2020;
+  --code-bg:#1F2731;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;font-size:15.5px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:56px 24px 96px}
+h1,h2,h3{font-family:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC",Georgia,"Times New Roman",serif;text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2.35rem;font-weight:700;letter-spacing:.01em}
+h2{font-size:1.5rem;font-weight:700;margin-top:64px;padding-top:20px;border-top:1px solid var(--line)}
+h3{font-size:1.12rem;font-weight:700;margin-top:32px}
+p{margin:12px 0}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+a:hover,a:focus-visible{border-bottom-color:var(--accent);outline:none}
+code,pre{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+code{font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;color:var(--ink)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;overflow-x:auto;font-size:.8rem;line-height:1.55;color:var(--ink-2)}
+pre b{color:var(--ink);font-weight:600}
+pre i{color:var(--ink-3);font-style:normal}
+pre .n{color:var(--accent-ink);font-weight:600}
+.eyebrow{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.lede{font-size:1.08rem;color:var(--ink-2);max-width:66ch;margin-top:18px}
+.meta{font-size:.82rem;color:var(--ink-3);margin-top:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:36px 0 8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.stat .v{font-family:"Songti SC","Noto Serif CJK SC",Georgia,serif;font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink)}
+.stat .k{font-size:.78rem;color:var(--ink-3);margin-top:6px}
+.thesis{border-left:3px solid var(--accent);background:var(--accent-soft);padding:14px 20px;border-radius:0 6px 6px 0;margin:28px 0}
+.thesis p{margin:6px 0}
+table{border-collapse:collapse;width:100%;font-size:.88rem;line-height:1.5}
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line-soft)}
+th{font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--surface-2)}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 8px;border-radius:999px;letter-spacing:.02em;white-space:nowrap;vertical-align:middle}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-mute{background:var(--mute-soft);color:var(--mute)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-gate{background:var(--gate-soft);color:var(--gate)}
+.p-acc{background:var(--accent-soft);color:var(--accent-ink)}
+/* layers */
+.layers{display:grid;gap:8px;margin:20px 0}
+.layer{display:grid;grid-template-columns:132px 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.layer .name{font-family:"Songti SC","Noto Serif CJK SC",Georgia,serif;font-weight:700;font-size:1rem;line-height:1.35}
+.layer .name small{display:block;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-weight:400;font-size:.72rem;color:var(--ink-3);margin-top:4px;word-break:break-all}
+.layer .body{font-size:.9rem;color:var(--ink-2)}
+.layer .body p{margin:4px 0}
+@media (max-width:640px){.layer{grid-template-columns:1fr}}
+/* lifecycle */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0}
+.node{flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:.86rem;color:var(--ink-2);position:relative}
+.node b{display:block;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.85rem;color:var(--ink);margin-bottom:4px}
+.node.frozen{border-style:dashed}
+.arrow{align-self:center;color:var(--ink-3);font-size:1.1rem;padding:0 2px}
+/* timeline */
+.tl{position:relative;margin:24px 0 0;padding-left:0}
+.phase{margin-top:36px}
+.phase-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.phase-h h3{margin:0}
+.phase-h .range{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.78rem;color:var(--ink-3)}
+.phase-sum{color:var(--ink-2);font-size:.92rem;margin:0 0 10px;max-width:70ch}
+.ev{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:9px 0;border-left:2px solid var(--line);margin-left:6px;position:relative}
+.ev::before{content:"";position:absolute;left:-6px;top:17px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+.ev.big::before{background:var(--accent)}
+.ev .d{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.78rem;color:var(--ink-3);padding-left:14px;padding-top:3px;font-variant-numeric:tabular-nums}
+.ev .t{font-size:.9rem;color:var(--ink-2)}
+.ev .t b{color:var(--ink);font-weight:600}
+.ev .t .h{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.72rem;color:var(--ink-3);margin-left:6px}
+@media (max-width:560px){.ev{grid-template-columns:1fr;gap:2px}}
+/* chart */
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px 10px;margin:18px 0}
+.fig .cap{font-size:.8rem;color:var(--ink-3);margin-top:6px}
+.fig .ttl{font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:6px}
+.fig svg{width:100%;height:auto;display:block}
+.fig text{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;fill:var(--ink-3)}
+.fig .bar{fill:var(--accent)}
+.fig .bar2{fill:var(--gate)}
+.fig .lbl{fill:var(--ink);font-weight:600}
+.fig .grid{stroke:var(--line-soft);stroke-width:1}
+.fig .base{stroke:var(--line);stroke-width:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:700px){.two{grid-template-columns:1fr}}
+ul{padding-left:1.3em}
+li{margin:5px 0}
+.foot{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:.8rem;color:var(--ink-3)}
+.takeaways li{margin:10px 0}
+.takeaways b{color:var(--ink)}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">研究报告 · 仓库考古</div>
+  <h1>DeepSeek Harness 文档治理考古</h1>
+  <p class="lede">一个由 AI 代理主导开发（vibe coding）的 TypeScript 单仓，在 64 天、12,293 次提交里长出了 2,355 个 Markdown 文件、约 16.9 万行指引性文本。这份报告回答两个问题：<b>这些 AGENTS.md、功能文档、决策记录现在是怎样一套结构在管</b>，以及<b>它是按什么时间顺序一步步长成这样的</b>。</p>
+  <p class="meta">数据来源：仓库 <code>master</code> 分支工作树与 <code>git log</code>（2026-06-10 → 2026-08-13）。所有数字均由脚本统计得出，未做估算。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">2,355</div><div class="k">Markdown 文件</div></div>
+    <div class="stat"><div class="v">169,055</div><div class="k">Markdown 总行数（16.8 MB）</div></div>
+    <div class="stat"><div class="v">64 天</div><div class="k">从首个提交到 rc.5 发布</div></div>
+    <div class="stat"><div class="v">683</div><div class="k">英文 Agent Notes（541 活跃 + 142 归档）</div></div>
+    <div class="stat"><div class="v">1,078</div><div class="k">中英双语三元组（.md / .zh.md / .i18n.yaml）</div></div>
+    <div class="stat"><div class="v">28</div><div class="k"><code>doc-sync</code> 文档门禁叶子</div></div>
+    <div class="stat"><div class="v">231</div><div class="k">根 AGENTS.md 被修改的提交数</div></div>
+    <div class="stat"><div class="v">11</div><div class="k">Skills（6 个专管文档）</div></div>
+  </div>
+
+  <div class="thesis">
+    <p><b>一句话结论：</b>他们没有把文档当"写作"来管，而是当<b>代码</b>来管——路径即元数据、每条事实只有一个家、字数有硬上限、一致性由 28 个 CI 门禁而不是人来守，中英文以 git blob 哈希绑定。文档量的爆炸并非失控，而是把 AI 代理每次改动必须"留下决策记录"这条规则机械化以后的必然结果。</p>
+  </div>
+
+  <h2>一、现在的管理结构：五层 + 两条横切机制</h2>
+  <p>把仓库里所有"有指引性"的 Markdown 按<b>读者是谁、什么时候被读</b>来分，可以拆成五层。每一层都有自己的 <code>AGENTS.md</code>（CLAUDE.md 只是指向它的符号链接），每一层文件的"能写什么/不能写什么"都在 <code>docs/AGENTS.md</code> 的分层表里被明确规定。</p>
+
+  <div class="layers">
+    <div class="layer">
+      <div class="name">L1 指令层<small>AGENTS.md ×8（另加 .agents/notes 下 3 份）· CLAUDE.md → 符号链接 ×4</small></div>
+      <div class="body">
+        <p><b>每次会话都会被代理加载的"常备命令"</b>。根 <code>AGENTS.md</code> 只写一到三行一条的规则并链到规则的家；子树版本（<code>packages/</code>、<code>examples/</code>、<code>docs/</code>、<code>.agents/notes/</code>、<code>scripts/</code>、<code>website/</code>、<code>.github/</code>、<code>vendor/</code>）只写该子树特有的命令。</p>
+        <p>字数硬上限：根 1,900 词（当前刚好 1,900）、<code>docs/AGENTS.md</code> 1,320、<code>packages/AGENTS.md</code> 675、<code>examples/AGENTS.md</code> 310——由 <code>verify-doc-budgets</code> 在 CI 强制。</p>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="name">L2 标准层<small>docs/AGENTS.md · docs/i18n/README.md · .agents/notes/README.md</small></div>
+      <div class="body">
+        <p><b>"规则的规则"</b>：文档标准（分层表、写作规则、字数预算、slop 清单）、双语配对合同、Agent Note 的路径/格式/生命周期规范。三份文件合计不到 300 行，却是全部 16.9 万行的宪法；每一条规则都注明由哪个 <code>verify-*</code> 脚本执行。</p>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="name">L3 决策层<small>.agents/notes/{proposed,implemented,rejected,archived}/{class}/日期-主题.md</small></div>
+      <div class="body">
+        <p><b>Agent Notes——由代理写的 RFC</b>。1,372 个 md 文件（含中文），占全仓 Markdown 行数的 45%。记录"为什么这样决定、放弃了什么、如何验证"，这些是代码和 README 装不下的东西。任何非平凡的 PR 必须新增或更新至少一条；生命周期由目录编码，格式由门禁校验。</p>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="name">L4 参考层<small>docs/ (215 md) · packages/*/*/README.md (219/219)</small></div>
+      <div class="body">
+        <p><b>人读的现状说明</b>：<code>architecture.md</code>（有序总图，≤2,400 词）、<code>subsystems/</code>（92 个文件，每子系统一页，内嵌生成的 Cordis API 区块）、<code>cookbook/</code>（带编号验证步骤的 how-to）、<code>postmortem/</code>（唯一允许"讲故事"的层）、<code>user/</code>（网站发布的产品指南）、9 份由生成器写出的目录（tool/config/persistence catalog、module-graph、graph atlas 等）。219 个包全部有 README，且 README 必须含 <code>## Model Experience</code> 与 <code>## Known Limitations and Deferred Work</code> 两节。</p>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="name">L5 工作流层<small>.agents/skills/*/SKILL.md ×11 · .claude/skills → 符号链接</small></div>
+      <div class="body">
+        <p><b>可复用的操作程序</b>，其中 6 个专管文档：<code>dsh-doc-standards</code>（放置与审计）、<code>dsh-prose-standard</code>（文风与覆盖）、<code>dsh-trim-cot-leakage</code>（清除思维链泄露）、<code>dsh-archive-agent-notes</code>（归档判定）、<code>dsh-translate-docs</code>（仅限用户手动调用）、<code>dsh-doc-site-sync</code>（网站投影）。规则的家在 docs，skill 只装流程——这条分工本身也被写进了 Agent Note。</p>
+      </div>
+    </div>
+  </div>
+
+  <p>两条横切整个树的机制：</p>
+  <ul>
+    <li><b>双语三元组。</b>每份在范围内的文档是三个并列文件：<code>foo.md</code> + <code>foo.zh.md</code> + <code>foo.i18n.yaml</code>，第三个文件记录两侧上次被确认一致时的 git blob 哈希。任何一侧被改而未重新确认，<code>verify-translation-pairing</code> 就红。当前 1,078 组，中文侧 79,280 行——几乎恰好是全仓的一半。</li>
+    <li><b>28 个 doc-sync 门禁。</b>唯一一份叶子清单在 <code>scripts/run-gates.ts</code> 里，被本地 <code>pnpm run doc-sync</code>、CI 的 <code>node 24 / static</code> 任务和 GitHub Pages 部署工作流共用。</li>
+  </ul>
+
+  <h3>目录全貌（附计数）</h3>
+<pre><b>/</b>
+├── <span class="n">AGENTS.md</span>  ← CLAUDE.md          1,900 词，231 次提交
+├── README.md / README.zh.md / CONTRIBUTING.md(.zh) / BENCHMARK.md / THIRD_PARTY_NOTICES.md <i>(生成)</i>
+├── <b>.agents/</b>                                <i>1,386 md · 76,763 行 (45%)</i>
+│   ├── notes/  README.md · AGENTS.md
+│   │   ├── proposed/{architecture,feature,process,simplification,testing}/     25 篇 EN
+│   │   ├── implemented/{architecture 129,feature 170,process 69,bug-fix 77,simplification 48,testing 12}/  505 篇 EN
+│   │   ├── rejected/{feature,simplification}/                                   11 篇 EN
+│   │   └── archived/{同上六类}/ + manifest.json <i>(426 个文件的哈希封印)</i>          142 篇 EN
+│   └── skills/  11 × SKILL.md (+ agents/openai.yaml Codex 元数据)
+├── .claude/skills → ../.agents/skills
+├── <b>docs/</b>  <span class="n">AGENTS.md</span>                       <i>215 md · 54,584 行 (32%)</i>
+│   ├── architecture.md · glossary.md · testing.md · development.md · defensive-patterns.md · cordis-primer.md
+│   ├── subsystems/ 92 · user/ 26 · cookbook/ 16 · cordis-tutorial/ 16 · cordis-api/ 11 · postmortem/ 10 · i18n/ 7
+│   └── tool-catalog.md · config-catalog.md · persistence-catalog.md · module-graph.md · graph-atlas.md … <i>(生成，--check 校验)</i>
+├── <b>packages/</b>  <span class="n">AGENTS.md</span> ← CLAUDE.md · README.md   <i>545 md · 27,864 行 (16%)</i>
+│   └── &lt;group&gt;/&lt;pkg&gt;/README.md  ×219 (100%)
+├── examples/  <span class="n">AGENTS.md</span> ← CLAUDE.md          43 md
+├── scripts/  run-gates.ts · 28 verify-* · 10 gen-* · doc-budgets.manifest.json · translation-pairing.manifest.json
+├── website/  docs.ts <i>(源 md → VitePress 路由的投影清单)</i>
+└── vendor/ python/ native/  各自 README（少量）</pre>
+
+  <h2>二、"一个事实只有一个家"：分层表</h2>
+  <p>这是整套体系最核心的一张表，原文在 <code>docs/AGENTS.md</code>。每一层被规定了<b>职责</b>和<b>明确不属于它的内容</b>；重复出现的规则会被 slop 清单当作缺陷清掉。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>层</th><th>职责</th><th>不属于这里</th></tr></thead>
+    <tbody>
+      <tr><td>根 <code>AGENTS.md</code></td><td>常备命令：代理每次会话都需要在上下文里的规则，一到三行一条，链向其家</td><td>故事、示例、情境流程、任何从链接目标复述来的内容</td></tr>
+      <tr><td>子树 <code>AGENTS.md</code></td><td>该子树特有的命令</td><td>根文件已有的全仓规则</td></tr>
+      <tr><td><code>architecture.md</code></td><td>有序总图：组合、核心包、循环、能力接缝、扩展点</td><td>类型定义（→subsystems）、单包细节（→README）、决策理由（→Agent Notes）、实现状态标注</td></tr>
+      <tr><td><code>subsystems/</code></td><td>每子系统一页：类型定义、语义、生成的 Cordis API</td><td>行为叙述（→architecture.md）</td></tr>
+      <tr><td>Agent Notes</td><td>活跃决策记录：为什么、放弃了什么、需要什么验证；<code>implemented/</code> 用现在时描述已发布现实</td><td>迁移计划、验收清单、"应当…"式规格语；归档笔记是冻结历史，不是现行权威</td></tr>
+      <tr><td><code>postmortem/</code></td><td>事故故事——唯一允许叙事的层</td><td>—</td></tr>
+      <tr><td><code>cookbook/</code></td><td>带编号验证步骤的 how-to</td><td>设计理由（→每篇链接的 Agent Note）</td></tr>
+      <tr><td><code>user/</code></td><td>网站发布的产品指南</td><td>生成参考表、贡献者流程、决策历史</td></tr>
+      <tr><td>包 README</td><td>该包的合同：配置、语义、限制、扩展点、Model Experience</td><td>JSDoc 复述、生成目录复述、别的包的事</td></tr>
+      <tr><td>生成参考</td><td>从源码再生并做新鲜度校验的英文源；中文侧走配对流程</td><td>手工编辑生成区块</td></tr>
+      <tr><td>Skills</td><td>可复用工作流与专门的判定标准</td><td>产品与运行时合同（→docs 或源码）</td></tr>
+    </tbody>
+  </table></div>
+  <p>放置口诀（原文）：bug → postmortems；理由 → Agent Notes；流程 → cookbooks；类型定义 → subsystems；包合同 → READMEs；常备命令 → 根 AGENTS.md 并附理由链接。</p>
+
+  <h2>三、Agent Notes 的生命周期与格式</h2>
+  <p>路径就是元数据：<code>{lifecycle}/{class}/yyyy-mm-dd-topic.md</code>。日期是首次提出的日期，类别是封闭集合（<code>scripts/agent-note-tree.ts</code>），目录之外的任何位置都会被 <code>verify-agent-note-classification</code> 拒绝——连历史遗留的 <code>docs/rfc/</code> 目录若重新出现也算失败。仓库明文禁止建集中式 INDEX.md：目录树本身就是索引。</p>
+
+  <div class="flow">
+    <div class="node"><b>proposed/</b> <span class="pill p-warn">25</span><br>已评审、未实现。骨架：Problem → Proposal → Alternatives considered → Acceptance criteria → Risks</div>
+    <div class="arrow">→</div>
+    <div class="node"><b>implemented/</b> <span class="pill p-ok">505</span><br>已发布。Proposal 改写为现在时 Decision；验收与风险折进 Consequences。事实（路径、名字）随代码同步改，决定本身不改</div>
+    <div class="arrow">→</div>
+    <div class="node frozen"><b>archived/</b> <span class="pill p-mute">142</span><br>已完成且理由不再指导未来。移动完整三元组，加 <code>Archived:</code> 行，哈希写入 manifest，此后永久冻结</div>
+  </div>
+  <div class="flow">
+    <div class="node"><b>proposed/</b></div>
+    <div class="arrow">→</div>
+    <div class="node"><b>rejected/</b> <span class="pill p-bad">11</span><br>只在 Status 行加一行理由并冻结。仅当它还能阻止一个"诱人的错误"时才保留，否则删除三元组</div>
+    <div class="arrow">→</div>
+    <div class="node frozen">删除</div>
+  </div>
+
+  <p>格式由 <code>verify-agent-note-format</code> 强制：前三行必须是 <code># Agent Note: 标题</code> / 空行 / <code>Status: …</code>；<code>## Alternatives considered</code> 一节对所有笔记强制——"没有记录它击败了什么的决定，会招来重新争论"。2026-07-05 之前的旧笔记允许用一条固定注释代替。<code>implemented/</code> 里若出现 <code>## Proposal</code>、<code>## Plan</code>、<code>## Acceptance criteria</code> 即判失败。</p>
+  <p>两条防增殖规则：<b>每篇新笔记必须触发取代检查</b>（搜索活跃树里同一决定的旧笔记，全取代则合并后删除，部分取代则双向交叉链接）；<b>归档不看字数与年龄</b>，只看"替代方案、所有权边界、否定保证、持久/线上语义、安全规则、重新引入条件"是否仍有用。</p>
+
+  <h2>四、机械门禁：谁在守这 16.9 万行</h2>
+  <p><code>pnpm run doc-sync</code> = <code>tsx scripts/run-gates.ts doc-sync</code>，并行跑 28 个叶子（本地限 4 个 worker，因为几个门禁各自要建完整的 <code>ts.Program</code>）。按管什么可分六组：</p>
+  <div class="tbl"><table>
+    <thead><tr><th>组</th><th>门禁</th><th>拒绝什么</th></tr></thead>
+    <tbody>
+      <tr><td>Markdown 形状与链接</td><td><code>verify-md-wrap</code> · <code>verify-md-links</code> · <code>verify-mermaid</code> · <code>verify-doc-refs</code> · <code>verify-package-paths</code> · <code>verify-public-repository-links</code></td><td>一段落跨多物理行；相对链接或 <code>#锚点</code> 指向不存在的目标；Mermaid 只是"看起来对"；TS 注释里引用的 docs/notes 路径不存在；过期的 packages/ 路径</td></tr>
+      <tr><td>代码 ↔ 文档等价</td><td><code>doc-typecheck</code> · <code>verify-type-equiv</code> · <code>verify-export-jsdoc</code> · <code>verify-scoped-events</code></td><td>md 里的 <code>```ts</code> 围栏编译不过；<code>type-equiv</code>/<code>public-api</code> 块与源码符号不一致（未登记清单也算失败）；任一包导出缺 JSDoc / <code>@param</code> / <code>@returns</code></td></tr>
+      <tr><td>生成目录新鲜度</td><td><code>cordis-catalog</code> · <code>client-catalog</code> · <code>tool-catalog</code> · <code>config-catalog</code> · <code>persistence-catalog</code> · <code>doc-graphs</code></td><td>提交的生成 md 与 <code>gen-*.ts --check</code> 输出不同（生成区块内嵌 file:line，源码上方插行也会失效）</td></tr>
+      <tr><td>包 README 内容</td><td><code>verify-package-readme-model-experience</code> · <code>verify-package-readme-limitations</code> · <code>verify-config-source-ownership</code></td><td>缺 Model Experience 三字段；缺逐字标题 <code>## Known Limitations and Deferred Work</code>（白名单仅 <code>util/brand</code>）；YAML 内联凭据</td></tr>
+      <tr><td>Agent Note 与 Skill</td><td><code>verify-agent-note-classification</code> · <code>verify-agent-note-format</code> · <code>verify-archived-agent-notes</code> · <code>verify-skill-invocation-metadata</code></td><td>路径/日期/类别越界；头块或骨架不符；归档三元组不完整或封印哈希被改；SKILL.md 与 openai.yaml 的调用策略不一致</td></tr>
+      <tr><td>双语、预算、站点</td><td><code>verify-translation-pairing</code> · <code>verify-translation-prompt</code> · <code>verify-doc-budgets</code> · <code>docs-site-projection</code> · <code>docs-site-build</code></td><td>三元组缺失/失同步/结构签名不匹配；翻译提示词无法解析；超字数或被预算的文件失踪；网站投影或 HTML 锚点失效</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>字数预算：唯一有"松紧"的门禁</h3>
+  <p><code>scripts/doc-budgets.manifest.json</code> 是一张 9 行的路径→上限表。规则是双层的：manifest 里的<b>上限</b>是硬门禁；<code>docs/AGENTS.md</code> 里的<b>目标</b>更低（根 AGENTS.md ≤1,600、architecture ≤1,800、子树 ≤600）。低于目标时保留 ≥5% 余量，高于目标时冻结上限直到搬走或压缩内容。门禁变红的处置顺序：搬迁 → 压缩 → 提上限（须在 PR 里说明）。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>文件</th><th class="num">当前词数</th><th class="num">上限</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr><td><code>AGENTS.md</code></td><td class="num">1,900</td><td class="num">1,900</td><td><span class="pill p-warn">顶格·冻结</span></td></tr>
+      <tr><td><code>docs/AGENTS.md</code></td><td class="num">1,320</td><td class="num">1,320</td><td><span class="pill p-warn">顶格·冻结</span></td></tr>
+      <tr><td><code>packages/AGENTS.md</code></td><td class="num">672</td><td class="num">675</td><td><span class="pill p-warn">3 词余量</span></td></tr>
+      <tr><td><code>packages/README.md</code></td><td class="num">958</td><td class="num">994</td><td><span class="pill p-ok">有余量</span></td></tr>
+      <tr><td><code>docs/testing.md</code></td><td class="num">1,113</td><td class="num">1,150</td><td><span class="pill p-ok">有余量</span></td></tr>
+      <tr><td><code>docs/architecture.md</code></td><td class="num">1,288</td><td class="num">2,400</td><td><span class="pill p-ok">宽松</span></td></tr>
+      <tr><td><code>docs/cordis-primer.md</code></td><td class="num">577</td><td class="num">600</td><td><span class="pill p-ok">有余量</span></td></tr>
+      <tr><td><code>docs/defensive-patterns.md</code></td><td class="num">518</td><td class="num">550</td><td><span class="pill p-ok">有余量</span></td></tr>
+      <tr><td><code>examples/AGENTS.md</code></td><td class="num">237</td><td class="num">310</td><td><span class="pill p-ok">宽松</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>值得注意：两份最重要的指令文件恰好都被压在上限上。这说明预算确实在起作用——代理想往 AGENTS.md 里加东西，就必须先搬走或压缩别的。</p>
+
+  <h3>本地钩子与 CI 的分工</h3>
+  <p><code>lefthook</code> 的 pre-commit 只做窄检查：暂存的 <code>.i18n.yaml</code> 配对、暂存的归档笔记封印、<code>git diff --cached --check</code>、第三方声明自动再生并重新暂存；pre-push 只跑 typecheck。全部 28 个门禁在 CI 的 <code>node 24 / static</code> 任务里对每个 PR 强制，Pages 部署工作流也先跑 <code>doc-sync</code>。原则写在 lefthook.yml 头部：本地检查点要快，CI 拥有完整矩阵。</p>
+
+  <h2>五、时间线：从 692 字节到 16.8 MB</h2>
+  <p>先看总量曲线，再看每一阶段发生了什么。文件数在 7 月 20 日至 31 日间翻了三倍——那不是写了三倍的文档，而是 RFC 更名为 Agent Notes 之后，双语三元组规则被套用到整个笔记语料上。</p>
+
+  <div class="two">
+    <div class="fig">
+      <div class="ttl">全仓 .md 文件数（采样日）</div>
+      <svg viewBox="0 0 420 200" role="img" aria-label="md 文件数：129, 168, 295, 521, 1674, 2146, 2355">
+        <line class="grid" x1="40" y1="20" x2="410" y2="20"/><line class="grid" x1="40" y1="60" x2="410" y2="60"/><line class="grid" x1="40" y1="100" x2="410" y2="100"/><line class="grid" x1="40" y1="140" x2="410" y2="140"/>
+        <text x="36" y="24" text-anchor="end">2,400</text><text x="36" y="64" text-anchor="end">1,800</text><text x="36" y="104" text-anchor="end">1,200</text><text x="36" y="144" text-anchor="end">600</text>
+        <line class="base" x1="40" y1="180" x2="410" y2="180"/>
+        <!-- scale: 160px = 2400 files → 1 file = 0.0667px -->
+        <rect class="bar" x="52"  y="171.4" width="34" height="8.6" rx="3"/>
+        <rect class="bar" x="102" y="168.8" width="34" height="11.2" rx="3"/>
+        <rect class="bar" x="152" y="160.3" width="34" height="19.7" rx="3"/>
+        <rect class="bar" x="202" y="145.3" width="34" height="34.7" rx="3"/>
+        <rect class="bar" x="252" y="68.4"  width="34" height="111.6" rx="3"/>
+        <rect class="bar" x="302" y="36.9"  width="34" height="143.1" rx="3"/>
+        <rect class="bar" x="352" y="23"    width="34" height="157" rx="3"/>
+        <text class="lbl" x="69" y="166" text-anchor="middle">129</text>
+        <text class="lbl" x="119" y="163" text-anchor="middle">168</text>
+        <text class="lbl" x="169" y="155" text-anchor="middle">295</text>
+        <text class="lbl" x="219" y="140" text-anchor="middle">521</text>
+        <text class="lbl" x="269" y="63" text-anchor="middle">1,674</text>
+        <text class="lbl" x="319" y="32" text-anchor="middle">2,146</text>
+        <text class="lbl" x="369" y="18" text-anchor="middle">2,355</text>
+        <text x="69" y="195" text-anchor="middle">6/20</text><text x="119" y="195" text-anchor="middle">6/30</text><text x="169" y="195" text-anchor="middle">7/10</text><text x="219" y="195" text-anchor="middle">7/20</text><text x="269" y="195" text-anchor="middle">7/31</text><text x="319" y="195" text-anchor="middle">8/10</text><text x="369" y="195" text-anchor="middle">8/13</text>
+      </svg>
+      <div class="cap">对应字节数：0.68 → 0.92 → 1.90 → 3.46 → 11.14 → 15.16 → 16.84 MB</div>
+    </div>
+    <div class="fig">
+      <div class="ttl">根 AGENTS.md 大小（KB）</div>
+      <svg viewBox="0 0 420 200" role="img" aria-label="AGENTS.md 字节：0.7, 36.5, 51.4, 12.4, 12.9, 12.2, 14.4, 15.7 KB">
+        <line class="grid" x1="40" y1="20" x2="410" y2="20"/><line class="grid" x1="40" y1="60" x2="410" y2="60"/><line class="grid" x1="40" y1="100" x2="410" y2="100"/><line class="grid" x1="40" y1="140" x2="410" y2="140"/>
+        <text x="36" y="24" text-anchor="end">60</text><text x="36" y="64" text-anchor="end">45</text><text x="36" y="104" text-anchor="end">30</text><text x="36" y="144" text-anchor="end">15</text>
+        <line class="base" x1="40" y1="180" x2="410" y2="180"/>
+        <!-- scale: 160px = 60KB → 1KB = 2.667px -->
+        <rect class="bar2" x="48"  y="178.2" width="30" height="1.8" rx="1"/>
+        <rect class="bar2" x="92"  y="82.7"  width="30" height="97.3" rx="3"/>
+        <rect class="bar2" x="136" y="43"    width="30" height="137" rx="3"/>
+        <rect class="bar2" x="180" y="146.9" width="30" height="33.1" rx="3"/>
+        <rect class="bar2" x="224" y="145.5" width="30" height="34.5" rx="3"/>
+        <rect class="bar2" x="268" y="147.6" width="30" height="32.4" rx="3"/>
+        <rect class="bar2" x="312" y="141.6" width="30" height="38.4" rx="3"/>
+        <rect class="bar2" x="356" y="138.1" width="30" height="41.9" rx="3"/>
+        <text class="lbl" x="63" y="173" text-anchor="middle">0.7</text>
+        <text class="lbl" x="107" y="78" text-anchor="middle">36.5</text>
+        <text class="lbl" x="151" y="38" text-anchor="middle">51.4</text>
+        <text class="lbl" x="195" y="142" text-anchor="middle">12.4</text>
+        <text class="lbl" x="239" y="140" text-anchor="middle">12.9</text>
+        <text class="lbl" x="283" y="142" text-anchor="middle">12.2</text>
+        <text class="lbl" x="327" y="136" text-anchor="middle">14.4</text>
+        <text class="lbl" x="371" y="133" text-anchor="middle">15.7</text>
+        <text x="63" y="195" text-anchor="middle">6/10</text><text x="107" y="195" text-anchor="middle">6/20</text><text x="151" y="195" text-anchor="middle">6/30</text><text x="195" y="195" text-anchor="middle">7/4</text><text x="239" y="195" text-anchor="middle">7/10</text><text x="283" y="195" text-anchor="middle">7/20</text><text x="327" y="195" text-anchor="middle">7/31</text><text x="371" y="195" text-anchor="middle">8/13</text>
+      </svg>
+      <div class="cap">7 月 4 日引入字数预算，一天内从 51 KB 砍到 12 KB（≈4×），此后被上限钉住。</div>
+    </div>
+  </div>
+
+  <div class="tl">
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 0 · 起点：一个文件、一个符号链接</h3><span class="range">06-10</span></div>
+      <p class="phase-sum">第一天就确立了两条至今未变的约定：指令文件叫 AGENTS.md，CLAUDE.md 只是指向它的链接；指令文件里链接外部文档而不是内联。</p>
+      <div class="ev big"><div class="d">06-10</div><div class="t"><b>初始化仓库：README、AGENTS.md（692 字节）、CLAUDE.md → AGENTS.md 符号链接</b><span class="h">b67e81ac97</span></div></div>
+      <div class="ev"><div class="d">06-10</div><div class="t">AGENTS.md 里链入 MVP 需求分析与微内核架构文档<span class="h">804eede9eb</span></div></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 1 · ADR / RFC 与第一批门禁</h3><span class="range">06-11 → 06-18</span></div>
+      <p class="phase-sum">一周内搭起了传统软件工程的文档骨架（ADR、RFC、architecture、cookbook），并且从第 4 天起就把"文档与代码一致"交给脚本而不是人：doc-sync 一词在 06-14 出现，当天就进了 pre-push 钩子。</p>
+      <div class="ev"><div class="d">06-11</div><div class="t"><b>回填 15 篇 ADR + 8 篇 RFC</b>（<code>docs/adr/0001-0015</code>、<code>docs/rfc/001-008</code>）；首写 <code>docs/architecture.md</code>；<code>packages/AGENTS.md</code> 诞生；根 AGENTS.md 第一次重写<span class="h">9b8fccc6f9 · 4dafad4db6 · cacfae3cae · 7f024a1a9d</span></div></div>
+      <div class="ev"><div class="d">06-13</div><div class="t">第一个 skill <code>dsh-code-review</code>；<code>docs/cookbook/</code> 出现<span class="h">39b3db4b9c · e98c1c5d42</span></div></div>
+      <div class="ev big"><div class="d">06-14</div><div class="t"><b>doc-sync 门禁诞生</b>：md 内 <code>```ts</code> 围栏参与类型检查、事件分类校验（RFC 006）；同日写入本地 pre-push 钩子；<code>docs/development.md</code> 出现<span class="h">6a528be569 · fa7d1df6f2</span></div></div>
+      <div class="ev"><div class="d">06-16</div><div class="t"><b>"一段落一物理行"</b>约定 + <code>verify-md-wrap</code>；模块依赖图生成器<span class="h">67447fcdc3 · 4c8c1da8b3</span></div></div>
+      <div class="ev big"><div class="d">06-18</div><div class="t"><b>ADR 与 RFC 两棵树合并为一棵按生命周期分目录的 RFC 树</b>（proposed / implemented / rejected）；<code>docs/AGENTS.md</code> 诞生；<code>verify-md-links</code> 上线<span class="h">7c400e9c02</span></div></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 2 · 分类、目录生成、双语——与失控的 AGENTS.md</h3><span class="range">06-19 → 07-03</span></div>
+      <p class="phase-sum">结构在细化（路径编码类别、生成式目录、双语合同），但根 AGENTS.md 也在同一时期从 0.7 KB 涨到 51 KB：6 月中旬的一周（W25）里就有 36 次提交碰它。团队后来在 Agent Note 里承认："那种堆积恰恰是在现状规则和评审注意力都已存在的情况下发生的——这里的纯文字规则如果没有机械后盾，明显守不住。"</p>
+      <div class="ev"><div class="d">06-19</div><div class="t"><code>examples/AGENTS.md</code> 诞生：可复用逻辑必须回到 packages<span class="h">072f97c184</span></div></div>
+      <div class="ev big"><div class="d">06-20</div><div class="t"><b>RFC 按类别用路径子目录编码</b>（architecture / process / simplification，随后 feature 06-21、testing 06-22）+ <code>verify-rfc-classification</code>、<code>verify-doc-refs</code>；<code>verify-type-equiv</code>；Cordis 事件/服务目录生成器；skill <code>dsh-find-simplifications</code><span class="h">605587e79c · 07048983e0 · 4e5c08ef82 · 99a203f445</span></div></div>
+      <div class="ev"><div class="d">06-30</div><div class="t">根 AGENTS.md 达到峰值 51,366 字节；RFC 树 80 个文件</div></div>
+      <div class="ev big"><div class="d">07-02</div><div class="t"><b>双语文档合同</b>：<code>README.zh.md</code>、<code>docs/i18n/</code>、skill <code>dsh-translate-docs</code>、<code>verify-translation-pairing</code>；<code>docs/tool-catalog.md</code> 生成器<span class="h">4d89bb3e74 · df0e7bd5f2</span></div></div>
+      <div class="ev"><div class="d">07-03</div><div class="t"><b>"等权配对 + 侧车一致性记录"</b>：<code>.i18n.yaml</code> 成为三元组第三条腿；<code>verify-mermaid</code>；文档图谱 atlas<span class="h">ec05295a0c · 8caf923196 · 665c10ff19</span></div></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 3 · 收缩：分层、字数预算、统一格式</h3><span class="range">07-04 → 07-06</span></div>
+      <p class="phase-sum">三天内定型了"一个事实一个家"的分层表和字数上限门禁，根 AGENTS.md 一天内被压掉四分之三，溢出的内容分流到 testing.md 与 defensive-patterns.md。这是整个体系从"堆积"转向"治理"的拐点。</p>
+      <div class="ev big"><div class="d">07-04</div><div class="t"><b>文档分层、预算与上限门禁</b>：<code>docs/AGENTS.md</code> 成为文档标准（分层表、slop 清单），<code>verify-doc-budgets</code> + <code>doc-budgets.manifest.json</code>；根 AGENTS.md 按 1,500 词预算重写（51,366 → 12,413 字节），architecture.md 按 1,800 词重写；<code>docs/testing.md</code>、<code>docs/defensive-patterns.md</code> 从中拆出；skill <code>dsh-doc-standards</code>；<code>persistence-catalog</code> 生成器<span class="h">aa36b3b36b · 7702a33531 · 6227cfd03d · 232f314c3a</span></div></div>
+      <div class="ev"><div class="d">07-05</div><div class="t"><b>统一 RFC 格式并门禁化</b>（<code>verify-rfc-format</code>）：头块、按生命周期的骨架、强制 Alternatives considered；此日期成为"旧格式豁免"的分界线<span class="h">e6fad266a6</span></div></div>
+      <div class="ev"><div class="d">07-06</div><div class="t"><b>每个包导出都必须有 JSDoc</b>（<code>verify-export-jsdoc</code>）；<code>scripts/run-gates.ts</code> 并行门禁调度器；<code>config-catalog</code> 生成器；skills <code>dsh-pre-push-checks</code>、<code>dsh-merging-stacked-prs</code><span class="h">cd9737d569 · 0452261b5b · b0c7eadd23</span></div></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 4 · 站点、术语表与文风标准</h3><span class="range">07-09 → 07-16</span></div>
+      <p class="phase-sum">文档开始面向外部读者：VitePress 站点不复制 md，而是按 <code>website/docs.ts</code> 清单"投影"源文件；同时第一次出现专门针对 AI 写作习惯的文风规范。</p>
+      <div class="ev"><div class="d">07-09</div><div class="t">首个 <code>website/</code>（文档站）<span class="h">87a1774fef</span></div></div>
+      <div class="ev"><div class="d">07-10</div><div class="t">包 README 必须有 <code>Known Limitations and Deferred Work</code>（<code>verify-readme-limitations</code>）<span class="h">ecb8aa5b8e</span></div></div>
+      <div class="ev"><div class="d">07-12</div><div class="t"><code>docs/glossary.md</code>；包 README 的 Model Experience 节门禁化<span class="h">ed5304fb6d</span></div></div>
+      <div class="ev big"><div class="d">07-13</div><div class="t"><b>可维护的文档站</b>：<code>website/docs.ts</code> 投影清单 + skill <code>dsh-doc-site-sync</code>；skill <code>dsh-trim-prose</code> 创建，次日以 <b><code>dsh-prose-standard</code></b> 之名合入 master<span class="h">d2f810e9fe · 341b56ebc3 · 148046b9c8</span></div></div>
+      <div class="ev"><div class="d">07-14</div><div class="t"><code>verify-cordis-config</code>（cordis.yml 裸插件必须出现在 manifest 依赖里）；翻译合同可执行化（<code>verify-translation-prompt</code>）<span class="h">4afc701e98 · 3caaa43797</span></div></div>
+      <div class="ev"><div class="d">07-16</div><div class="t">网站里每个 YAML 示例都对照真实插件表面校验<span class="h">da26138592</span></div></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 5 · Agent Notes 制度化：强制、去索引、可归档</h3><span class="range">07-19 → 07-28</span></div>
+      <p class="phase-sum">十天里，RFC 更名为 Agent Notes 并搬进 <code>.agents/</code>，"每个非平凡 PR 必须留笔记"成为硬规则，随即出现合并取代与冻结归档机制。文件数从 521 涨到 1,674，正是双语三元组套用到笔记语料的结果。</p>
+      <div class="ev big"><div class="d">07-19</div><div class="t"><b>RFC 更名为 Agent Notes</b>：整棵树迁到 <code>.agents/notes/{proposed,implemented,rejected}/{class}/</code>，新增 <code>.agents/notes/README.md</code>、<code>AGENTS.md</code>；同日<b>删除生成的 INDEX.md</b>（目录树即索引）；同日<b>"非平凡改动必须附 Agent Note"</b>成为规则<span class="h">e8eddc7ef8 · 4779d04af8 · b1b57a0ac5</span></div></div>
+      <div class="ev"><div class="d">07-20</div><div class="t">笔记树 261 个文件；<code>verify-package-invariants</code><span class="h">bd1805c637</span></div></div>
+      <div class="ev"><div class="d">07-21</div><div class="t"><code>doc-sync</code> 改由 <code>run-gates.ts</code> 统一调度<span class="h">6fc7dd4c02</span></div></div>
+      <div class="ev"><div class="d">07-25</div><div class="t">合并被取代的决策；skill 学会 Agent Note 合并流程<span class="h">3feb05fef8 · 45034edd1a</span></div></div>
+      <div class="ev big"><div class="d">07-26</div><div class="t"><b>冻结归档树 <code>archived/</code></b> + <code>manifest.json</code> 哈希封印 + <code>verify-archived-agent-notes</code> + skill <code>dsh-archive-agent-notes</code>；首次批量归档低价值决策；根 AGENTS.md 上限提到 1,690<span class="h">37140bf823 · f18fb32e2c · 3bd4a9afa6</span></div></div>
+      <div class="ev"><div class="d">07-27</div><div class="t"><b>每篇新笔记必须做取代检查</b>；门禁计划可检视/可回放<span class="h">6241eb6044 · 4bb60b1069</span></div></div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-h"><h3>阶段 6 · 精修：按子系统分页、清 CoT 泄露、面向公开</h3><span class="range">07-30 → 08-13</span></div>
+      <p class="phase-sum">结构基本稳定后，工作转向内容质量与对外发布：扁平目录变成每子系统一页；出现专门清理"思维链泄露"（"previously / no longer / 见 review 第 N 条"这类痕迹）的 skill；CONTRIBUTING、PR 模板、公开链接校验都是最后两周才补的。</p>
+      <div class="ev big"><div class="d">07-30</div><div class="t"><b>扁平目录 → 按子系统分页</b>（<code>docs/subsystems/</code>，生成的 Cordis API 区块内嵌其中）；<code>THIRD_PARTY_NOTICES.md</code> 改为生成并门禁；AGENTS.md / packages/README.md 上限再次上调<span class="h">f7323354bb · 19606bc331 · b6bb24bfa1</span></div></div>
+      <div class="ev"><div class="d">08-03</div><div class="t">PR 模板首次出现（此前 Agent Note 要求一直只写在 AGENTS.md 里）；子系统页按包锚定<span class="h">f3fd8e4cd3</span></div></div>
+      <div class="ev"><div class="d">08-08</div><div class="t">skill 调用策略元数据门禁（SKILL.md ↔ openai.yaml）；"让日常翻译轻量化"<span class="h">ef7195a00a · c5dd99124c</span></div></div>
+      <div class="ev big"><div class="d">08-09</div><div class="t"><b>全仓清除思维链泄露</b>，随即蒸馏为 skill <code>dsh-trim-cot-leakage</code>；<code>verify-md-links</code> 增加 <code>#锚点</code> 校验并修掉 15 个死锚；"具体文风：点名行动者与已记录事实"决策；<code>docs/AGENTS.md</code> 上限提到 1,335<span class="h">25dcd7293c · 05a4a41f4f · 10ef3d4924 · dd384f86ab</span></div></div>
+      <div class="ev"><div class="d">08-11</div><div class="t"><code>CONTRIBUTING.md</code> 首次出现<span class="h">59e98ca8dd</span></div></div>
+      <div class="ev"><div class="d">08-13</div><div class="t"><code>verify-doc-site-fragments</code>（对照生成的 HTML 校验锚点）；<code>dsh</code> 0.1.0-rc.5 公开发布——语料定格在 2,355 文件 / 16.84 MB<span class="h">62080d49c2 · abe560f81e</span></div></div>
+    </div>
+  </div>
+
+  <h3>笔记与全仓语料的增长表</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>采样日</th><th class="num">RFC/Notes 文件</th><th class="num">全仓 .md 文件</th><th class="num">全仓 .md 字节</th><th>当日阶段</th></tr></thead>
+    <tbody>
+      <tr><td>06-20</td><td class="num">66</td><td class="num">129</td><td class="num">681 KB</td><td>阶段 2 开始</td></tr>
+      <tr><td>06-30</td><td class="num">80</td><td class="num">168</td><td class="num">917 KB</td><td>AGENTS.md 峰值</td></tr>
+      <tr><td>07-10</td><td class="num">138</td><td class="num">295</td><td class="num">1.90 MB</td><td>预算生效后</td></tr>
+      <tr><td>07-20</td><td class="num">261</td><td class="num">521</td><td class="num">3.46 MB</td><td>更名 Agent Notes 次日</td></tr>
+      <tr><td>07-31</td><td class="num">1,382</td><td class="num">1,674</td><td class="num">11.14 MB</td><td>双语三元组覆盖笔记</td></tr>
+      <tr><td>08-10</td><td class="num">1,829</td><td class="num">2,146</td><td class="num">15.16 MB</td><td>—</td></tr>
+      <tr><td>08-13</td><td class="num">2,057</td><td class="num">2,355</td><td class="num">16.84 MB</td><td>rc.5</td></tr>
+    </tbody>
+  </table></div>
+  <p class="meta">"RFC/Notes 文件"07-20 起含 <code>.zh.md</code> 与 <code>.i18n.yaml</code>；其中 <code>.md</code>（含 <code>.zh.md</code>）计数为 229 → 922 → 1,220 → 1,372。</p>
+
+  <h2>六、可以带走的七条规律</h2>
+  <ul class="takeaways">
+    <li><b>指令文件是"标准命令"，不是手册。</b>根 AGENTS.md 每条规则一到三行、必须链到规则的家；峰值 51 KB 的教训直接催生了字数预算。今天它 1,900 词顶格，任何增补都要先付出搬迁或压缩的代价。</li>
+    <li><b>规则一旦写成文字守不住，就把它写成脚本。</b>从第 4 天的 doc-typecheck 到第 64 天的 28 个门禁，几乎每条写作规则后面都跟着一个 <code>verify-*</code>。团队自己的表述："值得保留的不变量就值得被编码。"</li>
+    <li><b>路径即元数据，目录树即索引。</b>Agent Note 的状态与类别全在路径里；INDEX.md 被明确删除，因为生成索引只会漂移。</li>
+    <li><b>决策记录是 AI 开发的一等产物。</b>"每个非平凡 PR 必须留一条 Agent Note"让 683 篇笔记成为最大的文档类别——它们记录的是模型下次进入时最需要而代码里没有的东西：为什么、放弃了什么、如何验证。</li>
+    <li><b>增殖有配套的收缩机制。</b>取代检查、合并删除、冻结归档（哈希封印、永不再编辑）三件套，让"必须写"不至于变成"越写越乱"。归档标准是价值判断，明文禁止按字数或年龄归档。</li>
+    <li><b>双语不是翻译工程，而是一致性工程。</b>三元组 + blob 哈希 + 结构签名匹配，把"中英文是否说同一件事"的可机检部分交给门禁，只把措辞是否准确留给评审。</li>
+    <li><b>针对 AI 写作的专项反措施出现在最后。</b>slop 清单（07-04）、prose standard（07-14）、CoT 泄露清除（08-09）依次出现，说明"AI 味"文档是在结构稳定后才成为主要矛盾。</li>
+  </ul>
+
+  <h2>七、方法说明</h2>
+  <p>结构部分来自对工作树中 <code>docs/AGENTS.md</code>、<code>.agents/notes/README.md</code>、<code>docs/i18n/README.md</code>、<code>scripts/run-gates.ts</code>、各 <code>verify-*.ts</code> 头部注释、<code>lefthook.yml</code> 与 <code>.github/workflows/</code> 的直接阅读；时间线来自 <code>git log --diff-filter=A</code> 定位各文件首次出现的提交，采样日计数用 <code>git rev-list -1 --before=&lt;date&gt;</code> 取当日末提交后 <code>git ls-tree -r -l</code> 统计。提交哈希均为 10 位短哈希，可在仓库内直接 <code>git show</code>。</p>
+  <div class="foot">DeepSeek Harness · master @ 47f943859b（2026-08-13）· 生成于 2026-08-17</div>
+</div>

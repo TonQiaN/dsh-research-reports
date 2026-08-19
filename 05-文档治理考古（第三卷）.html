@@ -1,0 +1,777 @@
+<meta charset="utf-8">
+<title>DeepSeek Harness 文档治理考古</title>
+<style>
+:root {
+  --bg: #F1F2EE; --surface: #FAFBF8; --surface-2: #E7EAE4; --line: #CFD5CD;
+  --ink: #17202A; --ink-2: #4E5A63; --ink-3: #7B868E;
+  --accent: #2F6F5E; --accent-soft: #DCEBE4; --accent-ink: #1E4B3F;
+  --rust: #A24A2A; --rust-soft: #F1DED6;
+  --ochre: #9C7A14; --ochre-soft: #F3E9C8;
+  --code-bg: #E9ECE7;
+  --shadow: 0 1px 0 rgba(23,32,42,.06), 0 8px 24px -16px rgba(23,32,42,.25);
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono", "Roboto Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --surface: #1A211E; --surface-2: #232B27; --line: #33403A;
+    --ink: #E6E9E4; --ink-2: #B4BDB6; --ink-3: #85908A;
+    --accent: #6FB79F; --accent-soft: #1F3A32; --accent-ink: #A9DCC8;
+    --rust: #E08A6A; --rust-soft: #3E251C;
+    --ochre: #D9B44A; --ochre-soft: #3B321A;
+    --code-bg: #0F1412;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1A211E; --surface-2: #232B27; --line: #33403A;
+  --ink: #E6E9E4; --ink-2: #B4BDB6; --ink-3: #85908A;
+  --accent: #6FB79F; --accent-soft: #1F3A32; --accent-ink: #A9DCC8;
+  --rust: #E08A6A; --rust-soft: #3E251C;
+  --ochre: #D9B44A; --ochre-soft: #3B321A;
+  --code-bg: #0F1412;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+a:hover, a:focus-visible { border-bottom-color: currentColor; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; }
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; line-height: 1.25; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.6rem; letter-spacing: -.01em; }
+h2 { font-size: 1.75rem; margin-top: .25rem; }
+h3 { font-size: 1.2rem; margin: 2rem 0 .6rem; }
+h4 { font-size: 1.02rem; margin: 1.4rem 0 .4rem; font-family: var(--sans); font-weight: 700; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+li { margin: .25rem 0; }
+li::marker { color: var(--ink-3); }
+strong { font-weight: 700; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+.shell { display: grid; grid-template-columns: 1fr; gap: 0; max-width: 1180px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+@media (min-width: 1100px) {
+  .shell { grid-template-columns: 240px minmax(0, 1fr); gap: 3rem; }
+  .toc { position: sticky; top: 1.5rem; align-self: start; max-height: calc(100vh - 3rem); overflow: auto; }
+}
+.toc { padding-top: 2.4rem; font-size: .86rem; }
+.toc .toc-title { text-transform: uppercase; letter-spacing: .12em; font-size: .7rem; color: var(--ink-3); margin-bottom: .6rem; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: .28rem .5rem; color: var(--ink-2); border-left: 2px solid var(--line); border-bottom: 0; border-radius: 0; }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.toc .n { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-right: .4rem; }
+main { min-width: 0; max-width: 800px; }
+
+.hero { padding: 2.6rem 0 1.5rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+.hero .eyebrow { font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: .8rem; }
+.hero .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 44em; margin-top: 1rem; }
+.hero .meta { font-family: var(--mono); font-size: .76rem; color: var(--ink-3); margin-top: 1rem; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin: 1.5rem 0 0; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .8rem .9rem; box-shadow: var(--shadow); }
+.stat .v { font-family: var(--serif); font-size: 1.7rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: .78rem; color: var(--ink-2); margin-top: .3rem; }
+
+section { margin-top: 3.2rem; scroll-margin-top: 1.5rem; }
+.sec-eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .4rem; }
+.sec-lede { color: var(--ink-2); font-size: 1.02rem; margin: .8rem 0 1.4rem; }
+
+.ev { display: block; font-family: var(--mono); font-size: .74rem; color: var(--ink-3); line-height: 1.55; margin: .15rem 0 .8rem; padding-left: 1rem; text-indent: -1rem; overflow-wrap: anywhere; }
+.ev::before { content: "证据 "; color: var(--accent); }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: .9rem 1.1rem; margin: 1.2rem 0; border-radius: 0 6px 6px 0; }
+.callout.rust { border-left-color: var(--rust); }
+.callout.ochre { border-left-color: var(--ochre); }
+.callout p:last-child { margin-bottom: 0; }
+.quote { font-family: var(--serif); font-size: 1.05rem; color: var(--ink); border-left: 3px solid var(--line); padding: .3rem 1rem; margin: 1rem 0; }
+.quote .src { display: block; font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-top: .35rem; }
+.lesson { background: var(--accent-soft); border-radius: 6px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
+.lesson h4 { margin-top: 0; color: var(--accent-ink); }
+.lesson ul { margin-bottom: 0; }
+.tag { display: inline-block; font-family: var(--mono); font-size: .7rem; padding: .05rem .4rem; border-radius: 3px; border: 1px solid var(--line); color: var(--ink-2); vertical-align: middle; white-space: nowrap; }
+.tag.g { border-color: var(--accent); color: var(--accent); }
+.tag.r { border-color: var(--rust); color: var(--rust); }
+.tag.o { border-color: var(--ochre); color: var(--ochre); }
+
+.tbl-wrap { overflow-x: auto; margin: 1rem 0 1.4rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .7rem; border-bottom: 1px solid var(--line); }
+th { font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); background: var(--surface-2); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+figure { margin: 1.4rem 0; }
+figure svg { max-width: 100%; height: auto; display: block; color: var(--ink); }
+figcaption { font-size: .84rem; color: var(--ink-2); margin-top: .5rem; }
+.fig-box { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem; overflow-x: auto; }
+
+/* strata chart */
+.strata { display: grid; grid-template-columns: repeat(10, minmax(52px, 1fr)); gap: 6px; align-items: end; height: 190px; padding: 0 .2rem; }
+.strata .col { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+.strata .bar { background: var(--accent); opacity: .85; border-radius: 2px 2px 0 0; min-height: 3px; }
+.strata .lbl { font-family: var(--mono); font-size: .68rem; color: var(--ink-3); text-align: center; margin-top: .3rem; white-space: nowrap; }
+.strata .val { font-family: var(--mono); font-size: .68rem; color: var(--ink-2); text-align: center; font-variant-numeric: tabular-nums; }
+.strata-x { display: grid; grid-template-columns: repeat(10, minmax(52px, 1fr)); gap: 6px; padding: 0 .2rem; }
+.strata-events { display: grid; grid-template-columns: repeat(10, minmax(52px, 1fr)); gap: 6px; padding: .6rem .2rem 0; font-size: .72rem; line-height: 1.4; }
+.strata-events div { border-top: 2px solid var(--line); padding-top: .35rem; color: var(--ink-2); }
+.strata-events b { display: block; color: var(--ink); font-weight: 600; }
+.strata-events .hot { border-top-color: var(--rust); }
+.strata-wrap { overflow-x: auto; }
+
+.timeline { list-style: none; padding: 0; margin: 1rem 0; border-left: 2px solid var(--line); }
+.timeline li { position: relative; padding: 0 0 .9rem 1.3rem; margin: 0; }
+.timeline li::before { content: ""; position: absolute; left: -6px; top: .55rem; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.timeline li.turn::before { background: var(--accent); }
+.timeline .d { font-family: var(--mono); font-size: .76rem; color: var(--ink-3); }
+.timeline .t { display: block; }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .9rem 1rem; }
+.card h4 { margin-top: 0; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+.scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.scale .card { border-top: 3px solid var(--accent); }
+.scale .card.two { border-top-color: var(--ochre); }
+.scale .card.three { border-top-color: var(--rust); }
+.scale .who { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; font-size: .92rem; margin: .8rem 0 1.2rem; }
+.kv dt { font-family: var(--mono); font-size: .8rem; color: var(--ink-3); }
+.kv dd { margin: 0; }
+.footnote { font-size: .84rem; color: var(--ink-2); }
+.small { font-size: .88rem; }
+</style>
+
+<div class="shell">
+<nav class="toc" aria-label="目录">
+  <div class="toc-title">目录</div>
+  <ol>
+    <li><a href="#s0"><span class="n">00</span>先看结论</a></li>
+    <li><a href="#s1"><span class="n">01</span>元规则：第 2 天写下的一句话</a></li>
+    <li><a href="#s2"><span class="n">02</span>地层图：64 天的演化</a></li>
+    <li><a href="#s3"><span class="n">03</span>根 AGENTS.md 的新陈代谢</a></li>
+    <li><a href="#s4"><span class="n">04</span>决策记录：从 ADR 到 Agent Notes</a></li>
+    <li><a href="#s5"><span class="n">05</span>门禁清单：28 个 leaf 六类</a></li>
+    <li><a href="#s6"><span class="n">06</span>分层与写作规范</a></li>
+    <li><a href="#s7"><span class="n">07</span>双语配对</a></li>
+    <li><a href="#s8"><span class="n">08</span>生成式文档与网站投影</a></li>
+    <li><a href="#s9"><span class="n">09</span>人 + agent 的协作流程</a></li>
+    <li><a href="#s10"><span class="n">10</span>失败、冲突与代价</a></li>
+    <li><a href="#s11"><span class="n">11</span>给你的学习路线</a></li>
+    <li><a href="#s12"><span class="n">12</span>方法、核查与未解之问</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">DeepSeek Harness 研究系列 · 第三卷 · 文档治理</div>
+  <h1>DeepSeek Harness 文档治理考古</h1>
+  <p class="lede">一个 64 天、12,293 次提交、由 coding agent 写下大部分代码的仓库，是怎样把「文档」变成一台可信记忆机器的——以及一个从个人 vibecoding 走向团队协作的人，能从中学到什么、不该学什么。</p>
+  <p class="meta">仓库快照 2026-08-17 · master @ 47f943859b · 证据全部来自 git 历史与工作树，可用文中的 hash / 路径复核 · 前两卷：<a href="https://claude.ai/code/artifact/451e61ec-6c62-4e48-b8d7-0b9a6ad359e8">解剖（架构）</a> · <a href="https://claude.ai/code/artifact/72e025d0-d2b4-4ee7-8395-ba884c6d5794">工作流</a></p>
+  <div class="stats">
+    <div class="stat"><div class="v">12,293</div><div class="k">提交 · 2026-06-10 → 08-13</div></div>
+    <div class="stat"><div class="v">28</div><div class="k">doc-sync 下的文档 gate</div></div>
+    <div class="stat"><div class="v">683</div><div class="k">Agent Notes（含 142 份冻结归档）</div></div>
+    <div class="stat"><div class="v">936</div><div class="k">中英配对文档，0 份漂移</div></div>
+    <div class="stat"><div class="v">1900/1900</div><div class="k">根 AGENTS.md 字数 / 上限，余量 0</div></div>
+    <div class="stat"><div class="v">2.3–4.2%</div><div class="k">提交是「为了让文档 gate 变绿」</div></div>
+  </div>
+</header>
+
+<section id="s0">
+  <div class="sec-eyebrow">00 · 先看结论</div>
+  <h2>这不是一套写作规范，而是一台维持记忆的机器</h2>
+  <p class="sec-lede">如果只带走一句话：DeepSeek Harness 的文档治理，是在「代码主要由 agent 写、每天几十个 session 并行、人类只能审不能全读」的前提下，为了让仓库自己记得自己是什么、为什么这样，而演化出来的一组机械约束。</p>
+  <p>它由五个相互咬合的部件组成，每一个都能在 git 里找到「出生证明」：</p>
+  <ol>
+    <li><strong>一份每个 session 都会加载的「常令」</strong>（根 <code>AGENTS.md</code>，<code>CLAUDE.md</code> 是它的 symlink），被字数上限硬卡在 1,900 词，每条规则一到三行加一个链接。</li>
+    <li><strong>一棵用路径编码状态的决策记录树</strong>（<code>.agents/notes/{proposed,implemented,rejected}/{class}/yyyy-mm-dd-topic.md</code>），「非平凡改动必须带一份」，配一套哈希封印的冻结归档。</li>
+    <li><strong>28 个退出码非零的 gate</strong>（<code>pnpm run doc-sync</code>），管链接、锚点、每段一行、字数、格式、双语一致、生成物新鲜、JSDoc 完整。</li>
+    <li><strong>一张「每个事实只有一个家」的分层表</strong>和一份 9 条的 slop checklist，专门对付 agent 生成文本的两类污染：重复叙述与「泄漏的推理坐标」。</li>
+    <li><strong>一组给 agent 用的 skill</strong>（文档标准、写作标准、去推理泄漏、归档、翻译、pre-push 选检查、code review），承载「流程与判断」，而契约留在文档里。</li>
+  </ol>
+  <div class="callout">
+    <p><strong>对你最重要的三个反直觉发现</strong></p>
+    <ul>
+      <li>规则不是被「写好」的，是被「压出来」的：根 AGENTS.md 三周内从 52 词膨胀到 8,619 词，团队的解法不是提醒大家克制，而是先装一个 <code>wc -w</code> 上限 gate、再在同一天重写到 1,495 词。</li>
+      <li>最强的规则往往没有 gate：「非平凡改动必须带 Agent Note」明确写着「靠 review 裁决，无自动 gate」，遵守率仍从 75% 升到 93%——但也在最关键的公开发布 PR 上失守了一次。</li>
+      <li>治理本身是要付税的：约每 25–45 个提交就有 1 个纯粹为了让文档 gate 变绿；gate 代码 13.8k 行、占产品源码 9%；每次 merge master 回特性分支，都可能多付一个「重新生成目录」的提交。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="s1">
+  <div class="sec-eyebrow">01 · 元规则</div>
+  <h2>第 2 天写下的一句话，此后 60 天都在给它加叶子</h2>
+  <p>仓库 2026-06-10 初始化，06-11 就回填了 7 份 ADR。其中 ADR 0007 定下了整套治理的前提：</p>
+  <div class="quote">"This codebase is developed primarily by coding agents. Agents follow enforced gates far more reliably than prose conventions, and "a lot of work" is not a cost argument when agents do the labor."<span class="src">docs/adr/0007-quality-gates.md @ 9b8fccc6f9（2026-06-11），现位于 .agents/notes/implemented/process/2026-06-11-quality-gates.md:11</span></div>
+  <p>这句话有三个推论，后面每一节都是它的实例：</p>
+  <ul>
+    <li><strong>能机械判定的都做成命令。</strong>「一段一行」不是风格建议，是 <code>verify-md-wrap</code>；「链接别断」是 <code>verify-md-links</code>；「别写太长」是 <code>verify-doc-budgets</code>。06-20 的分类 note 说得更直白：<em>a convention that isn't machine-checked rots</em>。</li>
+    <li><strong>不能机械判定的，诚实地交给 review，别假装有 gate。</strong>「什么算非平凡改动」「翻译质量是否好」「note 是否描述了 shipped reality」都明确写着「Review enforces the semantic boundary」。</li>
+    <li><strong>「工作量大」不是反对理由。</strong>三件套双语、每篇 note 一千词、每次 merge 后重新生成目录——这些在人手时代不可接受的成本，在 agent 干活时被接受了。代价见第 10 节。</li>
+  </ul>
+  <span class="ev">.agents/notes/implemented/process/2026-06-20-agent-note-classification.md ## Problem："The repo's standing bias is mechanical quality gates over prose guidelines: a convention that isn't machine-checked rots." · 2026-07-19-require-agent-notes-for-non-trivial-changes.md ## Decision："No automated gate attempts to classify a diff as trivial or non-trivial"</span>
+</section>
+
+<section id="s2">
+  <div class="sec-eyebrow">02 · 地层图</div>
+  <h2>64 天、十个地层：治理是在提交量翻 50 倍的坡道上长出来的</h2>
+  <p class="sec-lede">按周看提交量与周活跃作者数，再把 gate 的出生和五个转折点挂在下面。你会看到：核心骨架在 7 月中旬（W27–W29）就成型了，此后新增的多是站点、发布、清洗类。</p>
+  <figure>
+    <div class="fig-box strata-wrap">
+      <div class="strata" role="img" aria-label="2026 年第 24 到 33 周每周提交量柱状图：67, 355, 108, 440, 684, 1749, 2169, 3542, 1966, 1213">
+        <div class="col"><div class="val">67</div><div class="bar" style="height:3px"></div></div>
+        <div class="col"><div class="val">355</div><div class="bar" style="height:15px"></div></div>
+        <div class="col"><div class="val">108</div><div class="bar" style="height:5px"></div></div>
+        <div class="col"><div class="val">440</div><div class="bar" style="height:19px"></div></div>
+        <div class="col"><div class="val">684</div><div class="bar" style="height:29px"></div></div>
+        <div class="col"><div class="val">1,749</div><div class="bar" style="height:74px"></div></div>
+        <div class="col"><div class="val">2,169</div><div class="bar" style="height:92px"></div></div>
+        <div class="col"><div class="val">3,542</div><div class="bar" style="height:150px"></div></div>
+        <div class="col"><div class="val">1,966</div><div class="bar" style="height:83px"></div></div>
+        <div class="col"><div class="val">1,213</div><div class="bar" style="height:51px"></div></div>
+      </div>
+      <div class="strata-x">
+        <div class="lbl">W24<br>06/08</div><div class="lbl">W25</div><div class="lbl">W26</div><div class="lbl">W27<br>06/29</div><div class="lbl">W28</div><div class="lbl">W29</div><div class="lbl">W30<br>07/20</div><div class="lbl">W31</div><div class="lbl">W32</div><div class="lbl">W33<br>08/10</div>
+      </div>
+      <div class="strata-x" style="margin-top:.3rem"><div class="lbl">2 人</div><div class="lbl">6</div><div class="lbl">8</div><div class="lbl">9</div><div class="lbl">13</div><div class="lbl">15</div><div class="lbl">20</div><div class="lbl">27</div><div class="lbl">24</div><div class="lbl">29 人</div></div>
+      <div class="strata-events">
+        <div><b>骨架</b>AGENTS.md 52 词；ADR 0007；doc-typecheck 上 CI</div>
+        <div><b>链接与换行</b>md-wrap、md-links；ADR/RFC 合并成生命周期树</div>
+        <div><b>类别</b>6 个 class 入路径；type-equiv、doc-refs</div>
+        <div class="hot"><b>转折 ①</b>双语配对；07-04 字数预算 + AGENTS.md 8,619→1,495</div>
+        <div><b>格式化</b>note 统一格式 gate；export-jsdoc；README 两个章节 gate</div>
+        <div><b>站点</b>VitePress 投影；-11,834 行去 slop（PR #260）</div>
+        <div class="hot"><b>转折 ②③</b>07-19 RFC→Agent Notes + 强制；07-22 hook 瘦身；07-26 冻结归档</div>
+        <div><b>吞吐峰</b>单周 3,542 提交、27 人；vendored-links</div>
+        <div class="hot"><b>转折 ④</b>08-08 pairing 自动合并；08-09 CoT 泄漏大清洗（763 文件）+ 锚点校验</div>
+        <div><b>发布</b>站点锚点校验；08-13 dsh 0.1.0-rc.5 公开发布</div>
+      </div>
+    </div>
+    <figcaption>每周提交数（柱）、周活跃作者数（第二行）与文档治理事件（下方）。红线标出的四个转折点，都落在提交量从 440 涨到 3,542 的坡道上。数据：<code>git log --format='%ad %an' --date=format:%G-W%V</code> 聚合。</figcaption>
+  </figure>
+
+  <h3>转折点细读</h3>
+  <ul class="timeline">
+    <li class="turn"><span class="d">2026-07-04 · 转折 ①</span><span class="t"><strong>先装 gate，再重写。</strong>13:53 <code>aa36b3b36b</code> 引入 docs/AGENTS.md「documentation standard」（tier 表 + 预算 + slop checklist）和 <code>verify-doc-budgets</code>，ceiling 先冻结在当时的 8,200；14:22 <code>7702a33531</code> 把根 AGENTS.md 重写到 1,495 词、ceiling 拉到 1,500。commit 正文："Every rule survives as one to three lines plus a link to its durable home; the stories, duplicate statements, and re-narrations go"。当天 gate 抓到的第一个违规者是标准自己（1,057 &gt; 1,000），选择压缩到 984 而不是抬上限。</span></li>
+    <li class="turn"><span class="d">2026-07-19 · 转折 ②</span><span class="t"><strong>38 分钟里的三连击。</strong>22:50 <code>e8eddc7ef8</code> 把 docs/rfc 迁到 .agents/notes 并改名「Agent Notes」（452 files）；23:15 <code>4779d04af8</code> 删除只活了 15 天的生成式 INDEX.md（理由：可预测的 merge 热点）；23:28 <code>b1b57a0ac5</code> 写下「Every non-trivial change MUST include at least one Agent Note in the same PR」。</span></li>
+    <li class="turn"><span class="d">2026-07-22/23 · 转折 ③（前半）</span><span class="t"><strong>hook 政策 24 小时三变。</strong>07-22 <code>31c0589439</code>「keep local git hooks fast」把 pre-push 砍到只剩 typecheck；07-23 13:09 <code>00d5b69882</code> 改回「push 前跑 primary CI」，14:02 <code>c79b34bda5</code> 53 分钟后 revert。最终定型为「Never default to the full suite」，由 <code>dsh-pre-push-checks</code> skill 教 agent 挑最窄检查。</span></li>
+    <li class="turn"><span class="d">2026-07-26 · 转折 ③（后半）</span><span class="t"><strong>强制写 note 一周后，给出退出机制。</strong><code>37140bf823</code> 引入 <code>archived/</code> 冻结层、SHA-256 append-only manifest、<code>verify-archived-agent-notes</code> 与 <code>dsh-archive-agent-notes</code> skill；首日 45 份 note 移入归档、删 6 份 rejected。强制化后两周内 note 数从 181 涨到 284，再到 480——退出机制不是可选项。</span></li>
+    <li class="turn"><span class="d">2026-08-09 · 转折 ④</span><span class="t"><strong>针对 agent 文风的集中清洗。</strong><code>25dcd7293c</code>（PR #2098）763 文件清除「(decision 12)」「(audit C2)」「design §4.7」「used to / no longer」这类只有会话里的人才看得懂的引用；<code>05a4a41f4f</code> 把判据蒸馏成 <code>dsh-trim-cot-leakage</code> skill；同日 <code>a27efdef36</code>（Turtle）在根 AGENTS.md 加入「Do not use metaphors」；<code>10ef3d4924</code> 让 <code>verify-md-links</code> 开始校验 #fragment 锚点（一次扫出 15 个死锚点）。</span></li>
+  </ul>
+  <span class="ev">git show --stat 7702a33531 / e8eddc7ef8 / 4779d04af8 / b1b57a0ac5 / 37140bf823 / 25dcd7293c；时间戳来自 git log --format='%h %ci'；周聚合命令见图注</span>
+</section>
+
+<section id="s3">
+  <div class="sec-eyebrow">03 · 常令文件</div>
+  <h2>根 AGENTS.md 的新陈代谢：膨胀、重写、被上限钉住</h2>
+  <p class="sec-lede">这份文件（<code>CLAUDE.md</code> 从第一天起就是它的 symlink，<code>.claude/skills</code> 也 symlink 到 <code>.agents/skills</code>）是唯一「每个 session 都进上下文」的文本。它的字数曲线是整个治理史最好的缩影。</p>
+  <figure>
+    <div class="fig-box">
+      <svg viewBox="0 0 760 300" role="img" aria-label="根 AGENTS.md 字数随日期变化：06-10 52 词，06-15 2430，06-18 3600，06-22 7161，06-29 7426，07-03 峰值 8619，07-04 重写为 1495，07-12 1304，07-19 1517，07-27 1702，08-03 1774，08-10 1852，08-13 1900；07-04 起有 ceiling 上限线，从 1500 逐步抬到 1900">
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <!-- axes -->
+        <line x1="60" y1="20" x2="60" y2="250" stroke="currentColor" stroke-opacity=".35"/>
+        <line x1="60" y1="250" x2="740" y2="250" stroke="currentColor" stroke-opacity=".35"/>
+        <!-- y gridlines: 0..9000, 250 - v/9000*220 -->
+        <g stroke="currentColor" stroke-opacity=".12">
+          <line x1="60" y1="201" x2="740" y2="201"/><line x1="60" y1="152" x2="740" y2="152"/><line x1="60" y1="103" x2="740" y2="103"/><line x1="60" y1="54" x2="740" y2="54"/>
+        </g>
+        <g font-family="ui-monospace, Menlo, monospace" font-size="11" fill="currentColor" fill-opacity=".7" text-anchor="end">
+          <text x="54" y="254">0</text><text x="54" y="205">2k</text><text x="54" y="156">4k</text><text x="54" y="107">6k</text><text x="54" y="58">8k</text>
+        </g>
+        <!-- x: day 0=06-10 -> x=70 ; day 64=08-13 -> x=730 ; 10.3125 px/day -->
+        <g font-family="ui-monospace, Menlo, monospace" font-size="11" fill="currentColor" fill-opacity=".7" text-anchor="middle">
+          <text x="70" y="270">06-10</text><text x="277" y="270">06-30</text><text x="318" y="270">07-04</text><text x="473" y="270">07-19</text><text x="545" y="270">07-26</text><text x="730" y="270">08-13</text>
+        </g>
+        <!-- word count polyline; y = 250 - w/9000*220 -->
+        <polyline fill="none" stroke="currentColor" stroke-width="2" points="70,248.7 80,227.3 122,190.6 153,162 194,75 266,68.5 307,39.3 318,213.5 400,218.1 473,212.9 545,208.4 617,206.6 689,204.7 730,203.6"/>
+        <g fill="currentColor"><circle cx="307" cy="39.3" r="3.5"/><circle cx="318" cy="213.5" r="3.5"/><circle cx="730" cy="203.6" r="3.5"/></g>
+        <!-- ceiling steps (accent), from 07-04 -->
+        <polyline fill="none" style="stroke:var(--accent)" stroke-width="2" stroke-dasharray="5 4" points="318,213.3 338,213.3 338,209.4 400,209.4 400,216.5 421,216.5 421,213.3 473,213.3 473,210.9 545,210.9 545,208.7 586,208.7 586,206.6 627,206.6 627,203.6 730,203.6"/>
+        <!-- annotations -->
+        <text x="307" y="30" font-size="12" fill="currentColor" text-anchor="middle">07-03 峰值 8,619 词</text>
+        <line x1="322" y1="200" x2="322" y2="120" stroke="currentColor" stroke-opacity=".5" marker-end="url(#arr)"/>
+        <text x="330" y="118" font-size="12" fill="currentColor">07-04 装 gate（ceiling 8200）→ 同日重写到 1,495</text>
+        <text x="330" y="134" font-size="11" fill="currentColor" fill-opacity=".75">→ ceiling 拉到 1,500</text>
+        <text x="430" y="182" font-size="12" style="fill:var(--accent)">— — ceiling（1500→1900，抬 66 次 / 降 19 次）</text>
+        <text x="620" y="232" font-size="12" fill="currentColor" text-anchor="middle">08-13：1,900 / 1,900，余量 0</text>
+      </svg>
+    </div>
+    <figcaption>根 AGENTS.md 的字数（实线）与 <code>scripts/doc-budgets.manifest.json</code> 里的 ceiling（虚线）。前三周每周翻倍，因为「每个 PR 加一段」；07-04 重写不是删规则而是搬家；此后 6 周被 ceiling 钉住，缓慢再生到顶格。数据：<code>git show &lt;hash&gt;:AGENTS.md | wc -w</code>，14 个采样点。</figcaption>
+  </figure>
+
+  <h3>膨胀期的内容是什么？</h3>
+  <p>不是坏内容，是放错了地方的好内容。06-29 版本里有一整节「Orchestrating review feedback across a stacked PR chain」，写着 <em>"Delegated work is trust-but-verify. When sub-agents implement fixes in parallel, their report describes what they INTENDED, not necessarily what landed."</em>；07-03 版本加了「Landing changes cleanly: gates, Codex, and scope」，记录一次 850 秒超时的收敛 prompt。这些是团队协作的真实教训——但它们是 war story，属于 cookbook 和 postmortem，不属于每次会话都要加载的常令。07-04 重写把它们搬到了 <code>docs/cookbook/responding-to-pr-review-on-a-stack.md</code>、新建的 <code>docs/testing.md</code>（预算 800）和 <code>docs/defensive-patterns.md</code>（预算 550）。</p>
+  <span class="ev">git show 55088d1cfc:AGENTS.md（06-29 版）；git show d942204759:AGENTS.md（07-03 版）；git show 7702a33531 -s（列出每个 eviction 目标）</span>
+
+  <h3>重写之后它长什么样</h3>
+  <p>9 个 section 的骨架自 07-04 起没变过（唯一例外是 07-10~07-20 短暂存在过的「Agent efficiency」）：Pre-release stance / Repository layout / Commands / Secrets / Conventions / Defensive patterns / Type safety and documentation / Editing these instructions / Vendoring policy。Conventions 30 条占全文 42%。三段最能反映「人机协作现实」的规则，全都能追溯到某次 agent 犯错：</p>
+  <div class="grid2">
+    <div class="card"><h4>Host sandbox failures</h4><p>Hypatia May 07-15 经 <code>codex/document-host-sandbox-retries</code> 分支加入：agent 被自己的沙箱挡住 gh/pnpm/网络时，会误诊为鉴权或项目故障然后去「修」代码。规则要求 "retry unchanged with the narrowest host escalation" 且 "never bypass … the product sandbox under test"。这是根文件里唯一以 agent 为主语的操作规则。</p></div>
+    <div class="card"><h4>Never default to the full suite</h4><p>25 天内翻转 5 次：06-29「PR ready 前跑完整 CI 序列」（问题：漏跑）→ 07-22「跑相关检查」（问题：反射性全跑、重复跑）→ 07-23 又加回又 revert。最终把「选哪些检查」外包给 <code>dsh-pre-push-checks</code> skill，根文件只留原则。</p></div>
+    <div class="card"><h4>Trust TypeScript / Do not comment on obvious facts / Do not use metaphors</h4><p>07-19、08-12、08-09 加入，全是对 LLM 文风与过度防御倾向的直接矫正：别给静态类型已保证的值加运行时校验，别写代码已表达的注释，写 <code>contract</code>/<code>boundary</code>/<code>shape</code> 前先问有没有更准的词。</p></div>
+    <div class="card"><h4>Pre-release stance（自毁条款）</h4><p>06-19 起写着 "Remove this section at the first tagged release. With no external consumers…"。08-13 dsh 家族已 <code>0.1.0-rc.5</code> 公开发布、221 个包设为 public，但本地 0 个 git tag，条款仍在。触发条件靠人记得，就会像这样悬着。</p></div>
+  </div>
+  <span class="ev">git show 1222d07da9 -- AGENTS.md；git log -S'Never default to the full suite' -- AGENTS.md；git show a27efdef36 / 9f2c64f175 / e8b95c8754 -- AGENTS.md；072f97c184（Pre-release stance 首次加入）；git tag | wc -l → 0；abe560f81e、8c1e8d9890（08-13 发布）</span>
+
+  <div class="callout ochre">
+    <p><strong>预算 gate 的真实效果</strong>：它成功触发了两次大瘦身（07-04、07-12），并把中枢文件的每周改动次数从 W27 的 64 次压到 W33 的 20 次（同期总提交涨了 8 倍）。但方向是单边的：manifest 里 ceiling 上调 66 次、下调 19 次，最后一次下调停在 07-13；根 AGENTS.md 与 docs/AGENTS.md 都精确顶在 ceiling 上（1900/1900、1320/1320），高于自己声明的 target（1,600 / 1,250）。gate 挡得住「越线」，挡不住「把线抬到刚好等于用量」。</p>
+  </div>
+  <span class="ev">git log -p -- scripts/doc-budgets.manifest.json 逐版解析（73 次提交）；git log --format='%ad' --date=format:%G-W%V -- AGENTS.md | sort | uniq -c；pnpm run verify-doc-budgets --list</span>
+</section>
+
+<section id="s4">
+  <div class="sec-eyebrow">04 · 决策记录</div>
+  <h2>从 ADR 到 Agent Notes：六次形态变化，每次都因为一个新痛点</h2>
+  <p class="sec-lede">决策记录制度不是一次设计出来的。两个月里改了六次形态，每一次的「为什么」都写在 commit 或 note 里，全部可考。</p>
+  <ul class="timeline">
+    <li><span class="d">06-11</span><span class="t"><code>docs/adr/0001–0018</code>（编号 ADR）+ <code>docs/rfc/001–009</code>（编号 RFC）回填。README 已有两条最稳定的不变量：写 ADR 只当决策「durable, contested, and surprising」；ADR 从不被编辑成另一个决策，只能 supersede。<span class="ev" style="display:inline;padding:0;text-indent:0">9b8fccc6f9、4dafad4db6</span></span></li>
+    <li><span class="d">06-18</span><span class="t">合并为 <code>docs/rfc/{proposed,implemented,rejected}/</code>，文件名改成 <code>yyyy-mm-dd-topic.md</code>，「ADR NNNN」裸编号引用全部改为相对链接——同一 commit 引入 <code>verify-md-links</code>，因为这次重组手改了约 40 条链接却没有任何检测。这是「为什么不用 ADR 编号」的可考证答案：编号无法被 lint 检查，相对链接可以，并且在文件跨目录移动时存活。<span class="ev" style="display:inline;padding:0;text-indent:0">7c400e9c02；2026-06-18-markdown-cross-link-lint.md ## Problem</span></span></li>
+    <li><span class="d">06-20</span><span class="t">加第二轴：6 个 class 子目录（feature / bug-fix / simplification / architecture / process / testing）。刻意没有 <code>refactor</code>（与 simplification 的判别式「observable behavior 是否改变」重叠）；拒绝在文件里加 <code>Classification:</code> 行——「路径已经承载的事实不再复制进文件」。<span class="ev" style="display:inline;padding:0;text-indent:0">605587e79c；2026-06-20-agent-note-classification.md</span></span></li>
+    <li><span class="d">07-05</span><span class="t">统一 in-file 格式并加 gate：前三行精确为 <code># Agent Note: 标题 / 空行 / Status: …</code>；第一个 H2 必须是 <code>## Problem</code>；implemented 禁用 <code>## Proposal / Plan / Migration plan / Acceptance criteria</code>；<code>## Alternatives considered</code> 强制。全部 112 篇一次性归一，「no transition period, no dual-format tolerance」。<span class="ev" style="display:inline;padding:0;text-indent:0">e6fad266a6；2026-07-05-uniform-agent-note-format.md</span></span></li>
+    <li class="turn"><span class="d">07-19</span><span class="t">改名 <code>.agents/notes/</code>「Agent Notes」；删除生成索引；从「值得写才写」改为「每个非平凡改动 MUST 写或更新一份，同 PR」。<span class="ev" style="display:inline;padding:0;text-indent:0">e8eddc7ef8、4779d04af8、b1b57a0ac5</span></span></li>
+    <li class="turn"><span class="d">07-26</span><span class="t">加 <code>archived/{class}/</code> 冻结层（路径里刻意没有 <code>implemented</code>，因为只有 implemented 能进）；<code>rejected/</code> 的保留标准从「留档防再议」改成「只在仍能防住一个诱人错误时保留，否则删除三件套」。<span class="ev" style="display:inline;padding:0;text-indent:0">37140bf823；2026-07-26-frozen-agent-note-archive.md</span></span></li>
+  </ul>
+
+  <figure>
+    <div class="fig-box">
+      <svg viewBox="0 0 760 275" role="img" aria-label="Agent Note 生命周期：proposed 25 份可以变为 implemented 505 份或 rejected 11 份；implemented 可以被冻结到 archived 142 份或被完全取代后合并删除；rejected 不再有防错价值时整个删除；proposed 永不归档只能被拒绝。所有变化靠三个 gate 校验：路径闭集、in-file 格式、归档 hash 封印。">
+        <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="currentColor">
+          <rect x="15" y="100" width="150" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="90" y="125" text-anchor="middle" font-weight="700">proposed/</text>
+          <text x="90" y="145" text-anchor="middle" font-size="10.5" fill-opacity=".75">25 份 · 未来时合法</text>
+          <rect x="280" y="30" width="215" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="387" y="55" text-anchor="middle" font-weight="700">implemented/</text>
+          <text x="387" y="75" text-anchor="middle" font-size="10.5" fill-opacity=".75">505 份 · 现在时，事实随代码更新</text>
+          <text x="387" y="112" text-anchor="middle" font-size="10.5" fill-opacity=".8">被完全取代 → 并入 owner 后删（举证责任在 owner）</text>
+          <rect x="280" y="170" width="215" height="60" rx="6" fill="none" style="stroke:var(--rust)" stroke-width="1.5"/>
+          <text x="387" y="195" text-anchor="middle" font-weight="700" style="fill:var(--rust)">rejected/</text>
+          <text x="387" y="215" text-anchor="middle" font-size="10.5" fill-opacity=".75">11 份 · Status 行写一句判决</text>
+          <rect x="560" y="30" width="190" height="60" rx="6" fill="none" style="stroke:var(--ochre)" stroke-width="1.5" stroke-dasharray="6 3"/>
+          <text x="655" y="55" text-anchor="middle" font-weight="700" style="fill:var(--ochre)">archived/{class}/</text>
+          <text x="655" y="75" text-anchor="middle" font-size="10.5" fill-opacity=".75">142 份 · SHA-256 封印，冻结</text>
+          <text x="655" y="205" text-anchor="middle" font-size="10.5" fill-opacity=".6">（删除三件套）</text>
+          <line x1="165" y1="115" x2="278" y2="70" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <rect x="163" y="82" width="118" height="17" rx="3" style="fill:var(--surface)"/><text x="222" y="94" font-size="10.5" text-anchor="middle" fill-opacity=".9">实现：重写为现在时</text>
+          <line x1="165" y1="145" x2="278" y2="190" stroke-width="1.5" style="stroke:var(--rust)" marker-end="url(#arr2)"/>
+          <rect x="160" y="158" width="124" height="17" rx="3" style="fill:var(--surface)"/><text x="222" y="170" font-size="10.5" text-anchor="middle" style="fill:var(--rust)">拒绝：只改 Status 行</text>
+          <line x1="495" y1="60" x2="558" y2="60" stroke-width="1.5" style="stroke:var(--ochre)" marker-end="url(#arr2)"/>
+          <text x="527" y="48" font-size="10.5" text-anchor="middle" style="fill:var(--ochre)">封存</text>
+          <text x="527" y="80" font-size="10.5" text-anchor="middle" style="fill:var(--ochre)">不再指导未来</text>
+          <line x1="495" y1="200" x2="600" y2="200" stroke-width="1.5" style="stroke:var(--rust)" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+          <text x="547" y="190" font-size="10.5" text-anchor="middle" style="fill:var(--rust)">不再诱人 → 删</text>
+          <line x1="15" y1="245" x2="750" y2="245" stroke="currentColor" stroke-opacity=".25"/>
+          <text x="15" y="260" font-size="10.5" fill-opacity=".8">gate：verify-agent-note-classification（路径闭集、禁 INDEX.md）· verify-agent-note-format（header / 章节 / Alternatives）</text>
+          <text x="15" y="272" font-size="10.5" fill-opacity=".8">· verify-archived-agent-notes（三件套 + manifest 封印，基线为 PR base）</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>三种生命周期各有专属出口：implemented → 冻结归档，proposed → 拒绝（永不归档），rejected → 删除。三个 gate 让「移动一个文件」自动要求重写章节、更新 Status 行、或追加封印。计数为 2026-08-17 工作树的英文文件数。</figcaption>
+  </figure>
+
+  <h3>几条值得抄的设计</h3>
+  <ul>
+    <li><strong>路径即状态。</strong>lifecycle 与 class 都在路径里，<code>ls</code> 就能回答「这个决策现在什么状态」；<code>Status:</code> 行作为自描述冗余保留，但由 gate 与目录交叉校验。gate 里硬编码了 <code>INDEX.md — centralized Agent Note indexes are forbidden</code>，把被否决的方案物理封死。</li>
+    <li><strong>Alternatives 强制，但只许记录、不许编造。</strong>「A decision recorded without what it beat invites re-litigation」；07-05 之前的旧 note 若回忆不起替代方案，只能放一行 <code>&lt;!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) --&gt;</code>。这是对 LLM 事后补写 rationale 倾向最便宜的防御——宁可留诚实的空洞。</li>
+    <li><strong>implemented note 与现实同步，但决策本身不改。</strong>只改事实（路径、默认值、机制），原地重写不追加历史；要改决策就写新 note 交叉链接。</li>
+    <li><strong>rejected 是护栏不是垃圾桶。</strong>现存 11 份，典型如 <code>builtin-timer-promises-for-hand-rolled-sleeps</code>：提案期 Risks 写「Essentially none」，实现 PR #679 才发现 vitest fake clock 不拦截 <code>node:timers/promises</code>；Status 行记录 "implementation falsified the parity premise"。实现是最好的证伪器。</li>
+    <li><strong>不进 PR 模板。</strong><code>.github/pull_request_template.md</code> 里没有 note 字样；制度靠根 AGENTS.md 常令 + <code>dsh-code-review</code> skill 的检查项执行，与「主要由 agent 提 PR」的现实匹配。</li>
+  </ul>
+  <div class="callout">
+    <p><strong>数字。</strong>implemented note 平均 ~1,095 词、中位数 825；07-19 强制化后每周 100+ 份新增（07-30 单日 54 份峰值）；07-20 到 08-09 三周产出 416 份。942 个 master 上的 PR merge 里 79.8% 触及 notes 目录，强制前 74.1%、后 81.5%——规则是对已有习惯的追认。只看改动源码的 PR：75% → 93%。30% 的非 merge 提交碰 notes 目录；每篇 note 拖着 <code>.zh.md</code> 与 <code>.i18n.yaml</code> 三件套。</p>
+  </div>
+  <span class="ev">find .agents/notes -name '20*.md' ! -name '*.zh.md' 分目录计数；对 942 个 first-parent 'Merge pull request' 做 git diff --name-only p1 p2 匹配 ^(.agents/notes|docs/rfc|docs/adr)/；scripts/agent-note-tree.ts:47；.agents/notes/README.md ## Alternatives considered — mandatory</span>
+</section>
+
+<section id="s5">
+  <div class="sec-eyebrow">05 · 门禁清单</div>
+  <h2>28 个 leaf、六类失败：每条规则句子里都写着执行它的命令名</h2>
+  <p class="sec-lede"><code>scripts/run-gates.ts</code> 的 <code>docSyncLeafGates()</code> 是唯一的成员清单（07-21 之前 <code>doc-sync</code> 是 24 段 <code>&amp;&amp;</code> 链，脚本体合计 34 秒却跑 3 分钟，而且漏挂了一个 gate；改成调度器后由 spec 断言成员）。按它们防止的失败类型分成六类：</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th style="width:9rem">类别</th><th>gate</th><th>它拒绝什么（举例）</th><th style="width:6rem">可搬运性</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A 生成物过期</strong></td><td><code>verify-cordis-catalog</code>、<code>client-catalog</code>、<code>tool-catalog</code>、<code>config-catalog</code>、<code>persistence-catalog</code>、<code>doc-graphs</code>、<code>scoped-events</code>、<code>docs-site-build</code></td><td>每个 <code>gen-*</code> 自带 <code>--check</code>：内存里重算，与已提交文件逐字节比较，不同即 exit 1 并提示「Run pnpm run gen-X and commit」。在被记录的符号上方插一行注释也会 stale（因为嵌了 <code>file.ts:NN</code> 行号指针）。</td><td><span class="tag r">档三</span> 深绑 Cordis/typert，~6,400 行</td></tr>
+        <tr><td><strong>B 引用断裂</strong></td><td><code>verify-md-links</code>、<code>doc-refs</code>、<code>package-paths</code>、<code>public-repository-links</code>、<code>doc-site-fragments</code></td><td>相对链接目标不存在；08-09 起 <code>#fragment</code> 必须是 GitHub slug 或显式 <code>&lt;a id&gt;</code>；<code>.ts</code> 注释里引用的 <code>.agents/notes/…md</code> 路径失效；VitePress 渲染后的 HTML 锚点不存在（两种 slugger 算法不同，所以查两次）。</td><td><span class="tag g">档一</span> md-links 216 行 + spec</td></tr>
+        <tr><td><strong>C 结构/格式漂移</strong></td><td><code>verify-md-wrap</code>、<code>agent-note-format</code>、<code>agent-note-classification</code>、<code>package-readme-limitations</code>、<code>package-readme-model-experience</code>、<code>mermaid</code>、<code>skill-invocation-metadata</code>、<code>translation-prompt</code>、<code>docs-site-projection</code></td><td>一段散文手动换成两行（mdast 判 <code>end.line &gt; start.line</code>）；implemented note 里出现 <code>## Acceptance criteria</code>；README 标题写成 <code>## Limitations</code> 而非精确的 <code>## Known Limitations and Deferred Work</code>；skill 只在 SKILL.md 设 <code>disable-model-invocation</code> 却没改 Codex 的 <code>openai.yaml</code>。</td><td><span class="tag g">档一</span> wrap 85 行 · note 三件 204 行；<span class="tag r">README 两个 gate 是 harness 特有</span></td></tr>
+        <tr><td><strong>D 文档与源码语义脱节</strong></td><td><code>doc-typecheck</code>、<code>verify-type-equiv</code>、<code>verify-export-jsdoc</code></td><td>Markdown 里 <code>```ts</code> 围栏编译不过；粘贴的类型声明与源码漂移（manifest 384 条）；某个 export 缺 <code>@param</code>/<code>@returns</code>（617 行、用 ts.Program 走遍所有包，引入时发现 34 个包 203 个欠文档导出）。</td><td><span class="tag o">档二</span> 需 TS Program，改路径常量可用</td></tr>
+        <tr><td><strong>E 多副本不一致</strong></td><td><code>verify-translation-pairing</code>、<code>verify-archived-agent-notes</code>、cordis-catalog 双侧字节相同区域</td><td>改了英文没重录 sidecar；中文列表少一项（结构签名不同）；给 <code>docs/AGENTS.md</code> 加 <code>.zh.md</code>（它被显式排除，「this translation must not exist」）；在归档 note 里改一个错别字（sealed content hash changed）。</td><td><span class="tag g">档一</span> pairing 908 行是档一里最重的</td></tr>
+        <tr><td><strong>F 规模与策略越界</strong></td><td><code>verify-doc-budgets</code>、<code>verify-config-source-ownership</code></td><td>9 个 standing docs 之一超过 manifest ceiling（<code>wc -w</code> 等价算法，文件缺失也 fail）；出厂 <code>cordis.yml</code> 里写 <code>apiKey: !!js process.env.X</code>。</td><td><span class="tag g">档一</span> budgets 58 行 + 9 行 JSON</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="ev">scripts/run-gates.ts:571-616；scripts/verify-md-wrap.ts:57-66；scripts/verify-md-links.ts:100-141；scripts/verify-agent-note-format.ts:22-83；scripts/verify-package-readme-limitations.ts:14-31；scripts/verify-doc-budgets.ts:17-42；scripts/gen-cordis-catalog.ts:12-18, 899-914；.agents/notes/archived/process/2026-07-21-doc-sync-through-gate-scheduler.md ## Problem；wc -l 各脚本</span>
+
+  <h3>gate 的三个共同设计语言</h3>
+  <ul>
+    <li><strong>错误消息带修复指令。</strong>几乎每条失败输出都是「下一步做什么」：<code>run X --write</code>、<code>see docs/i18n/README.md</code>、<code>join NO_LIMITATIONS with a reason</code>。这是给 agent 读的 gate：让它能自我修复。</li>
+    <li><strong>豁免要显式登记、带理由、且自身受校验。</strong><code>NO_LIMITATIONS</code>（当前只有 1 项 <code>packages/util/brand</code>）、<code>NO_MODEL_EXPERIENCE_SECTION</code>（4 项）指向不存在的包或空理由都会 fail；pairing manifest 的 <code>excluded</code> 若出现对应 <code>.zh.md</code> 反而报错；<code>doc-typecheck</code> 的 <code>ignore-check</code> 逃生口有 50% 比率上限（"Guard against the escape hatch becoming the norm"）。</li>
+    <li><strong>误伤时换更精确的解析器，不加 ignore 注释。</strong><code>verify-md-wrap</code> 引入当天就从正则改成 mdast AST；<code>verify-md-links</code> 从「目标存在」升级到「锚点存在」时，用语料本身的 15 处修复作为红→绿证据。</li>
+  </ul>
+
+  <figure>
+    <div class="fig-box">
+      <svg viewBox="0 0 760 220" role="img" aria-label="文档 gate 在哪里跑：本地 pre-commit 只跑三项秒级检查（staged 的 oxlint、translation-pairing --cached、archived-agent-notes）；pre-push 只跑 typecheck；agent 按 dsh-pre-push-checks skill 在文档改动时手动跑 pnpm run doc-sync；PR 的 CI static lane 跑 27 个文档 leaf；合入 master 后 docs-pages 部署前再跑一次完整 doc-sync">
+        <defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-family="ui-monospace, Menlo, monospace" font-size="10.5" fill="currentColor">
+          <text x="10" y="28" fill-opacity=".8">本地钩子刻意只做秒级检查（07-22 起）；文档 gate 的强制点在 CI。</text>
+          <rect x="10" y="55" width="135" height="80" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="77" y="76" text-anchor="middle" font-weight="700" font-size="12">pre-commit</text>
+          <text x="77" y="94" text-anchor="middle" fill-opacity=".8">oxlint (staged)</text>
+          <text x="77" y="109" text-anchor="middle" fill-opacity=".8">pairing --cached</text>
+          <text x="77" y="124" text-anchor="middle" fill-opacity=".8">archive seal</text>
+          <line x1="145" y1="95" x2="168" y2="95" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <rect x="170" y="55" width="100" height="80" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="220" y="76" text-anchor="middle" font-weight="700" font-size="12">pre-push</text>
+          <text x="220" y="100" text-anchor="middle" fill-opacity=".8">仅 typecheck</text>
+          <line x1="270" y1="95" x2="293" y2="95" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <rect x="295" y="55" width="150" height="80" rx="6" fill="none" style="stroke:var(--accent)" stroke-width="1.5"/>
+          <text x="370" y="76" text-anchor="middle" font-weight="700" font-size="12" style="fill:var(--accent)">CI · ci-static</text>
+          <text x="370" y="96" text-anchor="middle" fill-opacity=".8">27 个文档 leaf</text>
+          <text x="370" y="112" text-anchor="middle" fill-opacity=".8">+ docs:build:mpa</text>
+          <line x1="445" y1="95" x2="468" y2="95" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <rect x="470" y="55" width="130" height="80" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="535" y="76" text-anchor="middle" font-weight="700" font-size="12">merge → master</text>
+          <text x="535" y="96" text-anchor="middle" fill-opacity=".8">ci-linux-primary</text>
+          <text x="535" y="112" text-anchor="middle" fill-opacity=".8">全量</text>
+          <line x1="600" y1="95" x2="623" y2="95" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <rect x="625" y="55" width="125" height="80" rx="6" fill="none" style="stroke:var(--accent)" stroke-width="1.5"/>
+          <text x="687" y="76" text-anchor="middle" font-weight="700" font-size="12" style="fill:var(--accent)">docs-pages</text>
+          <text x="687" y="96" text-anchor="middle" fill-opacity=".8">完整 doc-sync</text>
+          <text x="687" y="112" text-anchor="middle" fill-opacity=".8">部署前再跑一次</text>
+          <rect x="170" y="160" width="430" height="40" rx="6" fill="none" stroke="currentColor" stroke-dasharray="5 4" stroke-width="1.5"/>
+          <text x="385" y="185" text-anchor="middle" fill-opacity=".9">agent 按 dsh-pre-push-checks 在改文档时手动跑 pnpm run doc-sync</text>
+          <line x1="385" y1="160" x2="385" y2="137" stroke="currentColor" stroke-opacity=".5" stroke-dasharray="3 3"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption>gate「查什么」与「何时跑」被刻意分离。06-14 doc-sync 曾进 pre-push，07-22 全部撤出，07-23 试图放回 53 分钟后 revert。代价：那些 <code>fix(ci): refresh generated references</code> 提交（见第 10 节）。来源：<code>lefthook.yml</code>、<code>.github/workflows/ci.yml</code>、<code>scripts/run-gates.ts</code> ciStaticGates/ciPrimaryGates。</figcaption>
+  </figure>
+</section>
+
+<section id="s6">
+  <div class="sec-eyebrow">06 · 分层与写作</div>
+  <h2>「一个事实一个家」、slop checklist、和两次针对 agent 文风的大清洗</h2>
+  <p class="sec-lede"><code>docs/AGENTS.md</code> 只有 1,320 词，但它是这套体系的宪法：一张 12 行的 tier 表、一段 5 条的写作规则、一份 9 条的 slop checklist、一个三步走的预算处置法。</p>
+
+  <h3>tier 表：每种文档一个 job，一栏「不属于这里」</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Tier</th><th>Job</th><th>不属于这里</th></tr></thead>
+      <tbody>
+        <tr><td>根 <code>AGENTS.md</code></td><td>常令：agent 每个 session 都要带在上下文里的规则，一到三行 + 链接其 home</td><td>故事、worked example、情境程序、从别处复述的东西</td></tr>
+        <tr><td>子树 <code>AGENTS.md</code></td><td>只在该子树成立的命令</td><td>根文件已经承载的全仓规则</td></tr>
+        <tr><td><code>architecture.md</code></td><td>有序地图：组合、核心包、loop、seam、扩展点</td><td>类型定义（→ subsystems）、包级细节（→ README）、决策理由（→ notes）</td></tr>
+        <tr><td>Agent Notes</td><td>活跃决策记录：why、放弃了什么、需要什么验证</td><td>迁移计划、验收清单、「should」spec-speak（一旦 shipped）</td></tr>
+        <tr><td><code>postmortem/</code></td><td>事故故事——唯一允许 war story 的 tier</td><td>—</td></tr>
+        <tr><td><code>cookbook/</code></td><td>带编号验证步骤的 how-to</td><td>设计理由（→ 它链接的 note）</td></tr>
+        <tr><td>Package README</td><td>包合同：config、语义、限制、扩展点、Model Experience</td><td>JSDoc 复述、生成目录复述、别的包的事</td></tr>
+        <tr><td>Generated reference</td><td>从源码再生成、新鲜度受 gate 的英文源；中文对侧走配对</td><td>对生成英文源的任何手改</td></tr>
+        <tr><td>Skills</td><td>可复用的工作流与专门的判断标准</td><td>产品与运行时合同（→ docs 或源码）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>放置口诀一句话：bugs → postmortems；rationale → Agent Notes；procedures → cookbooks；type definitions → subsystems；package contracts → READMEs；standing orders → 根 AGENTS.md 加一个 rationale 链接。</p>
+  <span class="ev">docs/AGENTS.md:15-35；2026-07-04-doc-tiers-and-budgets.md ## Alternatives："Housing the standard inside the skill — rejected: … a standard packed into SKILL.md is invisible to an agent that edits docs without invoking the skill"</span>
+
+  <h3>slop checklist：9 条，每条都有真实「事故」背书</h3>
+  <ol class="small">
+    <li>同一规则多处出现 → 07-04 根文件里「同一规则说了两三遍」。</li>
+    <li>叙事历史（previously / now / no longer / used to / renamed / PR / commit）→ 08-09 大清洗。</li>
+    <li>实现状态标注（"implemented!"、"future: …"）→ 07-04 删掉 architecture.md 里的 "future plugins: hooks, compaction, sandbox…" 行。</li>
+    <li>手写目录复述 → 手画 ASCII 依赖图让位给生成的 <code>module-graph.md</code>。</li>
+    <li>推理稿（一步步的实现叙述、测试 walkthrough、被拒的局部替代）→ 08-09 清掉 "(audit C2) waits for mux+host stream establishment…" 类注释。</li>
+    <li>兄弟方法旁重复的 rationale → 只在 owning capability 写一次。</li>
+    <li>段落墙 → 07-04 "Seam narrations compress to two-to-four sentences plus links"。</li>
+    <li>强调通胀（bold / CAPS / "critically"）→ 重写后根文件 bold 从 86 处降到 21，CAPS 'NOT'×11 只剩 'MUST'×2。</li>
+    <li>implemented note 里的 spec-speak → 写下次日就得到 gate（07-05）。</li>
+  </ol>
+  <span class="ev">docs/AGENTS.md:59-71；6227cfd03d、7702a33531、25dcd7293c、e6fad266a6 的 diff</span>
+
+  <h3>三个 skill 的分工</h3>
+  <div class="grid2">
+    <div class="card"><h4>dsh-doc-standards · 放哪儿、怎么审</h4><p>先做结构审（定位文档在树中的位置 → 设允许的细节层级 → 分 tutorial / reference → tutorial 按先修排序），再做语料审（先 <code>verify-doc-budgets --list</code>，用 trim-cot-leakage 猎推理稿，grep 独特短语抓重复，用生成物替换手写目录）。红灯时只转发三步法：先搬家、再压缩、最后抬 ceiling 并在 PR 里说理由。它还把翻译成本反过来当放置信号："prefer an unpaired home for content that will churn"。</p></div>
+    <div class="card"><h4>dsh-prose-standard · 写多少</h4><p>以「完整命题」为不可删单位（actor/action、条件/时序、modality、否定保证、所有权/副作用/失败/后果）。它是三者中唯一双向的："This is not a one-way shortening pass … A smaller word count alone is not an improvement"。前身 <code>dsh-trim-prose</code> 诞生于 07-13——因为前一天 PR #260 的 -11,834 行 trim 误删了契约细节，人类不得不次日回补 2,800 行。</p></div>
+    <div class="card"><h4>dsh-trim-cot-leakage · 会话视角泄漏</h4><p>唯一测试："could a reader at HEAD, with no access to any session transcript, PR thread, or uncommitted draft, resolve every reference and verify every claim?" 8 类：死引用 (decision 7)/(audit C2)/§4.7；stack/PR 视角；变更叙事 used to/no longer/v1；review 编排；对 reviewer 的辩护；控制流复述；犹豫残留；作者语言残留。附中英两套 rg recall battery。这是最「agent 特化」的一份：人类很少在注释里写 (decision 12)，长会话里的 agent 会把上下文里的临时坐标当成事实。</p></div>
+    <div class="card"><h4>「用词前先检查」而非禁词表</h4><p>08-09 concrete-prose 决策：维护性文字点名精确的 actor/action/file/event；口语检验（对同事解释时不会用的词就换掉）；<code>contract</code> 保留给前置/后置/不变量/兼容承诺，<code>boundary</code> 保留给字面的进程/wire/安全/事务分界，<code>shape</code> 只在结构形式本身是主题且没有 fields/schema/type/union variant 更窄的词时用。tier 表因此把 'type shapes' 改成 'type definitions'、'CI shape' 改成 'summary of CI'。</p></div>
+  </div>
+  <span class="ev">.agents/skills/dsh-doc-standards/SKILL.md、dsh-prose-standard/SKILL.md § Preserve the complete proposition、dsh-trim-cot-leakage/SKILL.md § The one test / § Taxonomy；148046b9c8（rebalance）；2026-08-09-concrete-prose-names-actors-and-recorded-facts.md</span>
+
+  <div class="callout">
+    <p><strong>模式：先人工大清洗 → 蒸馏成 skill → gate 留待复发。</strong>两次去 slop 运动（07-12 PR #260 -11,834 行；08-09 763 文件）都发生在体量积累之后，然后把判据固化成 skill 供后续 agent 自审。committed-artifact-citations note 把机械 gate 标为「Deferred」并列出候选正则。对小团队的含义：不必逐 PR 挑 slop，每 3–4 周做一次专项，关键是把「什么算 slop」写成 checklist。</p>
+  </div>
+</section>
+
+<section id="s7">
+  <div class="sec-eyebrow">07 · 双语</div>
+  <h2>双语配对：先建「陈旧可检测」，再连续四次为小改动降本</h2>
+  <p class="sec-lede">936 对文档、0 份漂移。机制不是段落对齐或行数比较，而是一个两行 sidecar：记录两侧「上次确认一致」时的 git blob hash。</p>
+  <figure>
+    <div class="fig-box">
+      <svg viewBox="0 0 760 230" role="img" aria-label="双语三件套机制：foo.md 与 foo.zh.md 各自计算 git blob hash，foo.i18n.yaml 记录两侧上次确认一致时的 hash；verify-translation-pairing 比较当前 hash 是否等于记录值，并比较两侧 Markdown 结构签名（标题深度序列、代码块逐字节、表格行列、列表种类与项数、链接目标）；语义质量留给 review；--write 必须点名 pair 重录">
+        <defs><marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="currentColor">
+          <rect x="20" y="30" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="95" y="52" text-anchor="middle" font-weight="700">foo.md</text>
+          <text x="95" y="68" text-anchor="middle" fill-opacity=".75">blob 77000ce…</text>
+          <rect x="20" y="140" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="95" y="162" text-anchor="middle" font-weight="700">foo.zh.md</text>
+          <text x="95" y="178" text-anchor="middle" fill-opacity=".75">blob f2f5310…</text>
+          <rect x="250" y="80" width="190" height="66" rx="6" fill="none" style="stroke:var(--accent)" stroke-width="1.5"/>
+          <text x="345" y="100" text-anchor="middle" font-weight="700" style="fill:var(--accent)">foo.i18n.yaml</text>
+          <text x="345" y="117" text-anchor="middle" fill-opacity=".8">foo.md: 77000ce…</text>
+          <text x="345" y="133" text-anchor="middle" fill-opacity=".8">foo.zh.md: f2f5310…</text>
+          <line x1="170" y1="55" x2="248" y2="95" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <line x1="170" y1="165" x2="248" y2="130" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <text x="180" y="66" font-size="10.5" fill-opacity=".8">git hash-object</text>
+          <text x="180" y="160" font-size="10.5" fill-opacity=".8">git hash-object</text>
+          <rect x="500" y="30" width="240" height="160" rx="6" fill="none" stroke="currentColor" stroke-dasharray="5 4" stroke-width="1.5"/>
+          <text x="620" y="52" text-anchor="middle" font-weight="700">verify-translation-pairing</text>
+          <text x="512" y="76" fill-opacity=".9">① 当前 hash == 记录值？</text>
+          <text x="512" y="94" fill-opacity=".9">② 结构签名相同？（标题深度、</text>
+          <text x="512" y="110" fill-opacity=".9">   代码块逐字节、表格行列、</text>
+          <text x="512" y="126" fill-opacity=".9">   列表种类/项数、链接目标）</text>
+          <text x="512" y="150" style="fill:var(--rust)">✗ 语义是否一致 → 留给 review</text>
+          <text x="512" y="176" fill-opacity=".8">重录：--write &lt;pair&gt;（禁止裸跑）</text>
+          <line x1="440" y1="113" x2="498" y2="113" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <text x="345" y="215" text-anchor="middle" fill-opacity=".8">两种语言等权，任一侧可先写；.gitattributes 给 *.i18n.yaml 绑了专用 merge driver</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>gate 只判「是否同步」与「结构是否一致」，不判「说的是否一回事」；README 明说 "a green gate means the pair was confirmed consistent at these exact contents, not that the confirmation was sound"。用 blob hash 而非 commit hash，是为了同一 PR 内未提交的编辑也能校验。</figcaption>
+  </figure>
+
+  <h3>演化：一条不断降本的曲线</h3>
+  <ul class="timeline">
+    <li><span class="d">07-02</span><span class="t">Ziya 提出 v1：英文 canonical、<code>.zh.md</code> 首行 HTML 指纹、EN→ZH 单向。<span class="ev" style="display:inline;padding:0;text-indent:0">4d89bb3e74</span></span></li>
+    <li><span class="d">07-03</span><span class="t">评审后一天内重设计为「双语等权 + 三件套 sidecar」，理由是团队要「中文先写、再译英文」的 note 也合法。<span class="ev" style="display:inline;padding:0;text-indent:0">ec05295a0c "Redesign per review: neither language is canonical"</span></span></li>
+    <li><span class="d">07-04 → 07-26</span><span class="t">政策分阶段收紧：required 清单 → <code>requiredSince: 2026-07-05</code> 日期前沿（新文档从出生起双语，存量 grandfather）→ <code>requiredClasses</code> → 07-26「make bilingual pairing universal」只剩 <code>excluded</code> 一个字段。中间用流水线批量补齐：07-15 一次 146 对 note、07-26 一次 186 个 README。<span class="ev" style="display:inline;padding:0;text-indent:0">f5774a2a26、f32d3f207f、b4d032c1a2、2565133af3、226dc7a249</span></span></li>
+    <li><span class="d">07-26/27</span><span class="t"><code>gen-translation-brief</code>：从记录的 blob 恢复上次确认文本 → diff 到工作树 → 按 Markdown 单元对齐 → 只给译者「diff + 对侧原文 + 相关术语行」。10 个真实历史更新的对照基准：token 与轮次约 1/3（中位 276k vs 595k、14 vs 32 turns）；整篇重译被证明<em>有害</em>（preservation 4.4/10 vs 9.8）；小模型在 brief 上与大模型持平。<span class="ev" style="display:inline;padding:0;text-indent:0">bf87be0d7d；2026-07-26-briefed-minimal-translation-updates.md ## Benchmark</span></span></li>
+    <li><span class="d">08-08</span><span class="t">两项：<code>.i18n.yaml</code> 专用 git merge driver（两侧 clean 三方合并即自动重算 hash；无 Node 时 fail-closed）；日常翻译改为「agent 单次单遍 + 术语表」，重型 <code>dsh-translate-docs</code> skill 设为 <code>disable-model-invocation: true</code> 只许人显式调用，由 <code>verify-skill-invocation-metadata</code> 保证 Claude/Codex 两侧策略一致。<span class="ev" style="display:inline;padding:0;text-indent:0">542c029c80、c5dd99124c；2026-08-08-lightweight-routine-documentation-translation.md："the glossary is the small, binding input that prevents repository-wide term drift"</span></span></li>
+    <li><span class="d">08-04 / 08-09</span><span class="t">xjt 全语料人工校对 976 文件；术语表把 <code>contract</code> 从「契约」迁到「约定」；15 个生成参考页补齐审校过的中文并纳入配对。<span class="ev" style="display:inline;padding:0;text-indent:0">2db712eec7、17360907f6、7ff0cbcb7e</span></span></li>
+  </ul>
+  <div class="callout ochre">
+    <p><strong>成本是真的。</strong>自 07-03 起 41% 的非 merge 提交碰 <code>.zh.md</code>；07-27 全覆盖后，83% 改英文文档的提交同 commit 也改了中文。翻译工具链约 4.0k 行（其中 2.0k 行是 spec）。生成参考页有了中文对侧后，<code>config-catalog.zh.md</code> 四天内被约 20 位作者改了 57 次——因为源码行号一动、英文就重生成、中文就要跟。仓库自己也承认：网站以中文为 root locale、英文给外部与 agent，两类真实读者才撑起这笔税。</p>
+  </div>
+  <span class="ev">git rev-list --no-merges --count 按路径过滤；wc -l scripts/translation-*.ts scripts/verify-translation-*.ts；git log --no-merges --since=2026-08-09 -- docs/config-catalog.zh.md；website/.vitepress/config.ts locales.root lang zh-CN</span>
+</section>
+
+<section id="s8">
+  <div class="sec-eyebrow">08 · 生成物与投影</div>
+  <h2>能从源码机械枚举的都生成；网站只是 docs/ 的只读投影</h2>
+  <p class="sec-lede">9 个 <code>gen-*</code> 生成器，产出占英文文档字数的 41.7%（187,340 词里的 78k）。判据一句话：源码能否机械且完备地给出该事实。不能时退到三档，而不是全部手写。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>模式</th><th>用在哪</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td><strong>generated</strong>：AST 是全部真相</td><td>services / events / module graph（<code>gen-cordis-catalog</code>、<code>gen-module-graph</code>）</td><td>06-20 note："Pure generation is correct here because the codebase is disciplined enough that the AST is the whole truth"，并反转了 06-11 的 "verify, don't generate"（手写 taxonomy 表 + 名字集合校验被删）。</td></tr>
+        <tr><td><strong>boot-and-harvest</strong>：运行时才可知</td><td>tool schema（<code>gen-tool-catalog</code>）</td><td>"Tool schemas are not statically knowable, so the same technique would produce a doc that lies"——boot 每个 tool 插件后读 <code>ctx.tools.schemas()</code>，再用 <code>assertManifestComplete</code> 保证没有包被静默遗漏。</td></tr>
+        <tr><td><strong>hybrid</strong>：源码发现清单 + 生成器里的 curated 表</td><td>哪个 service 属于哪一页、包角色分类</td><td>不能推断的策略写成显式表 + 双向完备性 guard（发现了未分类 → 报错；分类了不存在的 → 报错）。</td></tr>
+        <tr><td><strong>verify-not-generate</strong>：需要语义判断</td><td>核心数据结构（<code>```ts type-equiv</code> 粘贴 + <code>verify-type-equiv</code>）；Model Experience</td><td>"an AST can find registrations but cannot infer semantic conditions such as history retention, output truncation"。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>生成物不是独立目录，而是嵌进手写 subsystems 页的 <code>&lt;!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers --&gt;</code> 区域，中英两侧字节相同；同一 projection 还产出给模型读的 <code>api-catalog.ts</code>、<code>known-event-types.ts</code>——人和自修改插件的模型读同一份源，一个 freshness gate 同时保护文档与运行时。</p>
+  <p><strong>网站</strong>（VitePress）是显式 allowlist 投影：<code>website/docs.ts</code> 声明 83 路由/语言、166 页；<code>scripts/project-doc-site.ts</code> 在构建前把仓库链接改写成站内路由或 GitHub 链接、复制图片、剥掉语言切换行；<code>website/</code> 下除 AGENTS.md 不得有 Markdown（spec 强制）。代价：漏发布没有 gate——3 个新 subsystems 页（attachment / feedback / extensions）不在 allowlist 里；<code>dsh-doc-site-sync</code> skill 仍引用着 07-13 当天就失效的 <code>en-docs</code> 和 08-12 删掉的 <code>sectionOrder</code>，此后编辑 7 次没人发现，因为 gate 只看路径不看散文里的标识符。</p>
+  <span class="ev">.agents/notes/archived/process/2026-06-20-generated-cordis-catalog.md；2026-07-02-tool-schema-catalog.md；2026-07-12-package-model-experience-contract.md；packages/typert/generator/src/cordis-catalog.ts:915-917；website/docs.ts:76-197；.agents/skills/dsh-doc-site-sync/SKILL.md:36-37；git log -S'sectionOrder' -- website/.vitepress/config.ts → 0a2ac90617</span>
+</section>
+
+<section id="s9">
+  <div class="sec-eyebrow">09 · 协作流程</div>
+  <h2>人 + agent：谁写规则、agent 扮演什么角色、哪些规则是「因为有 agent 才需要」</h2>
+  <p class="sec-lede">这是对你最重要的一节。这个团队 15+ 人、两个月 5,600 个 merge，但规则由一个人主导，agent 只以「审校者」显名，人类的工作是「别让 agent 压过头」。</p>
+
+  <h3>谁在写规则</h3>
+  <ul>
+    <li>34 个治理转折 commit 里 23 个出自 Tianyi Cui；根 AGENTS.md 220 个非 merge 提交里他占 139（63%）；几乎所有治理 PR 由他合入，直到 8 月 Turtle / Yichen 开始自合。全部提交里他占 43%（含 merge），非 merge 提交占 33.7%。</li>
+    <li>07-12 之后治理 commit 普遍「只有 subject、无 body」，且首 commit 到合入常在 1 小时内（e8eddc7ef8 36 分钟、b1b57a0ac5 30 分钟）；错了就快速 revert（07-23 那次 53 分钟）。规则以「可回滚的小 PR」试错，而不是开会定案。「为什么」从 commit body 迁到了 Agent Note——这正是 07-19 强制写 note 的另一层意义。</li>
+    <li>没有任何 commit 声明「由 Codex/Claude 起草」；全库只有 1 条 <code>Co-Authored-By</code>（人类）。agent 唯一显名的角色是 reviewer：'address Codex review round N' 类提交 06 月 53 条、07 月 74 条、08 月 0 条（改为 ds-review-bot 与泛称 'review findings'）。agent 参与只能从分支前缀（<code>codex/</code> 209 个 PR、<code>worktree/</code> 210 个、<code>claude/</code> 3 个）推断。</li>
+  </ul>
+  <span class="ev">git log --no-merges --format='%an' -- AGENTS.md | sort | uniq -c；git shortlog -sn / --no-merges master；git log --grep='codex review' 按月；git log --format=%B | grep -ci 'Co-Authored-By' → 1；git log --merges | grep -oE 'from [^ ]+/[^ ]+' 前缀统计</span>
+
+  <h3>人类回推 agent 的五次记录</h3>
+  <p>agent（无论是审校还是执行削减任务）天然朝「更紧、更少、删掉」推；人类三番五次把预算从「目标」改回「护栏」，把删除改成冻结。这些是「所有权」最直接的证据：</p>
+  <ol>
+    <li>07-04 Codex 审校要求 exact-freeze 预算 → 同日 <code>cada16c701</code> 改回 ≥5% headroom："Exact-size ceilings turned every two-word wording fix into a gate event."</li>
+    <li>07-06 Hypatia May："do not compress needed standing guidance to satisfy a stale number. A ceiling set too low is a budget bug."</li>
+    <li>07-13 <code>codex/trim-ai-prose</code> 过度削减 → "Ceilings are guardrails, not reduction targets"、"A smaller word count alone is not an improvement"，并诞生 dsh-prose-standard。</li>
+    <li>07-25 Turtle 的 Codex 分支删除 14 条 superseded note → 次日 Tianyi <code>b458a97907</code> 一条不少地恢复到冻结归档，并把「删除 vs 冻结」写成制度（Alternatives 明确拒绝 "Delete every note that leaves the active corpus"）。</li>
+    <li>08-04 / 08-12 Turtle：tier 规则明确「These rules apply to human-facing documentation」，引入 tutorial/reference 分类与读者分级；「human touch」删掉 architecture.md 60 行 agent 密度的服务表，改成 "We recommend using an agent to explore the codebase"；加一句无加粗的 "Do not comment on facts obvious from code."</li>
+  </ol>
+  <p class="small">反例也有：kingwl 07-10 加入的「Agent efficiency / One-round gate runs」段（源自实测的 session 浪费）在 07-20 一次 <code>Merge origin/master into feat/plan-mode</code>（<code>0246806fec</code>）中无声消失，从未到达 master——非核心作者的规则在合并冲突里没有 gate 兜底。</p>
+  <span class="ev">git show -s cada16c701 / 72166dad03 / 148046b9c8 / b458a97907 / f07f8f15ed / 09981bf948 / 9f2c64f175；git rev-list --ancestry-path 4e09fdeafb..451fad5a2b 逐个 grep 'One-round gate runs'</span>
+
+  <h3>流程机制一览</h3>
+  <dl class="kv">
+    <dt>指令共享</dt><dd><code>CLAUDE.md → AGENTS.md</code> symlink（根、packages/、examples/、vendor/、.agents/notes/implemented/），<code>.claude/skills → .agents/skills</code>；一份文件同时喂 Claude Code 与 Codex。docs/ 子树没有 CLAUDE.md，是遗漏点。</dd>
+    <dt>skills vs AGENTS</dt><dd>skill 承载「工作流与判断标准」，契约留在 docs（不调 skill 的 agent 看不到 SKILL.md）；11 个 skill 中 6 个带 Codex 的 <code>agents/openai.yaml</code>，触发策略由 gate 保证两侧一致；只有翻译是 manual-only。</dd>
+    <dt>本地 hook</dt><dd>pre-commit：staged oxlint --fix、whitespace、pairing --cached、archive、vendor manifest；pre-push：只 typecheck。「A full pre-push suite therefore delays every publication, amplifies unrelated local flakes, and gives no new signal when CI immediately runs the exhaustive matrix again."</dd>
+    <dt>push 前</dt><dd><code>dsh-pre-push-checks</code>：先用只读的 <code>change-scope</code> 命令算出确定性的变更范围（动机：agent 在新 worktree / stacked 分支上算错 diff base），选最窄证据；"report only commands run"；"Do not push and hope CI differs"；绕过 hook 需用户明确同意。</dd>
+    <dt>PR 元数据</dt><dd>恰好一个 <code>kind/*</code>（闭集 6 种）+ 至少一个 <code>area/*</code>（agent 可无需批准新建但必须回报）+ native Issue Type；Issue 模板全中文；无 CODEOWNERS；stacked PR 用 GitHub 原生 stack，<code>gh stack sync</code> 是唯一允许「先 push 后验证」的例外。</dd>
+    <dt>历史策略</dt><dd>merge commit 而非 squash（保留 review-fix 与回归测试 commit 作为记录）；从 06-16「绝不 rebase 已 push 分支」逐步放宽到 08-02「review 前可 rewrite、review 后倾向新 commit、rewrite 只用 --force-with-lease」——规则跟着工具能力走。</dd>
+    <dt>review</dt><dd><code>dsh-code-review</code> 的 blocking 项显式针对 agent 行为：新 prose 必须语义审查；implemented note 是否改写为 shipped reality；验证作者确实跑了相关检查；"a green pairing hash does not prove translation quality"；"verify each claim and fix or rebut it on technical grounds without performative agreement"。</dd>
+  </dl>
+  <span class="ev">ls -la CLAUDE.md packages/CLAUDE.md examples/CLAUDE.md .claude/skills；lefthook.yml；.agents/skills/dsh-pre-push-checks/SKILL.md § Handle failures；.github/pull_request_template.md；2026-08-08-unified-github-label-taxonomy.md；67447fcdc3、9a07380c23；.agents/skills/dsh-code-review/SKILL.md § Blocking requirements</span>
+
+  <h3>哪些规则是「因为有 agent 才需要」的</h3>
+  <div class="grid2">
+    <div class="card"><h4>agent 特有</h4><ul class="small"><li>机械 gate 优先于 prose（元规则本身）</li><li>Host sandbox failures（沙箱阻断 ≠ 项目故障）</li><li>Trust TypeScript / 别过度防御</li><li>Do not comment on obvious facts / Do not use metaphors</li><li>trim-cot-leakage 的 8 类（(decision 7)、'a later PR in this stack'）</li><li>Alternatives 只许记录不许编造</li><li>report only commands run；trust-but-verify（子代理报告的是意图不是结果）</li><li>postmortem 0003：agent 把替代服务器的 HTTP 200 当成功 → 把 URL/mode 做成 model-visible 事实</li><li>Model-visible ⟺ logged</li></ul></div>
+    <div class="card"><h4>传统团队也需要，只是被放大了</h4><ul class="small"><li>一个事实一个家、链接而非复述</li><li>决策记录 + 被拒方案</li><li>字数预算（人手时代膨胀慢得多）</li><li>链接/锚点/生成物新鲜度 gate</li><li>postmortem 只在 subtle + systemic + costly 时写</li><li>merge commit 保留 review 历史</li><li>本地 hook 只做秒级检查</li></ul></div>
+  </div>
+</section>
+
+<section id="s10">
+  <div class="sec-eyebrow">10 · 诚实的一节</div>
+  <h2>失败、规则打架、和治理本身的税</h2>
+  <p class="sec-lede">这套体系的说服力，一半来自它把自己的失败也记录下来。这里把散见各处的冲突与代价并列。</p>
+
+  <h3>四份 postmortem，四位不同作者</h3>
+  <ul class="small">
+    <li><strong>0001</strong>（06-18，Tianyi Cui）：<code>export default apply</code> 让 Loader 丢掉 <code>inject</code>，100% 覆盖率全绿，真实 Loader 一连就崩。教训 "Coverage proves lines ran; it says nothing about whether the feature works the way it ships" → packages/AGENTS.md 两条硬规则、examples 的 keyless 冒烟、testing.md「真实入口路径」。</li>
+    <li><strong>0002</strong>（07-14，Dudu-0223）：<code>disabled: !!js …</code> 不在 config 下不求值，文件系统工具被永久禁用，snapshot refresh 把 <code>UNKNOWN_TOOL</code> 当合法期望写盘。教训 "A snapshot refresh is fixture production, not correctness review" → <code>verify-cordis-config</code> gate。08-11 该禁令被 Loader 对 <code>disabled</code> 求值取代——note 明说 "closed … by evaluation, not prohibition"：postmortem 是历史证据不是永久禁令。</li>
+    <li><strong>0003</strong>（07-29，NI0317）：Web agent 改了 GUI 却验收了另一个端口的替代服务器。根因是 URL/mode 对模型不可见 → 写进 logged prompt section 与环境变量。教训 "HTTP readiness, build success, and a boot manifest are different facts."</li>
+    <li><strong>0004</strong>（08-03，Hypatia May）：Landlock 部分强制通知与子进程非零退出被合并成 SANDBOX_UNAVAILABLE。教训 "a shared prefix is not a protocol"。</li>
+  </ul>
+  <p class="small">postmortem 不冻结（0001 被改过 12 次以保持链接现行），与归档 note 的「永久冻结、gate 跳过」相反——是对「历史文档要不要维护」的分层回答。</p>
+  <span class="ev">docs/postmortem/000{1,2,3,4}-*.md；git log --diff-filter=A --format='%h %ad %an' -- docs/postmortem/；6fb226ea24；2026-08-11-loader-entry-disabled-interpolation.md:25</span>
+
+  <h3>规则打架与失控点清单（谁裁决）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>现象</th><th>证据</th><th>裁决者</th></tr></thead>
+      <tbody>
+        <tr><td>「≤ target 保 5% headroom」与「&gt; target 冻结 ceiling」写在同一句里且互斥；实践每次选前者</td><td>docs/AGENTS.md:57；08-04 <code>52607cab69</code> 在超 target 状态把 1775→1900，正文只引 5% 规则</td><td><span class="tag r">无人</span> gate 只判上限</td></tr>
+        <tr><td>merge 冲突解决可无理由抬 ceiling，取值恰是 ceil(946×1.05)=994</td><td><code>3f01ff8291</code>（08-11 merge commit），普通 <code>git log -p</code> 看不到</td><td><span class="tag r">无人</span> merge commit 不进 review</td></tr>
+        <tr><td>ratchet-down 从未发生：architecture.md 被人手从 2,317 砍到 1,288，ceiling 仍是 2,400</td><td>66 次抬 / 19 次降，最后一次降 07-13</td><td><span class="tag r">无人</span></td></tr>
+        <tr><td>「一个事实一个家」被立法者自己破坏：5% 规则「Amended together in all four policy homes」；docs/AGENTS.md:39 复述根 AGENTS.md:122</td><td><code>cada16c701</code> 正文；<code>b1b57a0ac5</code> 三处同加</td><td><span class="tag o">review</span> 无重复短语检测</td></tr>
+        <tr><td>根 AGENTS.md 的 Repository layout 树在 HEAD 当天就漂移：仍列 <code>self-modification/</code>、<code>support/</code>，17 个真实分组未列</td><td><code>a2d0f7f411</code> 改名却漏改树；<code>verify-package-paths</code> 只认字面 <code>packages/</code> 前缀</td><td><span class="tag r">无人</span> 手写清单无生成器</td></tr>
+        <tr><td>skill 里的代码标识符没有 gate：<code>en-docs</code>/<code>sectionOrder</code> 引用失效后 7 次编辑没人改；'ADRs' 裸词熬过两次全库改名</td><td>dsh-doc-site-sync SKILL.md:36-37；docs/postmortem/README.md:9</td><td><span class="tag r">无人</span> gate 只查可解析引用</td></tr>
+        <tr><td>「非平凡改动必须带 note」在 PR #2519（dsh 转 public）零 note 落地，两篇 implemented note 立即过时</td><td><code>47f943859b</code> 无 .agents/notes 变更；2026-08-10-npm-release-sequences.md:29 仍写 "restricted"</td><td><span class="tag o">review</span> note 承认无 gate</td></tr>
+        <tr><td>doc-tiers note 说「Housing the standard inside the skill — rejected」，但 dsh-prose-standard 自 07-24 起含 1,240 词标准正文，tier 表被改成 "specialized decision standards" 以容纳之，note 未调和</td><td>0c708cb10d；f0fc20ca42</td><td><span class="tag o">review</span> note 只查格式</td></tr>
+        <tr><td>gate 扫描范围不对称：<code>verify-md-wrap</code> 不扫 <code>.agents/skills</code>、<code>python/</code>；实测 <code>python/sdk/README.md:5</code> 有硬换行漏检</td><td>各 gate 各自维护 PATTERNS 常量</td><td><span class="tag r">无人</span></td></tr>
+        <tr><td>新生成器 <code>gen-cordis-inspect-catalog</code> 无 <code>--check</code>、不在任何聚合、产物 banner 冒名 gen-cordis-api</td><td>PR #2047（08-13）</td><td><span class="tag r">无人</span> 缺「每个 gen 必有 verify」元 gate</td></tr>
+        <tr><td>冻结归档在分支内可撤封（封 → 次日撤 → 合入），因为基线是 PR base 而非本地</td><td>060617c725 → 4b37c4827c，PR #2202</td><td><span class="tag g">gate</span> 粒度是 PR 级，设计如此</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small">总结一句：gate 裁决的只有格式、链接、路径、字数上限；「一处一事实」「冻结 ceiling」「带 note」「note 描述现实」全靠 review，而 review 在 5,600 PR / 两个月的吞吐下反复失守。doc-tiers note 自己也承认："a prose rule with no mechanical backstop demonstrably does not hold here."</p>
+
+  <h3>治理的税，量化</h3>
+  <div class="grid2">
+    <div class="card"><h4>返工提交</h4><p>「为了让文档 gate 变绿」的提交占非 merge 提交的 2.3–4.2%（151–280 / 6,683）；其中 64% 是重新生成 catalog/graph；<strong>39% 发生在一次 master merge-forward 之后 2 小时内</strong>（中位延迟 8.8 分钟）。仓库有 4,626 次「Merge master into …」——是 984 次 PR merge 的 4.7 倍。带源码行号的生成物 × 并行长寿分支 = 最大的单一税源。</p></div>
+    <div class="card"><h4>gate 机器本身</h4><p>49 个 doc-gate 脚本 13,815 行 + 18 个 spec 3,462 行 + run-gates 890 行 ≈ 产品源码（198k 行）的 9%。666 个提交（10%）改过这些脚本，44% 出自一人。"The gates themselves are code to maintain."</p></div>
+    <div class="card"><h4>上下文税</h4><p>agent 每 session 的固定指令负载：根 + 子树 AGENTS.md 共 6,365 词 ≈ 8.3k token；AGENTS.md 要求「先读」的 architecture/testing/defensive-patterns 再加 ≈ 3.8k；11 个 SKILL.md 共 13,578 词。规则每周被改几十次——agent 读到的版本很快过时。</p></div>
+    <div class="card"><h4>review 返工</h4><p>179 个 'address review round N' 提交里 70% 改了 .md，29% 改了 notes。「机械 gate 减少了返工」在数据上得不到支持——更像是把返工从「格式/链接/新鲜度」类转移到了「措辞/契约准确性」类。</p></div>
+  </div>
+  <span class="ev">git log --no-merges --format='%h %ad %an %s' | grep -Ei 'regenerat|refresh|re-record|budget|pairing' 分类；对每个修补 commit 沿 first-parent 回溯 ≤2h 找 master merge；wc -l scripts/verify-*.ts scripts/gen-*.ts；wc -w AGENTS.md docs/AGENTS.md packages/AGENTS.md examples/AGENTS.md packages/client/AGENTS.md .agents/skills/*/SKILL.md</span>
+</section>
+
+<section id="s11">
+  <div class="sec-eyebrow">11 · 学习路线</div>
+  <h2>给从个人 vibecoding 走向团队的你：抄什么、别抄什么、先做什么</h2>
+  <p class="sec-lede">这个仓库的规模（15+ 人、每周数千提交、两种 agent 并行）决定了它的复杂度。你不需要它的 28 个 gate，你需要它的<em>顺序</em>和<em>元规则</em>。按你团队的大小选一列。</p>
+
+  <div class="scale">
+    <div class="card"><div class="who">你一个人 + agent（现在）</div><h4>先建「记忆」，不建「治理」</h4><ul class="small">
+      <li>第一天：<code>CLAUDE.md → AGENTS.md</code> symlink（或反之），一份真文件多个入口名。</li>
+      <li>AGENTS.md 里每条规则一到三行；先允许它膨胀几周收集教训，但在某个点做一次 07-04 式的重写，并加一行 <code>wc -w</code> 上限（1,200–1,500 词起步）到 CI 或 pre-commit。</li>
+      <li>建一个 <code>docs/decisions/yyyy-mm-dd-topic.md</code> 目录，格式抄四段：Problem / Decision / Alternatives considered / Consequences。不编号，用相对链接。哪怕只有你一个人，Alternatives 也要写——你两周后的自己就是那个「不同的人」。</li>
+      <li>把「agent 会犯的错」写成一句话规则而不是抱怨：只汇报真正跑过的命令；沙箱阻断不是项目故障；别给静态类型已保证的值加运行时校验；别写代码已表达的注释；别在文档里写 (decision 3) 这种只有当前会话看得懂的坐标。</li>
+      <li>直接搬两个 skill：<code>dsh-trim-cot-leakage</code>（0 条仓库命令）和 <code>dsh-prose-standard</code>，改名后当作 AGENTS.md 的写作附录。</li>
+    </ul></div>
+    <div class="card two"><div class="who">2–5 人</div><h4>加最便宜的 gate，按仓库自己的采纳顺序</h4><ul class="small">
+      <li>依次：<code>verify-md-links</code>（216 行 + spec）→ <code>verify-md-wrap</code>（85 行）→ <code>verify-doc-budgets</code>（58 行 + 一个 JSON manifest，只列 2–3 份 standing docs）→ 决策记录三件（路径闭集 + 格式，~200 行）。每一步都等对应痛点出现再加。全部只依赖 mdast 与 tsx，仓库假设都在文件头的 PATTERNS 里，一小时能跑起来。</li>
+      <li>指定唯一的 AGENTS.md owner；其他人经小 PR 提议；错了快速 revert。合并冲突是规则消失的盲区——多人并行改 AGENTS.md 时合并后 grep 自己的段落。</li>
+      <li>本地 hook 只做秒级检查（staged lint、whitespace），全套交 CI；如果 CI 不完整，反而保留「PR ready 前跑一次全量」（仓库 06-29 版本），别照搬 "Never default to the full suite"。</li>
+      <li>postmortem 只在 subtle + systemic + costly 时写，固定 Executive summary + Guardrails 结构；每次事故至少改一条常设规则或加一个 gate；专门记录「agent 把什么当成了成功证据」。</li>
+      <li>rejected 记录当护栏不当档案：一个 REJECTED.md 维护 5–10 条，每条一行判决，每季度删过时的。</li>
+      <li>不做双语，除非有两类真实读者。</li>
+    </ul></div>
+    <div class="card three"><div class="who">5–10 人及以上</div><h4>这时才值得复制它的制度层</h4><ul class="small">
+      <li>决策记录树 proposed/implemented/rejected + 「非平凡改动同 PR 带一份」；先靠 owner 以身作则再立规（仓库强制前已 74%）；<strong>强制与退出机制（archive）同一周上线</strong>，否则两周内语料翻三倍。</li>
+      <li>任何中心化清单文件（INDEX、CHANGELOG、目录表）在 ≥5 并行分支/天时是冲突源，生成它也没用（gen-rfc-index 只活了 15 天）；把元数据编进路径。</li>
+      <li>用 skill 承载工作流与判断标准，用 docs 承载契约；给 skill 显式触发策略（哪些只许人手动触发），多 agent 工具并存时用脚本校验策略一致。</li>
+      <li>review 清单里显式写针对 agent 的检查项（新 prose 语义审查、note 是否改写为 shipped reality、performative agreement）；把 reviewer 定义为 gate 看不见的语义缺陷的最后防线；人类 review 意见要有「蒸馏进 skill」的正式出口。</li>
+      <li>预算给 target 与 ceiling 双值，抬 ceiling 必须在 PR 里说理由；接受 ceiling 会被反复 rubber-stamp 的现实，每两周做一次「trim」而不是靠 gate 触发。</li>
+      <li>并行开发者 ≥3 且做双语时，才值得写 <code>.i18n.yaml</code> merge driver。</li>
+    </ul></div>
+  </div>
+
+  <div class="lesson">
+    <h4>不该抄的（至少现在不该）</h4>
+    <ul>
+      <li>30 条 Conventions + 5 个子树 AGENTS.md + 11 个 skill 的规模：照抄会让 agent 上下文里塞满不适用的规则。</li>
+      <li>每周谈判 ceiling（66 次抬升、最小 1 词）与 73 次 manifest 提交——这是多人并发的摩擦成本；小团队一个固定上限 + 季度 review。</li>
+      <li>档三的 7 个 <code>gen-*</code>（~6,400 行）和 <code>verify-package-readme-model-experience</code>（553 行、126 条 allowlist）：从源码生成参考手册、要求每个包写「模型看到什么 / token 效应 / KV cache 效应」是 harness 特有问题。</li>
+      <li>生成物嵌源码行号 + 人工翻译生成物：仓库自己 64% 的返工来自这里。若做生成 catalog，让 gate 忽略行号漂移或把 regenerate 做成 pre-commit 自动步骤；生成物英文单语。</li>
+      <li>带自毁条件的段落（"remove at first tagged release"）若没人负责触发，会像仓库一样在公开 rc 发布后仍挂着；要么不写，要么绑一个可机检的触发器（有 tag 则 fail）。</li>
+      <li>文风词义辨析（contract/boundary/shape、reserve seam）：那是针对已积累数万行 LLM prose 的矫正；你先写清「不叙述控制流、不写变更历史」两句就够。</li>
+    </ul>
+  </div>
+
+  <div class="lesson">
+    <h4>五个最值得带走的元教训</h4>
+    <ul>
+      <li><strong>规则 = 一条退出码非零的命令，否则它会烂。</strong>写不成命令的规则，诚实地标注「靠 review」，别假装有 gate。</li>
+      <li><strong>gate 出生要附带可计数的 Problem</strong>（40 条链接、203 个导出、15 个锚点、8,130 词）。写不出数字的 gate 大概率是过早的。</li>
+      <li><strong>预算不是让文件变短，是让「加字」成为需要显式解释的行为。</strong>它成功触发了两次瘦身，但日常方向是蠕升；真正把文件变短的是人手重写。</li>
+      <li><strong>agent 天然朝「更紧、更少、删掉」推，人要预设否决权并写成文字</strong>：「删字数前先列出段落里的每个命题」「删除改冻结」「Alternatives 只许记录不许编造」。</li>
+      <li><strong>历史与现状分离</strong>：其他文档一律只写现状，历史叙事集中到 postmortem 与决策记录两处，这样哪怕不写 gate，也能靠 grep 'previously|now|no longer' 做审计。</li>
+    </ul>
+  </div>
+
+  <h3>第一周可以做的事（按顺序）</h3>
+  <ol>
+    <li>建 <code>AGENTS.md</code>，<code>CLAUDE.md</code> symlink 它；写下你已经知道的 5–10 条 agent 常犯错，每条一到三行。</li>
+    <li>建 <code>docs/decisions/</code>，把上周做过的两个技术决定用四段模板补写，包括当时放弃的方案。</li>
+    <li>加一个 30 行脚本：检查 Markdown 相对链接是否存在（可以直接从 <code>scripts/verify-md-links.ts</code> 裁）；接进 CI。</li>
+    <li>给 AGENTS.md 设 <code>wc -w</code> 上限并写进同一个脚本；超了先搬家再压缩再抬。</li>
+    <li>把 <code>dsh-trim-cot-leakage</code> 的「唯一测试」和 8 类清单抄进 AGENTS.md 的写作附录，让 agent 提 PR 前自查一遍。</li>
+    <li>下一次出「CI 绿了但产品坏了」的事故时，写第一篇 postmortem，并至少改一条常设规则。</li>
+  </ol>
+</section>
+
+<section id="s12">
+  <div class="sec-eyebrow">12 · 方法与核查</div>
+  <h2>这份考古是怎么做的、哪些地方修正过、还有什么没弄清</h2>
+  <p>研究由 16 个并行 agent 完成：9 个视角挖掘（时间线、gate、Agent Notes、分层与写作、双语、人机流程、失败与拒稿、生成物与网站、根 AGENTS.md 解剖）→ 1 个完整性评论员找缺口 → 4 个补缺研究（治理税量化、谁在写规则、可移植性与 onboarding、规则冲突清单）→ 2 个对抗式事实核查员对 20 条最显眼的具体事实找反证。全程只读，1,241 次工具调用。所有 hash、路径、引用都可以在仓库里 <code>git show</code> / <code>grep</code> 复核。</p>
+  <h3>事实核查修正的地方（已在正文中采用修正值）</h3>
+  <ul class="small">
+    <li>「Every non-trivial change MUST include…」原句在 <code>b1b57a0ac5:AGENTS.md:120</code>；HEAD 的 :122 是 07-26 改写后的措辞。</li>
+    <li>07-26 归档：<code>37140bf823</code> 本身移入 45 份、删 6 份 rejected；HEAD 上 59 份 "Archived: 2026-07-26" 含同日 <code>b458a97907</code> 恢复的 14 份。07-27 commit 封 21 份，HEAD 剩 20（一份次日被移回 implemented）。</li>
+    <li>Tianyi Cui 的 5,235 次提交是<em>含 merge</em> 的总数（43%）；非 merge 为 2,252 / 6,683（33.7%）。</li>
+    <li>自毁条款 'tagged/published' → 'tagged' 的缩写发生在 <code>7702a33531</code>（07-04），不是 07-12 的 trim。</li>
+    <li>kingwl 的「Agent efficiency」段真正丢失于 <code>0246806fec</code>（07-20），不是 07-12 的 <code>88db403d9f</code>。</li>
+    <li>各视角对「峰值词数」给了 8,619 / 8,566 / 8,130 三个数：三者都对，是 07-03 同日不同 commit；正文统一用 8,619（<code>907c8d3871</code>），8,130 是重写前一 commit。</li>
+  </ul>
+  <h3>标注为 [推测] 或未能核实的</h3>
+  <ul class="small">
+    <li>远端是否已有 <code>dsh-v*</code> tag（本地 0 个、<code>ls-remote</code> 无输出，疑为沙箱网络）；若有，自毁条款已触发但未执行。</li>
+    <li>真实 CI 分钟数无法核实（gh 只能访问镜像库）；「1.1–2.2 万次 doc-sync 级执行」是按触发规则推算的区间。</li>
+    <li><code>codex/</code>、<code>worktree/</code> 分支里人类实际写了多少字，只能从分支前缀与 review-round 提交推断。</li>
+    <li>08-08 自动 pairing 合并落地后 5 天 pairing 修补率反升（0.96% → 4.5%/merge-forward），样本期太短，原因未定。</li>
+  </ul>
+  <h3>值得继续观察的问题</h3>
+  <ul class="small">
+    <li>根 AGENTS.md 1900/1900、高于 target 1,600：下一条 standing order 进来时，是 displacement 还是又一次 raise？这是「预算规则是否真的被遵守」的最佳样本。</li>
+    <li>proposed/ 里 5 份 06-11 的质量提案两个月无人 reject 也无人实现——制度缺少「过期 proposal 必须给出判决」的触发器。</li>
+    <li><code>packages/client/AGENTS.md</code> 已 2,236 词且不在预算 manifest 里，正在重演根文件 6 月的膨胀路径。</li>
+    <li>「非平凡改动必带 note」+「当天可归档」的组合已产生 min gap 0 天的「出生即封存」note；门槛是否应上调？</li>
+  </ul>
+  <p class="footnote">本页面本身遵守了它所描述的一条规则：每个结论后附证据行。它没有遵守的一条是字数预算——作为学习材料，我选择了完整性。</p>
+</section>
+</main>
+</div>

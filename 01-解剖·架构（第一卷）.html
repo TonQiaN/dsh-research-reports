@@ -1,0 +1,1110 @@
+<meta charset="utf-8">
+<title>DeepSeek Harness 解剖</title>
+
+<style>
+  :root {
+    /* 色板取自产品自带的设计系统 packages/client/ui-theme/src/styles/design-platform.css */
+    --ground:      #ffffff;
+    --surface:     #f9fafb;
+    --surface-2:   #f1f3f5;
+    --line:        #e1e5ee;
+    --line-soft:   #ebeef2;
+    --ink:         #0f1115;
+    --ink-2:       #4e535a;
+    --ink-3:       #81858c;
+    --accent:      #4176e6;
+    --accent-ink:  #2f5bbd;
+    --accent-soft: #edf3fe;
+    --warn:        #96690f;
+    --warn-soft:   #fbf3e2;
+    --risk:        #b23f39;
+    --risk-soft:   #fbeeed;
+    --bar-neutral: #b9bfc9;
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+            "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+
+    --measure: 40rem;
+    --bleed: 68rem;
+    --radius: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #151517;
+      --surface:     #1b1b1c;
+      --surface-2:   #232324;
+      --line:        #35363a;
+      --line-soft:   #2a2a2c;
+      --ink:         #f9fafb;
+      --ink-2:       #b4b9c0;
+      --ink-3:       #81858c;
+      --accent:      #5686fe;
+      --accent-ink:  #86a9ff;
+      --accent-soft: rgba(86, 134, 254, 0.13);
+      --warn:        #d6a13f;
+      --warn-soft:   rgba(214, 161, 63, 0.12);
+      --risk:        #e8756e;
+      --risk-soft:   rgba(232, 117, 110, 0.12);
+      --bar-neutral: #5a5f68;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #151517;
+    --surface:     #1b1b1c;
+    --surface-2:   #232324;
+    --line:        #35363a;
+    --line-soft:   #2a2a2c;
+    --ink:         #f9fafb;
+    --ink-2:       #b4b9c0;
+    --ink-3:       #81858c;
+    --accent:      #5686fe;
+    --accent-ink:  #86a9ff;
+    --accent-soft: rgba(86, 134, 254, 0.13);
+    --warn:        #d6a13f;
+    --warn-soft:   rgba(214, 161, 63, 0.12);
+    --risk:        #e8756e;
+    --risk-soft:   rgba(232, 117, 110, 0.12);
+    --bar-neutral: #5a5f68;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.78;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 1.4rem 6rem;
+  }
+
+  /* Block, not grid: a grid item with an auto inline margin loses `stretch`
+     sizing and falls back to fit-content, which collapses the nested
+     auto-fit grids (contents, stat tiles) to a single narrow column. */
+  .page {
+    max-width: var(--bleed);
+    margin: 0 auto;
+  }
+
+  /* ---------- prose column ---------- */
+  .col { max-width: var(--measure); margin: 0 auto; }
+  .wide { max-width: var(--bleed); margin: 0 auto; }
+
+  p, ul, ol { margin: 0 0 1.1rem; }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin-bottom: .45rem; }
+  li::marker { color: var(--ink-3); }
+
+  a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+  a:hover { border-bottom-color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  code, .m { font-family: var(--mono); font-size: .845em; }
+  p code, li code, td code, figcaption code, .m {
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    padding: .06em .34em;
+    color: var(--ink-2);
+    /* Long module paths must break rather than push the page sideways;
+       only table cells keep nowrap, and .tablewrap scrolls them. */
+    overflow-wrap: anywhere;
+  }
+  td code { white-space: nowrap; }
+
+  strong { font-weight: 620; color: var(--ink); }
+
+  /* ---------- masthead ---------- */
+  .masthead { padding: 4.5rem 0 2.2rem; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+  }
+  .kicker span { white-space: nowrap; }
+  h1 {
+    font-size: clamp(2.15rem, 5.4vw, 3.1rem);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    font-weight: 640;
+    margin: 0 0 1.3rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.14rem;
+    line-height: 1.72;
+    color: var(--ink-2);
+    margin-bottom: 0;
+  }
+  .standfirst strong { color: var(--ink); }
+
+  /* ---------- thesis ---------- */
+  .thesis {
+    margin: 2.6rem auto 3.4rem;
+    padding: 1.5rem 0 1.5rem 1.4rem;
+    border-left: 2px solid var(--accent);
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--ink);
+  }
+  .thesis p:last-child { margin-bottom: 0; }
+
+  /* ---------- section scaffolding ---------- */
+  section { padding-top: 3.4rem; scroll-margin-top: 1.5rem; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .715rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: .6rem;
+    display: block;
+  }
+  h2 {
+    font-size: 1.62rem;
+    line-height: 1.3;
+    letter-spacing: -.014em;
+    font-weight: 640;
+    margin: 0 0 1.15rem;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 1.06rem;
+    font-weight: 620;
+    letter-spacing: -.006em;
+    margin: 2rem 0 .7rem;
+    text-wrap: balance;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 0;
+  }
+
+  /* ---------- contents ---------- */
+  .toc {
+    margin: 2.2rem auto 0;
+    padding: 1.3rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    min-width: 0;
+    gap: .1rem 1.6rem;
+  }
+  .toc li { margin: 0; }
+  .toc a {
+    display: block;
+    padding: .28rem 0;
+    border: 0;
+    font-size: .93rem;
+    color: var(--ink-2);
+  }
+  .toc a:hover { color: var(--accent-ink); }
+  .toc .n {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-3);
+    margin-right: .55rem;
+  }
+
+  /* ---------- stat grid ---------- */
+  /* 20rem min keeps this at 3 / 2 / 1 columns — all exact divisors of the six
+     tiles, so no run ever ends in an empty cell showing the seam colour. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 2.4rem 0 0;
+  }
+  .stat { background: var(--ground); padding: 1.05rem 1.15rem 1.15rem; }
+  .stat dt {
+    font-family: var(--mono);
+    font-size: .69rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: .5rem;
+  }
+  .stat dd {
+    margin: 0;
+    font-size: 1.72rem;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -.028em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat dd .u {
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--ink-3);
+    letter-spacing: 0;
+    margin-left: .22rem;
+  }
+  .stat .sub {
+    margin-top: .45rem;
+    font-size: .79rem;
+    line-height: 1.5;
+    color: var(--ink-3);
+  }
+
+  /* ---------- figures ---------- */
+  figure {
+    margin: 2rem 0;
+    padding: 0;
+  }
+  .figbox {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.4rem 1rem;
+    overflow-x: auto;
+  }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink-2); }
+  figcaption {
+    margin-top: .8rem;
+    font-size: .855rem;
+    line-height: 1.65;
+    color: var(--ink-3);
+  }
+  figcaption b { color: var(--ink-2); font-weight: 600; }
+
+  .svg-label { font-family: var(--mono); font-size: 11.5px; fill: currentColor; }
+  .svg-label-sm { font-family: var(--mono); font-size: 10px; fill: var(--ink-3); }
+  .svg-title { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; fill: var(--ink-3); }
+  .svg-box { fill: var(--ground); stroke: currentColor; stroke-width: 1; }
+  .svg-box-soft { fill: var(--surface-2); stroke: var(--line); stroke-width: 1; }
+  .svg-box-accent { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.25; }
+  .svg-line { stroke: currentColor; stroke-width: 1.25; fill: none; }
+  .svg-line-accent { stroke: var(--accent); stroke-width: 1.5; fill: none; }
+  .svg-line-dash { stroke: var(--ink-3); stroke-width: 1.1; fill: none; stroke-dasharray: 4 3; }
+  .svg-accent-text { fill: var(--accent-ink); font-family: var(--mono); font-size: 11px; }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 1.6rem 0; border: 1px solid var(--line); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; font-size: .885rem; }
+  th, td { text-align: left; padding: .58rem .85rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--mono);
+    font-size: .69rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-2); }
+  td code { white-space: nowrap; }
+
+  /* ---------- charts ---------- */
+  .chart { margin: 1.9rem 0; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .chart-title { font-size: .96rem; font-weight: 620; }
+  .chart-note { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
+
+  .colchart {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+    align-items: end;
+    height: 190px;
+    padding-top: 1.3rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .colchart .col-item { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; position: relative; }
+  .colchart .bar { background: var(--bar-neutral); border-radius: 3px 3px 0 0; width: 100%; }
+  .colchart .bar.hi { background: var(--accent); }
+  .colchart .val {
+    font-family: var(--mono);
+    font-size: .69rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+    text-align: center;
+    margin-bottom: .3rem;
+    white-space: nowrap;
+  }
+  .colchart .val.hi { color: var(--accent-ink); font-weight: 600; }
+  .colaxis {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: .45rem;
+  }
+  .colaxis span {
+    font-family: var(--mono);
+    font-size: .66rem;
+    color: var(--ink-3);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .barchart { display: grid; gap: .42rem; }
+  .barrow { display: grid; grid-template-columns: minmax(6.5rem, 8.5rem) minmax(0, 1fr) auto; gap: .7rem; align-items: center; }
+  .barrow .name { font-family: var(--mono); font-size: .765rem; color: var(--ink-2); text-align: right; overflow: hidden; text-overflow: ellipsis; }
+  .barrow .track { height: 15px; position: relative; }
+  .barrow .fill { height: 100%; background: var(--bar-neutral); border-radius: 0 3px 3px 0; }
+  .barrow .fill.hi { background: var(--accent); }
+  .barrow .v { font-family: var(--mono); font-size: .755rem; font-variant-numeric: tabular-nums; color: var(--ink-3); white-space: nowrap; }
+  .barrow .v.hi { color: var(--accent-ink); font-weight: 600; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    margin: 1.7rem 0;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: .93rem;
+    line-height: 1.7;
+  }
+  .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .note.risk { border-left-color: var(--risk); background: var(--risk-soft); }
+  .note p:last-child { margin-bottom: 0; }
+  .note .tag {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: .35rem;
+  }
+  .note.warn .tag { color: var(--warn); }
+  .note.risk .tag { color: var(--risk); }
+
+  /* ---------- risk list ---------- */
+  .risks { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin: 1.8rem 0; }
+  .risk-item { background: var(--ground); padding: 1.05rem 1.2rem; }
+  .risk-item h4 { margin: 0 0 .4rem; font-size: .97rem; font-weight: 620; letter-spacing: -.004em; }
+  .risk-item p { margin: 0; font-size: .9rem; line-height: 1.68; color: var(--ink-2); }
+  .risk-item .ev {
+    display: block;
+    margin-top: .5rem;
+    font-family: var(--mono);
+    font-size: .715rem;
+    color: var(--ink-3);
+    word-break: break-all;
+  }
+  .sev {
+    float: right;
+    margin-left: .8rem;
+    font-family: var(--mono);
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .12rem .45rem;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .sev.s1 { color: var(--risk); }
+  .sev.s2 { color: var(--warn); }
+  .sev.s3 { color: var(--ink-3); }
+
+  footer {
+    margin-top: 4.5rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--line);
+    font-size: .855rem;
+    line-height: 1.7;
+    color: var(--ink-3);
+  }
+  footer code { font-size: .8em; }
+
+  @media (max-width: 640px) {
+    body { font-size: 15.5px; padding: 0 1rem 4rem; }
+    .colchart { height: 150px; gap: 2px; }
+    .colaxis { gap: 2px; }
+    .colchart .val { font-size: .6rem; }
+    .barrow { grid-template-columns: minmax(5rem, 6.5rem) minmax(0, 1fr) auto; gap: .5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead col">
+    <div class="kicker">
+      <span>代码库剖析</span>
+      <span>219 个 workspace</span>
+      <span>快照 47f9438 · 2026-08-13</span>
+    </div>
+    <h1>DeepSeek Harness 解剖</h1>
+    <p class="standfirst">一个由 DeepSeek AI 开源的 agent harness，建立在 vendored 的 Cordis 框架上，口号是<strong>「一切皆插件」</strong>。这份报告不复述 README，而是把它拆开：turn 到底怎么跑、可替换性靠什么兑现、22.7 万行源码为什么配了 26.8 万行测试，以及这套架构的账单记在哪里。</p>
+  </header>
+
+  <div class="col">
+    <nav class="toc" aria-label="目录">
+      <ol>
+        <li><a href="#thesis"><span class="n">01</span>核心判断</a></li>
+        <li><a href="#loop"><span class="n">02</span>一次 turn 的执行</a></li>
+        <li><a href="#compose"><span class="n">03</span>组合与补丁分层</a></li>
+        <li><a href="#seams"><span class="n">04</span>能力接缝</a></li>
+        <li><a href="#browser"><span class="n">05</span>浏览器里的第二棵树</a></li>
+        <li><a href="#interop"><span class="n">06</span>把同行当子 agent</a></li>
+        <li><a href="#gates"><span class="n">07</span>62 道闸门</a></li>
+        <li><a href="#process"><span class="n">08</span>为 agent 而建的仓库</a></li>
+        <li><a href="#cost"><span class="n">09</span>账单与风险</a></li>
+        <li><a href="#onboard"><span class="n">10</span>上手路径</a></li>
+        <li><a href="#method"><span class="n">11</span>方法与边界</a></li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="wide">
+    <dl class="stats">
+      <div class="stat">
+        <dt>源码</dt>
+        <dd>227,637<span class="u">行</span></dd>
+        <div class="sub">1,324 个文件，分布在 49 个包组</div>
+      </div>
+      <div class="stat">
+        <dt>测试</dt>
+        <dd>268,040<span class="u">行</span></dd>
+        <div class="sub">测试比源码多 18%；每文件 100% 覆盖率闸门</div>
+      </div>
+      <div class="stat">
+        <dt>工作区包</dt>
+        <dd>219</dd>
+        <div class="sub">全部 public 发布，零 <code>private: true</code></div>
+      </div>
+      <div class="stat">
+        <dt>历史长度</dt>
+        <dd>64<span class="u">天</span></dd>
+        <div class="sub">12,293 次提交，每个日历日都有代码落地</div>
+      </div>
+      <div class="stat">
+        <dt>能力接缝</dt>
+        <dd>26</dd>
+        <div class="sub">对应 46 个 provider 包</div>
+      </div>
+      <div class="stat">
+        <dt>Agent Note</dt>
+        <dd>686</dd>
+        <div class="sub">决策记录，四种生命周期目录 + 密封归档</div>
+      </div>
+    </dl>
+  </div>
+
+  <div class="col">
+
+    <section id="thesis">
+      <span class="eyebrow">01 · 核心判断</span>
+      <h2>它不是「带插件 API 的 agent」，是「跑在插件框架上的 agent」</h2>
+
+      <div class="thesis">
+        <p>绝大多数 harness 有一个特权内核，外加一圈扩展点。dsh 没有内核可打补丁：
+          <strong>agent loop、会话日志、工具注册表、模型适配器，本身就是配置里可以卸载和替换的插件行。</strong>
+          <code>dsh-base</code> 这个基础 bundle 就是一次性插入的 78 行配置；web profile 再叠 51 行。</p>
+      </div>
+
+      <p>这句话很容易当口号听。判断它是不是真的，只需要看一件事：<strong>可替换性有没有兑现成删除量。</strong>本报告最有说服力的一处证据是 E2B 远程沙箱 —— 把整个执行世界搬到远端 Linux 沙箱，代价是禁用 2 行配置、插入 3 行配置，而 bash、PTY、LSP 三个消费方<strong>一行都不改、一个 fork 都不出</strong>
+        (见 <a href="#seams">第 4 节</a>)。这是接缝设计能不能收敛的硬指标。</p>
+
+      <p>另一处是它对「真源」的处理。会话日志不是聊天记录的副产品，而是模型请求的<strong>唯一来源</strong>：每一次请求的消息数组都从日志重新投影出来，而不是在内存里累积。这条规则甚至有一个运行时断言在守(下一节会讲到它的一个重要限定)。</p>
+    </section>
+
+    <hr style="margin-top:3rem">
+
+    <section id="loop">
+      <span class="eyebrow">02 · packages/core · 13,462 行</span>
+      <h2>一次 turn 的执行：声明式的骨架，可拦截的每一步</h2>
+
+      <p>默认驱动器是 <code>ReactLoopAgent</code>，一共 496 行，位于 <code>packages/core/agent-loop/src/agent.ts</code>。它坐在一条只追加、序号连续的会话日志上。一个 <strong>step</strong> 是一次模型请求加上它触发的工具调用；一个 <strong>turn</strong> 是零个或多个 step。</p>
+    </section>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 720 500" role="img"
+             aria-label="turn 执行流程图：输入从收件箱被 claim，消息以 user/message 落盘，模型历史再从日志重新投影出来送入请求；pre-step、request、llm/stream、tools 三段是可拦截的瀑布事件；运行时断言比对请求消息与日志投影是否一致。">
+          <defs>
+            <marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0.5 L8 4 L0 7.5 z" fill="currentColor"/>
+            </marker>
+            <marker id="ar-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0.5 L8 4 L0 7.5 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+
+          <text x="40" y="18" class="svg-title">持久会话事件 · 落盘</text>
+          <text x="446" y="18" class="svg-title">瀑布扩展点 · 可拦截</text>
+
+          <!-- spine boxes -->
+          <g>
+            <rect x="40" y="32" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="52" class="svg-label">turn/start</text>
+
+            <rect x="40" y="80" width="200" height="30" rx="3" class="svg-box-soft"/>
+            <text x="52" y="100" class="svg-label">inbox.claim()</text>
+
+            <rect x="40" y="128" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="148" class="svg-label">step/start</text>
+
+            <rect x="40" y="176" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="196" class="svg-label">user/message ×n</text>
+
+            <rect x="40" y="224" width="200" height="34" rx="3" class="svg-box-accent"/>
+            <text x="52" y="246" class="svg-accent-text">deriveMessages()</text>
+
+            <rect x="40" y="288" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="308" class="svg-label">assistant/chunk ×n</text>
+
+            <rect x="40" y="336" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="356" class="svg-label">assistant/message</text>
+
+            <rect x="40" y="384" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="404" class="svg-label">tool/call · tool/result</text>
+
+            <rect x="40" y="432" width="200" height="30" rx="3" class="svg-box"/>
+            <text x="52" y="452" class="svg-label">step/end → turn/end</text>
+          </g>
+
+          <!-- spine connectors -->
+          <g class="svg-line" marker-end="url(#ar)">
+            <line x1="140" y1="62" x2="140" y2="76"/>
+            <line x1="140" y1="110" x2="140" y2="124"/>
+            <line x1="140" y1="158" x2="140" y2="172"/>
+            <line x1="140" y1="206" x2="140" y2="220"/>
+            <line x1="140" y1="258" x2="140" y2="284"/>
+            <line x1="140" y1="318" x2="140" y2="332"/>
+            <line x1="140" y1="366" x2="140" y2="380"/>
+            <line x1="140" y1="414" x2="140" y2="428"/>
+          </g>
+
+          <!-- hooks -->
+          <g>
+            <rect x="446" y="80" width="248" height="30" rx="3" class="svg-box-accent"/>
+            <text x="458" y="100" class="svg-accent-text">agent/pre-step</text>
+
+            <rect x="446" y="224" width="248" height="34" rx="3" class="svg-box-accent"/>
+            <text x="458" y="246" class="svg-accent-text">agent/request</text>
+
+            <rect x="446" y="288" width="248" height="30" rx="3" class="svg-box-accent"/>
+            <text x="458" y="308" class="svg-accent-text">llm/stream</text>
+
+            <rect x="446" y="384" width="248" height="30" rx="3" class="svg-box-accent"/>
+            <text x="458" y="404" class="svg-accent-text">tools/pre · execute · post</text>
+          </g>
+
+          <g class="svg-line-dash">
+            <line x1="240" y1="95" x2="440" y2="95" marker-end="url(#ar-a)"/>
+            <line x1="240" y1="241" x2="440" y2="241" marker-end="url(#ar-a)"/>
+            <line x1="240" y1="303" x2="440" y2="303" marker-end="url(#ar-a)"/>
+            <line x1="240" y1="399" x2="440" y2="399" marker-end="url(#ar-a)"/>
+          </g>
+          <text x="252" y="88" class="svg-label-sm">改写 / 拒绝</text>
+
+          <path class="svg-line-accent" d="M 570 258 L 570 282" marker-end="url(#ar-a)"/>
+
+          <!-- the runtime invariant closes the loop: what goes out on the wire
+               must still equal what the log projects -->
+          <path class="svg-line-accent" d="M 442 300 C 392 352 300 352 250 262"
+                marker-end="url(#ar-a)" stroke-dasharray="3 3"/>
+          <text x="292" y="372" class="svg-accent-text">运行时断言：两者必须逐字相等</text>
+          <text x="292" y="388" class="svg-label-sm">否则中止这次模型调用</text>
+
+          <!-- loop back -->
+          <path class="svg-line" d="M 40 447 L 18 447 L 18 143 L 34 143" marker-end="url(#ar)"/>
+          <text x="46" y="486" class="svg-label-sm">工具还欠一次请求 / 新输入到达 → 回到 step</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 1 · 消息数组不是攒出来的，是投影出来的。</b>输入从收件箱被 <code>claim</code> 之后先以 <code>user/message</code> 落盘，随后模型历史由 <code>deriveMessages()</code> 从日志重新投影。这意味着 <code>agent/request</code> 瀑布<em>结构上</em>无法改写消息 —— 它拿到的消息数组在瀑布开始前就已经定死。虚线是四个可拦截点；<code>agent/pre-step</code> 可以整体改写或直接拒绝这一批输入。</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <p>日志里目前有 <strong>44 种</strong>会话事件类型，但只有 <strong>3 种</strong>会产生模型消息(<code>user/message</code>、<code>assistant/message</code>、<code>tool/result</code>)。这个 3 : 44 的比例是整套设计的支点：模型看得见的表面很窄，窄到可以被一条断言完整重算，而其余 41 种事件负责承载 UI、遥测、审批、计划、目标这些不进模型上下文的耐久事实。</p>
+
+    <h3>压缩不删除</h3>
+    <p>上下文压缩落地为 <code>surfaceOp: replace</code> —— 表面遮蔽掉一段区间，原始事件<strong>逐字留在日志里</strong>。于是「模型上下文」和「人类可读记录」变成同一条日志的两个投影，源码里因此专门存在一个 <code>isAppendSurfaceEvent</code> 谓词，并写明表面是渲染人类记录的<em>错误</em>来源：一次压缩会抹掉用户明明已经看过的对话。</p>
+
+    <div class="note warn">
+      <span class="tag">重要限定</span>
+      <p>那条「模型可见 ⟺ 已落盘」的运行时断言，<strong>并没有挂在出厂的三个 bundle 里</strong>。我在 <code>packages/bundle/{base,headless,web-app}/cordis.patch.yml</code> 中检索<code>dsh-invariants</code>，零命中；真正挂载 <code>InvariantRegistry</code> 的是<code>packages/examples/agent-spine-demo</code> 与各包的测试拓扑。所以它是<strong>开发期、CI 与示例组合的保证</strong>，而不是用户跑 <code>dsh --profile web</code> 时在线上守着的东西 ——除非用户自己把它组合进去。这不影响架构价值，但影响你怎么向别人描述它。</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <section id="compose">
+      <span class="eyebrow">03 · packages/boot · packages/bundle</span>
+      <h2>组合：四层补丁，压平成一次调用</h2>
+      <p>「可以从配置替换任何东西」这句话的兑现方式，是拒绝嵌套。profile、每个 bundle 的 <code>cordis.patch.yml</code>、home 级补丁、命令行 <code>--patch</code>，全部被拉平成<strong>一个补丁列表</strong>，由<strong>一次</strong> <code>applyEntryPatches</code> 施加在空条目列表上。</p>
+    </section>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 700 250" role="img"
+             aria-label="组合分层图：base bundle 插入 78 行，web-app bundle 补 27 行并插入 2 处，profile 补丁与 home 补丁与命令行 overlay 依次叠加，四层被压平成一次 applyEntryPatches 调用，产出一个扁平条目列表。">
+          <defs>
+            <marker id="ar2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0.5 L8 4 L0 7.5 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <text x="10" y="16" class="svg-title">按序叠加的补丁层</text>
+
+          <g>
+            <rect x="10" y="30" width="150" height="28" rx="3" class="svg-box-soft"/>
+            <text x="22" y="49" class="svg-label">空条目列表</text>
+
+            <rect x="10" y="66" width="150" height="28" rx="3" class="svg-box"/>
+            <text x="22" y="85" class="svg-label">dsh-base</text>
+            <text x="170" y="85" class="svg-label-sm">insert 78 行</text>
+
+            <rect x="10" y="102" width="150" height="28" rx="3" class="svg-box"/>
+            <text x="22" y="121" class="svg-label">dsh-web-app</text>
+            <text x="170" y="121" class="svg-label-sm">27 处按 id 改写 + 2 处 insert</text>
+
+            <rect x="10" y="138" width="150" height="28" rx="3" class="svg-box"/>
+            <text x="22" y="157" class="svg-label">profile 补丁</text>
+            <text x="170" y="157" class="svg-label-sm">用户自己的 cordis.patch.yml</text>
+
+            <rect x="10" y="174" width="150" height="28" rx="3" class="svg-box"/>
+            <text x="22" y="193" class="svg-label">home 补丁</text>
+
+            <rect x="10" y="210" width="150" height="28" rx="3" class="svg-box-accent"/>
+            <text x="22" y="229" class="svg-accent-text">--patch overlay</text>
+          </g>
+
+          <g class="svg-line" marker-end="url(#ar2)">
+            <line x1="85" y1="58" x2="85" y2="62"/>
+            <line x1="85" y1="94" x2="85" y2="98"/>
+            <line x1="85" y1="130" x2="85" y2="134"/>
+            <line x1="85" y1="166" x2="85" y2="170"/>
+            <line x1="85" y1="202" x2="85" y2="206"/>
+          </g>
+
+          <path class="svg-line-accent" d="M 300 134 L 470 134" marker-end="url(#ar-a)"/>
+          <text x="308" y="126" class="svg-accent-text">一次 applyEntryPatches</text>
+
+          <rect x="480" y="60" width="205" height="150" rx="3" class="svg-box"/>
+          <text x="492" y="82" class="svg-label">扁平条目列表</text>
+          <line x1="492" y1="94" x2="673" y2="94" stroke="var(--line)" stroke-width="1"/>
+          <text x="492" y="114" class="svg-label-sm">- id: llm</text>
+          <text x="492" y="132" class="svg-label-sm">- id: agent-loop</text>
+          <text x="492" y="150" class="svg-label-sm">- id: session-persistence</text>
+          <text x="492" y="168" class="svg-label-sm">- id: tool-bash</text>
+          <text x="492" y="186" class="svg-label-sm">… 每一行都能被上层按 id 替换</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 2 · 不嵌套，是为了让上层能改到下层插入的每一行。</b>如果这些层做成嵌套的 include,bundle 插入的条目对用户那一层就是不可见的。压平的另一个好处是 <code>dsh --profile web --dump-config</code> 打印的内容可以复用同一次调用来生成，因而<em>可证</em>与实际启动的树一致。唯一的软失败是「补丁的目标行不存在」只告警 —— 这样一份 overlay 才能被不同形态的树共用。</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <p>配置里的 <code>!!js</code> 也不是模板语法，而是 <code>with (ctx) { eval(expr) }</code> 对活的插件上下文求值，且只在该条目声明的注入就绪之后才执行。这带来的表达力是真实的，风险也是真实的 —— 见 <a href="#cost">第 9 节</a> 的 postmortem 0002。</p>
+
+    <section id="seams">
+      <span class="eyebrow">04 · 26 个接缝 · 46 个 provider</span>
+      <h2>能力接缝：三个角色缺一不是接缝</h2>
+      <p>仓库把「可替换能力」定义成一个三角色结构，并在术语表里明确写死：
+        <strong>Service Definition</strong>(拥有 <code>ctx.&lt;key&gt;</code> 与词汇类型)、<strong>Service Provider</strong>(一个或多个实现)、<strong>Consumer</strong>(注入者，通常是面向模型的工具)。只有一个角色不叫接缝。</p>
+      <p>接缝分两种机械形态，而且分法有依据：
+        <strong>16 个是抽象 Service 子类</strong> —— 一个上下文只能有一个提供方，重复注册直接抛错，因为「有两个文件系统」本身就是组合错误；
+        <strong>10 个是并存注册表</strong> —— 多个具名 provider 共存、按调用选择，因为「同时装 Exa、Perplexity 和 DeepSeek 三个搜索后端」正是它要的效果。</p>
+      <p>最能说明问题的是 <code>ctx.fs</code> 与 <code>ctx.subprocess</code> 这一对：它们合起来定义了一个「执行世界」。</p>
+    </section>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 700 300" role="img"
+             aria-label="E2B 切换对比图：左右两侧的消费方 tool-bash、terminal-bash、lsp-stdio 和中间的 ctx.fs、ctx.subprocess 两个接缝完全相同，只有最底层的 provider 从 fs-local 加 subprocess-local 换成 fs-e2b 加 subprocess-e2b，整个改动是禁用 2 行、插入 3 行配置。">
+          <defs>
+            <marker id="ar3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0.5 L8 4 L0 7.5 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <text x="10" y="16" class="svg-title">本地执行世界</text>
+          <text x="380" y="16" class="svg-title">远程执行世界 · E2B</text>
+          <line x1="355" y1="26" x2="355" y2="282" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>
+
+          <!-- LEFT -->
+          <g>
+            <rect x="10" y="30" width="98" height="26" rx="3" class="svg-box"/>
+            <text x="20" y="47" class="svg-label">tool-bash</text>
+            <rect x="116" y="30" width="106" height="26" rx="3" class="svg-box"/>
+            <text x="126" y="47" class="svg-label">terminal-bash</text>
+            <rect x="230" y="30" width="94" height="26" rx="3" class="svg-box"/>
+            <text x="240" y="47" class="svg-label">lsp-stdio</text>
+
+            <rect x="10" y="106" width="150" height="30" rx="3" class="svg-box-soft"/>
+            <text x="22" y="126" class="svg-label">ctx.fs</text>
+            <rect x="174" y="106" width="150" height="30" rx="3" class="svg-box-soft"/>
+            <text x="186" y="126" class="svg-label">ctx.subprocess</text>
+
+            <rect x="10" y="186" width="150" height="30" rx="3" class="svg-box"/>
+            <text x="22" y="206" class="svg-label">fs-local</text>
+            <rect x="174" y="186" width="150" height="30" rx="3" class="svg-box"/>
+            <text x="186" y="206" class="svg-label">subprocess-local</text>
+          </g>
+          <g class="svg-line" marker-end="url(#ar3)">
+            <line x1="59" y1="56" x2="70" y2="100"/>
+            <line x1="169" y1="56" x2="120" y2="100"/>
+            <line x1="169" y1="56" x2="230" y2="100"/>
+            <line x1="277" y1="56" x2="255" y2="100"/>
+            <line x1="85" y1="136" x2="85" y2="180"/>
+            <line x1="249" y1="136" x2="249" y2="180"/>
+          </g>
+
+          <!-- RIGHT -->
+          <g>
+            <rect x="380" y="30" width="98" height="26" rx="3" class="svg-box"/>
+            <text x="390" y="47" class="svg-label">tool-bash</text>
+            <rect x="486" y="30" width="106" height="26" rx="3" class="svg-box"/>
+            <text x="496" y="47" class="svg-label">terminal-bash</text>
+            <rect x="600" y="30" width="94" height="26" rx="3" class="svg-box"/>
+            <text x="610" y="47" class="svg-label">lsp-stdio</text>
+
+            <rect x="380" y="106" width="150" height="30" rx="3" class="svg-box-soft"/>
+            <text x="392" y="126" class="svg-label">ctx.fs</text>
+            <rect x="544" y="106" width="150" height="30" rx="3" class="svg-box-soft"/>
+            <text x="556" y="126" class="svg-label">ctx.subprocess</text>
+
+            <rect x="380" y="186" width="150" height="30" rx="3" class="svg-box-accent"/>
+            <text x="392" y="206" class="svg-accent-text">fs-e2b</text>
+            <rect x="544" y="186" width="150" height="30" rx="3" class="svg-box-accent"/>
+            <text x="556" y="206" class="svg-accent-text">subprocess-e2b</text>
+          </g>
+          <g class="svg-line" marker-end="url(#ar3)">
+            <line x1="429" y1="56" x2="440" y2="100"/>
+            <line x1="539" y1="56" x2="490" y2="100"/>
+            <line x1="539" y1="56" x2="600" y2="100"/>
+            <line x1="647" y1="56" x2="625" y2="100"/>
+          </g>
+          <g class="svg-line-accent" marker-end="url(#ar-a)">
+            <line x1="455" y1="136" x2="455" y2="180"/>
+            <line x1="619" y1="136" x2="619" y2="180"/>
+          </g>
+
+          <text x="10" y="246" class="svg-label-sm">上面两层逐字相同 —— 消费方不知道自己在哪台机器上执行</text>
+          <rect x="380" y="232" width="314" height="46" rx="3" class="svg-box-accent"/>
+          <text x="392" y="250" class="svg-accent-text">改动总量：禁用 2 行 + 插入 3 行</text>
+          <text x="392" y="268" class="svg-label-sm">bash / PTY / LSP:0 个 fork</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 3 · 接缝设计的验收标准是「差异有多小」，不是「抽象有多漂亮」。</b>能做到这一点的前提写在 Agent Note 里：<code>ctx.subprocess</code> 被精确加宽了两个操作(<code>resolveExecutable</code> 和一个深度原语 <code>spawnTerminal</code>)，并明确拒绝把终端建模成普通管道子进程 —— 管道分配不了控制终端，也证明不了会话清理。代价是有一条<strong>类型系统管不到</strong>的组合期义务：
+        <code>e2b.cwd</code>、<code>sandboxPolicy.workspaceRoot</code> 和 bash 的默认工作目录必须指向同一个远程目录。</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <p>沙箱那一层刻意做窄：<code>ctx.sandbox</code> 只做 argv 改写，策略(模式、工作区根)放在另一个服务<code>ctx.sandboxPolicy</code> 里 —— 就是为了防止一次性 shell、文件系统后端和 PTY 后端把自己关进三个不同的根目录。它的返回值也不是布尔：<code>{argv, enforcement, denialSignatures, runnerFailureRules}</code>，让消费方能区分「命令跑了、内核拒绝了写」和「启动器根本没起来」，而不必知道底下选了哪个后端。</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>平台</th><th>沙箱实现</th><th>形态</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Linux</td><td class="num">bwrap → Landlock</td><td>降级链；Landlock 由一个自限制后 exec 的 C 启动器提供</td></tr>
+          <tr><td>macOS</td><td class="num">Seatbelt</td><td>SBPL profile 由 <code>writableRoots()</code> 生成</td></tr>
+          <tr><td>Windows</td><td class="num">ACL 受限令牌</td><td>是 <code>sandbox-local</code> 里的一级，不是独立 provider</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Landlock 启动器有个值得一提的细节：它<strong>拒绝从元数据回答「Landlock 可用吗」</strong>，而是真的起一个短命子进程去建立并强制一套最大规则集 —— 因为 <code>--version</code> 式的探测在「有系统调用但拒绝强制」的内核上会误判为可用。</p>
+
+    <section id="browser">
+      <span class="eyebrow">05 · packages/client · 71,896 行</span>
+      <h2>浏览器里跑着第二棵 Cordis 插件树</h2>
+      <p>这是整个仓库<strong>最被低估的部分</strong>。Web GUI 不是一个调 API 的 React 应用：
+        <code>packages/client/web/src/boot.tsx</code> 里 <code>new Context()</code>，挂载<strong>同一份 vendored loader 源码</strong>，把一个浏览器模块系统注入 loader 的 <code>internal</code> 槽，然后对宿主推来的条目图逐行 <code>loader.create()</code>。</p>
+      <p>换句话说，Node 与浏览器两侧共用同一套 fiber 生命周期、<code>inject</code> 等待、<code>ctx.effect</code> 释放与 HMR,<strong>只换了一个 seam</strong>(<code>EntryTree.import</code> 的实现)。UI 组合走一个 API:<code>ctx.slots.register()</code>，声明一个子槽<em>就是</em>渲染它的授权 ——现行组合里有 42 个槽键、133 处注册。</p>
+
+      <h3>Typert：把类型图当成编译产物发到浏览器</h3>
+      <p>宿主服务上打 <code>@Remote</code> 的方法，在构建期被从 <code>tsconfig.host.json</code> 的<code>ts.Program</code> 里分析成类型图，按包发射成 <code>lib/typert.remote-client.{js,d.ts}</code>:
+        Zod 编解码器 + 调用描述符 + <code>declare module</code> 合并。浏览器侧因此拿到的 <code>ctx.remote.goals.create(...)</code> 是<strong>真实的类型化方法</strong>，不是 Proxy。</p>
+      <div class="note">
+        <span class="tag">这带来一个不寻常的约束</span>
+        <p>客户端程序<strong>在宿主编译完成前根本无法类型检查</strong> ——所以 <code>typecheck</code> 脚本写成 <code>build:lib:host &amp;&amp; tsc -b tsconfig.client.json</code>。线上契约不是一个手工维护的共享类型包，而是<strong>编译产物</strong>，且宿主是它唯一的权威。「做一个 shared-types 包」是显而易见的设计，这里被明确否掉了。</p>
+      </div>
+      <p>客户端与宿主的隔离靠两个<strong>永远无法合并</strong>的 TypeScript 程序(两边都增广同一批 cordis
+        <code>Context</code> 键)，外加一个构建期纯度插件：任何跨插件的 <code>@deepseek-ai/*</code> 值导入直接抛错。十个平台模块按同一实例共享(React、cordis、ui-slots 等)，其余全部按 bundle 内联 ——这正是每个 UI 插件能独立热重载的原因。</p>
+    </section>
+
+    <section id="interop">
+      <span class="eyebrow">06 · packages/subagent · 7 个 provider</span>
+      <h2>把 Claude Code 和 Codex 当成可插拔的子 agent</h2>
+      <p>
+        <code>SubagentProvider</code> 只有三个方法(<code>name</code> / <code>capabilities</code> / <code>start</code>)，于是「委派给别家的 agent」成了一次普通的 provider 实现：
+      </p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Provider</th><th>驱动方式</th><th>版本锁定</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">subagent-claude-code</td><td>官方 <code>@anthropic-ai/claude-agent-sdk</code></td><td class="num">0.3.220 / CLI 2.1.220</td></tr>
+            <tr><td class="num">subagent-codex</td><td>手写 <code>codex app-server --stdio</code> JSON-RPC 适配器</td><td class="num">0.147.0</td></tr>
+            <tr><td class="num">subagent-acp</td><td>任意 ACP agent</td><td class="num">SDK 0.25.1</td></tr>
+            <tr><td class="num">subagent-dsh-sdk</td><td>另一个完整的 dsh 运行时</td><td class="num">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>细节里有两处见功力。其一，Claude Code provider <strong>让官方 SDK 拥有协议，却把 spawn 抢了过来</strong>：用 <code>ManagedClaudeCodeProcess</code> 包住 harness 自己的 <code>SubprocessHandle</code> 去满足Anthropic 的 <code>SpawnedProcess</code> 接口 —— 这样进程树权威留在 harness 手里，又不必 fork 别人的 SDK。</p>
+      <p>其二，四个跨进程 provider 全部声明 <code>NO_START_CAPABILITIES</code>，于是服务层<strong>直接拒绝</strong> <code>outputSchema</code> / <code>maxDepth</code> / <code>toolFilter</code> / <code>persona</code> 请求，而不是收下再忽略。理由写得很清楚：接受并忽略会让同一个工具 schema 因为背后 provider 不同而含义不同。</p>
+      <p>对外还有另外两条：一个纯自动化的 ACP server，一个 3 请求 / 4 通知的 stdio JSON-RPC SDK 协议(Python SDK 说同一套协议)，以及作为 <em>MCP 客户端</em>的接入 —— 注意<strong>没有</strong> MCP server。这些缺口被写在各包的 Known Limitations 里，没有藏。</p>
+    </section>
+
+    <section id="gates">
+      <span class="eyebrow">07 · scripts/ · 124 个 .ts</span>
+      <h2>62 道闸门：把每一条可机检的约定变成一个非零退出码</h2>
+      <p>
+        <code>scripts/run-gates.ts</code> 是一个会校验自身 DAG(重复 id、未知依赖、环)的小调度器，把 62 道唯一闸门组合成 14 个具名聚合：<code>ci-primary</code> 52 道、<code>doc-sync</code> 28 道、本地 <code>check-all</code> 46 道。</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>族</th><th>它机械保证的东西</th></tr></thead>
+          <tbody>
+            <tr><td>静态 / 类型</td><td>typecheck、oxlint(规则集按 SHA-256 指纹钉死)、jscpd 克隆检测、knip</td></tr>
+            <tr><td>打包 / 产物</td><td>publint、工作区约束、NodeNext 消费者类型检查、<strong>用纯 Node 导入构建产物</strong>验证不变量</td></tr>
+            <tr><td>文档</td><td>7 个生成目录的 <code>--check</code> 新鲜度、JSDoc 覆盖、<strong>字数上限</strong>、双语配对、Mermaid 解析、Agent Note 格式</td></tr>
+            <tr><td>测试</td><td>单测 + 每文件 100% 覆盖 + 真实 API e2e + 无密钥快照回放 + 浏览器快照</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>三个反常识的设计</h3>
+      <p>
+        <strong>一、覆盖率豁免不是豁免。</strong> <code>coverage-exempt</code> 听起来像放过慢用例，实际做的是把它们拆到第二道闸门里<em>照跑</em>，只免掉 v8 插桩开销 —— 正确性信号一点没少。而且环境变量设成非 <code>'1'</code> 的值会抛错，而不是静默失效。</p>
+      <p>
+        <strong>二、运行时不变量不是测试。</strong> 219 个包<strong>全部</strong>带一个 <code>src/invariant.ts</code> 伴生文件(35 个有可执行断言，184 个是空的、但必须写明 <code>No runtime invariant:</code> 的理由)。它们在每一次真实运行、每一次快照回放、每一个普通单测里在线断言<em>事件流与可变数据之间的关系</em> ——这是类型和用例都覆盖不到的那一格。闸门强制那句解释，所以「空」不会烂成一次耸肩。</p>
+      <p>
+        <strong>三、快照 fixture 是双向的。</strong> 同一份 <code>session.jsonl</code> 既是回放脚本又是期望输出。这消掉了通常的录制/断言不对称，但也带来一个 churn 问题，解法是一个相当深的<code>stabilizeRefreshLog</code>：在整条日志上建立规范化等价的字符串双射，尽可能复用已提交的 id、路径、时间戳，任何歧义就退回生成新值。没有它，每次刷新都会重写每一个 UUID。</p>
+      <p>为什么值得这么干?Agent Note 里说得很直白：
+        <em>「这个代码库主要由编码 agent 开发。agent 遵守被强制的闸门远比遵守散文约定可靠，而当劳动由 agent 完成时，『工作量很大』不构成成本论据。」</em>同一篇笔记也点名了这套体系自己的失效模式：100% 覆盖率的压力会催生没有断言的测试 ——并把变异测试列为计划中的对冲。</p>
+    </section>
+
+    <section id="process">
+      <span class="eyebrow">08 · .agents/ · 686 篇笔记</span>
+      <h2>一个为 agent 而建、也主要由 agent 建成的仓库</h2>
+      <p>这个仓库的第一条 commit 是<code>Initialize repo with README, AGENTS.md, and CLAUDE.md symlink</code> ——<strong>在任何代码之前先立规约</strong>。之后 64 天里落了 12,293 次提交，一天没断。</p>
+    </section>
+  </div>
+
+  <div class="wide">
+    <div class="chart">
+      <div class="chart-head">
+        <div class="chart-title">每周提交数</div>
+        <div class="chart-note">2026-W23 → W32 · 共 12,293 次</div>
+      </div>
+      <div class="colchart" role="img" aria-label="每周提交数柱状图：第23周67次，第24周355次，第25周108次，第26周440次，第27周684次，第28周1749次，第29周2169次，第30周3542次为峰值，第31周1966次，第32周1213次。">
+        <div class="col-item" title="2026-W23 · 67"><div class="bar" style="height:1.9%"></div></div>
+        <div class="col-item" title="2026-W24 · 355"><div class="bar" style="height:10%"></div></div>
+        <div class="col-item" title="2026-W25 · 108"><div class="bar" style="height:3%"></div></div>
+        <div class="col-item" title="2026-W26 · 440"><div class="bar" style="height:12.4%"></div></div>
+        <div class="col-item" title="2026-W27 · 684"><div class="bar" style="height:19.3%"></div></div>
+        <div class="col-item" title="2026-W28 · 1749"><div class="bar" style="height:49.4%"></div></div>
+        <div class="col-item" title="2026-W29 · 2169"><div class="val">2,169</div><div class="bar" style="height:61.2%"></div></div>
+        <div class="col-item" title="2026-W30 · 3542"><div class="val hi">3,542</div><div class="bar hi" style="height:100%"></div></div>
+        <div class="col-item" title="2026-W31 · 1966"><div class="bar" style="height:55.5%"></div></div>
+        <div class="col-item" title="2026-W32 · 1213"><div class="val">1,213</div><div class="bar" style="height:34.2%"></div></div>
+      </div>
+      <div class="colaxis">
+        <span>W23</span><span>W24</span><span>W25</span><span>W26</span><span>W27</span>
+        <span>W28</span><span>W29</span><span>W30</span><span>W31</span><span>W32</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>
+      37 个 git 作者名(其中至少一对是同一人的别名)，头部三人占 64%。5,610 个 merge commit 里只有 984 个是 PR 合并，另有约 2,400 个是<code>Merge remote-tracking branch 'origin/master'</code> 一类的向前合并 ——这正是仓库自己文档里那套 stacked PR 工作流留下的拓扑指纹。</p>
+
+    <h3>Agent Note：决策记录被当成受控产物</h3>
+    <p>
+      686 篇笔记按 <code>{生命周期}/{类别}/yyyy-mm-dd-主题.md</code> 组织，格式由闸门强制：
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>生命周期</th><th class="num">数量</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>implemented</td><td class="num">507</td><td>已落地的决策记录</td></tr>
+          <tr><td>archived</td><td class="num">143</td><td><strong>密封冻结</strong>：每条三元组(en/zh/sidecar)按 sha256 记入清单，追加前须重验全部旧封</td></tr>
+          <tr><td>proposed</td><td class="num">25</td><td>仍未实施；最早的停在 2026-06-11</td></tr>
+          <tr><td>rejected</td><td class="num">11</td><td>只在「能挡住一个诱人的错误」时才保留</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>双语不是「翻译一下」：936 对文档由一份 <code>.i18n.yaml</code> 记录<strong>双方的 git blob 哈希</strong>加结构签名绑定。存 blob 而不是 commit 哈希是有用意的 —— 它让「上次确认过的原文」可被取回，于是不同步的一对变成一个三方 diff，可以按段落/表格行/列表项做最小改动更新，而不必整篇重译(重译会扔掉此前已被评审过的措辞)。</p>
+    <p>
+      i18n 的 README 里还有一句罕见的自我限定：<em>「闸门变绿只说明这一对在这个确切内容上被确认过一致，不说明那次确认是可靠的。」</em> 所以 <code>--write</code> 拒绝裸跑，必须点名你确认了哪些 —— 让批量盖章成为一个可见的、刻意的动作。</p>
+  </div>
+
+  <div class="col">
+    <section id="cost">
+      <span class="eyebrow">09 · 尽调视角</span>
+      <h2>账单记在哪里</h2>
+      <p>以下每一条都有路径可查，并且我核对过数字。它们不否定上面的设计价值 ——它们是这套设计正在支付的代价，以及几处我认为需要盯住的地方。</p>
+    </section>
+
+    <div class="risks">
+      <div class="risk-item">
+        <h4><span class="sev s1">值得盯</span>vendored Cordis 已经变成一个 fork</h4>
+        <p>
+          <code>vendor/</code> 里 9 个包、6,493 行，而 <code>vendor/README.md</code> 记录了<strong>18 处本地修改</strong> —— 其中数处重写了 fiber 的释放语义、Loader/Include 的事务性回滚与配置解析，且各自点名了回归用例。这已经不是「钉住上游以便审计」，而是自己在维护一个 fork 并以自己的 scope 发到 npm。问题在于：没有任何机械手段可以从上游重建 <code>vendor/</code>，同步流程是「重新施加上面列出的本地修改」，即人工重新推导 18 段散文语义。而提议要验证这份漂移的那篇笔记，从 2026-06-11 起一直停在 <code>proposed</code>(当时只有 2 处修改)。<span class="ev">vendor/README.md · .agents/notes/proposed/</span>
+        </p>
+      </div>
+
+      <div class="risk-item">
+        <h4><span class="sev s1">已发生</span>快照体系可以给自己的回归背书</h4>
+        <p>
+          Postmortem 0002：一个 <code>disabled: !!js</code> 表达式静默关掉了整个文件系统工具栈，横跨 8 个快照场景；所有闸门全绿，而快照刷新<strong>把坏掉的记录提交成了期望输出</strong>。因为期望输出是从实跑里重新录制的，确定性被当成了正确性。修复(在新鲜运行里拒绝 <code>UNKNOWN_TOOL</code>)补的是这一个症状 ——任何其他形式的静默降级组合，依然会产出一份自洽且通过的快照。<span class="ev">docs/postmortem/0002</span>
+        </p>
+      </div>
+
+      <div class="risk-item">
+        <h4><span class="sev s2">结构性</span>贡献的最小单位是一个已发布的 npm 包</h4>
+        <p>「一切皆插件」的成本不在运行时间接层，而在于：加一个哪怕不渲染任何东西的 React 占位，也要配 package.json、tsconfig、tsdown 配置、invariant 伴生文件、英文 README、中文 README、i18n sidecar、测试目录，再进三个目录。这笔固定税就是「一个目录选择器长成了 6 个包」的原因，并且它在结构上把团队推向拆分而不是合并。<span class="ev">packages/host/directory-picker* · 2,844 行源码 + 3,691 行测试</span>
+        </p>
+      </div>
+
+      <div class="risk-item">
+        <h4><span class="sev s2">校准问题</span>抑制标记的数量，是闸门是否校准的诚实读数</h4>
+        <p>
+          <strong>631 处</strong> <code>v8 ignore</code> 撑着 100% 覆盖率闸门，
+          <strong>492 处</strong> <code>jscpd:ignore</code> 撑着克隆检测。这些豁免大多附有理由(这是好事)，但反过来说明：真实的工程精力正在被花在<em>为满足阈值而撰写理由</em>上。另外覆盖率的 <code>v8 ignore</code> 需附理由这条约定，目前<strong>只有文档、没有闸门</strong>，已有 15 处没写理由。<span class="ev">vitest.config.ts · .jscpd.json</span>
+        </p>
+      </div>
+
+      <div class="risk-item">
+        <h4><span class="sev s2">已漂移</span>最该被读的那份文件，自己没有闸门守着</h4>
+        <p>根 <code>AGENTS.md</code> 的仓库布局块是每个 agent 最先读的东西。我逐项比对过：它覆盖 49 个包组中的 <strong>32 个</strong>，漏掉 <strong>17 个</strong>
+          (包括 <code>client/</code> —— 全仓最大的一组，71,896 行)，还列了 2 个已经不存在的组(<code>self-modification/</code>、<code>support/</code>)。原因很具体：<code>verify-package-paths.ts</code> 会扫这个文件，但解析不了这个代码块。<strong>37 道 verify-* 闸门全绿，而这份说明书三分之一过期。</strong>闸门在保护代码不被文档误导，没有保护文档不被代码甩下。<span class="ev">AGENTS.md · scripts/verify-package-paths.ts</span>
+        </p>
+      </div>
+
+      <div class="risk-item">
+        <h4><span class="sev s3">设计张力</span>有些接缝在付抽象费、没收替换红利</h4>
+        <p>
+          <code>subprocess</code>、<code>attachment</code>、<code>credentials</code>、<code>settings</code>、<code>lsp</code>都是「定义包 + 唯一提供方」的拆分。更能说明问题的是反方向：subagent 接缝不得不在类型定义里暴露一个四布尔的能力矩阵和逐 provider 的散文说明，因为一个进程内 fiber 和一个跨进程 Codex CLI
+          <em>本来就没在实现同一个操作</em>。按仓库自己的规则(角色独立演进时才拆)，这更像是在提示它应该是两个接缝。</p>
+      </div>
+
+      <div class="risk-item">
+        <h4><span class="sev s3">流程负载</span>过程产物的增速快过产品消化它的能力</h4>
+        <p>
+          686 篇笔记明令<strong>禁止建索引</strong>(只能按目录浏览或全仓搜索)，外加冻结归档、哈希清单、一个专门的归档 skill，以及「每个非平凡 PR 都必须新增或更新一篇笔记」的规则。<code>proposed/</code> 目录是这个张力最直接的读数：25 篇提案，数篇自 2026-06-11 起两个月未动 ——其中就包括那篇要去验证整个运行时所依赖的 Cordis fork 的。</p>
+      </div>
+    </div>
+
+    <div class="note risk">
+      <span class="tag">还有一条不是技术问题</span>
+      <p>
+        <code>CONTRIBUTING.md</code> 明示项目目前<strong>不接受外部 pull request</strong>。对一个已经把 219 个包全部公开发布、并鼓励社区给插件仓库打 <code>dsh-plugin</code> 标签的项目来说，这是当下最硬的一道门 —— 插件生态被鼓励在树外生长，树内则关着。</p>
+    </div>
+
+    <h3>顺带一提：文档在体量上被低估了 UI 的权重</h3>
+    <p>架构文档把 <code>core/</code> 放在最前面，而实际体量分布是这样的：
+    </p>
+  </div>
+
+  <div class="wide">
+    <div class="chart">
+      <div class="chart-head">
+        <div class="chart-title">各包组源码行数(前 10)</div>
+        <div class="chart-note">packages/&lt;group&gt;/*/src · 不含测试</div>
+      </div>
+      <div class="barchart" role="img" aria-label="各包组源码行数横向柱状图：client 71,896 行远超其余；extensions 16,090;core 13,462;host 10,634;typert 8,861;subagent 8,436;session 8,385;llm 8,040;test-support 6,984;fs 5,746。">
+        <div class="barrow"><div class="name">client</div><div class="track"><div class="fill hi" style="width:100%"></div></div><div class="v hi">71,896</div></div>
+        <div class="barrow"><div class="name">extensions</div><div class="track"><div class="fill" style="width:22.4%"></div></div><div class="v">16,090</div></div>
+        <div class="barrow"><div class="name">core</div><div class="track"><div class="fill" style="width:18.7%"></div></div><div class="v">13,462</div></div>
+        <div class="barrow"><div class="name">host</div><div class="track"><div class="fill" style="width:14.8%"></div></div><div class="v">10,634</div></div>
+        <div class="barrow"><div class="name">typert</div><div class="track"><div class="fill" style="width:12.3%"></div></div><div class="v">8,861</div></div>
+        <div class="barrow"><div class="name">subagent</div><div class="track"><div class="fill" style="width:11.7%"></div></div><div class="v">8,436</div></div>
+        <div class="barrow"><div class="name">session</div><div class="track"><div class="fill" style="width:11.7%"></div></div><div class="v">8,385</div></div>
+        <div class="barrow"><div class="name">llm</div><div class="track"><div class="fill" style="width:11.2%"></div></div><div class="v">8,040</div></div>
+        <div class="barrow"><div class="name">test-support</div><div class="track"><div class="fill" style="width:9.7%"></div></div><div class="v">6,984</div></div>
+        <div class="barrow"><div class="name">fs</div><div class="track"><div class="fill" style="width:8%"></div></div><div class="v">5,746</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>文档着力刻画的 agent loop 内核，整个 <code>core/</code> 组是 13,462 行 —— 不到 UI 层的五分之一。churn 也指向同一处：改动最频繁的单个包目录是 <code>client/ui-conversation</code>(2,856 次文件触碰)。这不是缺陷，是一份关于「这个项目现在真正的工作面在哪里」的事实。</p>
+
+    <section id="onboard">
+      <span class="eyebrow">10 · 上手</span>
+      <h2>两条上手路径，文档只清楚地讲了一条</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>路径</th><th>做法</th><th>成本</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>补丁 overlay</strong></td>
+              <td><code>dsh web --patch ./my.cordis.yml</code> 挂一个树外插件</td>
+              <td class="num">几分钟 · 零闸门</td>
+            </tr>
+            <tr>
+              <td><strong>树内包</strong></td>
+              <td>新建 <code>packages/&lt;group&gt;/tool-foo</code> 工作区包</td>
+              <td class="num">约 20 个文件 · 一周量级</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>第一条是完整、受支持的扩展机制，并且真的能跑通。问题是没有任何文档告诉新人这一点 ——于是「加个工具」的任务会本能地走上第二条。而第二条的真正成本中心不是 TypeScript：一个新工具包会连带要求你手写 <code>README.zh.md</code>、Agent Note 的中文版，以及被你的包扰动到的 <code>tool-catalog.zh.md</code> / <code>config-catalog.zh.md</code> 等生成目录的中文对照，再重新记录每份 <code>.i18n.yaml</code>。</p>
+      <p>闸门本身的设计倒是相当体贴：几乎每道闸门都用 <code>packages/*/*</code> 通配而不是读注册表，所以新包<strong>自动</strong>进入约束、README 检查、config 目录、双语配对的作用域，不必编辑任何清单。两个例外(<code>gen-tool-catalog.ts</code> 的 <code>TOOL_PACKAGES</code> 和 <code>packages/bundle/base</code>)恰好就是新人会忘的两个，而它们的报错会直接点名文件和修法。</p>
+      <p>另外值得一提：生成目录质量很高，而且高得有道理。<code>gen-tool-catalog.ts</code>是<strong>在真实 Cordis 上下文里把每个工具插件启动起来</strong>再读 <code>ctx.tools.schemas()</code>，而不是解析源码 —— 因为 schema 可能来自加载期配置或运行时展开。它还双向设防：包不在清单里要报错，包启动了却没注册任何东西<em>也</em>要报错，并猜出最可能的原因(未满足的 <code>inject</code>)。读 <code>docs/tool-catalog.md</code> 比读 <code>packages/</code> 更快也更可信。</p>
+    </section>
+
+    <section id="method">
+      <span class="eyebrow">11 · 方法</span>
+      <h2>这份报告是怎么做的，以及它没做什么</h2>
+      <p>
+        13 个并行的分析 agent 分头深读源码(10 个按子系统，3 个分别扮演尽调、研究者、新人视角)，每条事实都要求给出打开过的文件路径。之后我复核了各 agent 之间互相冲突的数字，以本地实测为准—— 包括包组数(49，非 51)、<code>ui-*</code> 包数(31，非 45)、Agent Note 数(686)、vendor 修改数(18)、以及 <code>AGENTS.md</code> 布局块的逐项比对(覆盖 32、漏 17、多 2)。</p>
+      <div class="note">
+        <span class="tag">未做的事</span>
+        <p>
+          <strong>没有跑过任何构建、测试、闸门或产品二进制。</strong>所有行为性结论来自读源码、读类型、读用例断言与生成产物，而不是观察运行。尤其是：100% 覆盖率是 <code>vitest.config.ts</code> 里配置的阈值，不是我实测到的数字；三平台沙箱的内核行为、Claude Code / Codex 的真实 e2e(无密钥会自跳过)均未验证。行数一律是 <code>wc -l</code> 原始行数，含空行与注释 —— 这个仓库注释密度约 26%，所以绝对值偏高，但彼此之间可比。</p>
+      </div>
+      <p>分析过程中顺带发现几处文档漂移，已在上文对应位置标出：
+        <code>core/session</code> 里写着「五种产生消息的事件类型」而实际是三种；
+        <code>capability-seams.md</code> 里有已改名或不存在的包名；
+        <code>tool-catalog.md</code> 声称 cordis 工具集「不在任何出厂树里」，但 <code>apps/cli</code> 的<code>cordis</code> preset 确实挂载了它；<code>tool-cordis</code> 的 README 落后于自己的源码一个版本模型。</p>
+    </section>
+
+    <footer>
+      <p>分析对象：<code>deepseek-harness</code> @ <code>47f943859b</code>(master,2026-08-13)。219 个工作区包 · 227,637 行源码 · 268,040 行测试 · 12,293 次提交。配色取自项目自带的设计系统 <code>packages/client/ui-theme/src/styles/design-platform.css</code>。</p>
+    </footer>
+
+  </div>
+</div>
