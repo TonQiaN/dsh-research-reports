@@ -1,0 +1,931 @@
+<meta charset="utf-8">
+<title>DeepSeek Harness 的十一个 Skill</title>
+<style>
+:root {
+  --bg: #F4F2ED; --surface: #FCFBF8; --surface-2: #ECE8DF; --line: #D8D2C6;
+  --ink: #1F1B15; --ink-2: #574F44; --ink-3: #847B6D;
+  --accent: #A3541B; --accent-soft: #F3E1CF; --accent-ink: #6D3810;
+  --steel: #3B5B7C; --steel-soft: #DCE6F0;
+  --moss: #5B7638; --moss-soft: #E2EAD3;
+  --plum: #6E4B7A; --plum-soft: #EBE0EF;
+  --code-bg: #ECE8DF;
+  --shadow: 0 1px 0 rgba(31,27,21,.06), 0 8px 24px -16px rgba(31,27,21,.25);
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono", "Roboto Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17140F; --surface: #1F1B15; --surface-2: #29241C; --line: #3B3428;
+    --ink: #EAE5DA; --ink-2: #BDB4A4; --ink-3: #8E8576;
+    --accent: #E39B5A; --accent-soft: #3A2814; --accent-ink: #F3C99C;
+    --steel: #8FB4DA; --steel-soft: #1E2C3B;
+    --moss: #A6C27D; --moss-soft: #242F19;
+    --plum: #C3A2CF; --plum-soft: #2E2333;
+    --code-bg: #100E0A;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17140F; --surface: #1F1B15; --surface-2: #29241C; --line: #3B3428;
+  --ink: #EAE5DA; --ink-2: #BDB4A4; --ink-3: #8E8576;
+  --accent: #E39B5A; --accent-soft: #3A2814; --accent-ink: #F3C99C;
+  --steel: #8FB4DA; --steel-soft: #1E2C3B;
+  --moss: #A6C27D; --moss-soft: #242F19;
+  --plum: #C3A2CF; --plum-soft: #2E2333;
+  --code-bg: #100E0A;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+a:hover, a:focus-visible { border-bottom-color: currentColor; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: .8rem 1rem; overflow-x: auto; font-size: .82rem; line-height: 1.55; margin: 1rem 0; }
+pre code { background: none; padding: 0; font-size: inherit; }
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; line-height: 1.25; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.6rem; letter-spacing: -.01em; }
+h2 { font-size: 1.75rem; margin-top: .25rem; }
+h3 { font-size: 1.2rem; margin: 2rem 0 .6rem; }
+h4 { font-size: 1.02rem; margin: 1.4rem 0 .4rem; font-family: var(--sans); font-weight: 700; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+li { margin: .25rem 0; }
+li::marker { color: var(--ink-3); }
+strong { font-weight: 700; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+.shell { display: grid; grid-template-columns: 1fr; gap: 0; max-width: 1180px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+@media (min-width: 1100px) {
+  .shell { grid-template-columns: 240px minmax(0, 1fr); gap: 3rem; }
+  .toc { position: sticky; top: 1.5rem; align-self: start; max-height: calc(100vh - 3rem); overflow: auto; }
+}
+.toc { padding-top: 2.4rem; font-size: .86rem; }
+.toc .toc-title { text-transform: uppercase; letter-spacing: .12em; font-size: .7rem; color: var(--ink-3); margin-bottom: .6rem; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: .28rem .5rem; color: var(--ink-2); border-left: 2px solid var(--line); border-bottom: 0; border-radius: 0; }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.toc .n { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-right: .4rem; }
+main { min-width: 0; max-width: 800px; }
+.wide { max-width: 100%; }
+
+.hero { padding: 2.6rem 0 1.5rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+.hero .eyebrow { font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: .8rem; }
+.hero .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 44em; margin-top: 1rem; }
+.hero .meta { font-family: var(--mono); font-size: .76rem; color: var(--ink-3); margin-top: 1rem; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem; margin: 1.5rem 0 0; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .8rem .9rem; box-shadow: var(--shadow); }
+.stat .v { font-family: var(--serif); font-size: 1.7rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: .78rem; color: var(--ink-2); margin-top: .3rem; }
+
+section { margin-top: 3.2rem; scroll-margin-top: 1.5rem; }
+.sec-eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .4rem; }
+.sec-lede { color: var(--ink-2); font-size: 1.02rem; margin: .8rem 0 1.4rem; }
+
+.ev { display: block; font-family: var(--mono); font-size: .74rem; color: var(--ink-3); line-height: 1.55; margin: .15rem 0 .8rem; padding-left: 1rem; text-indent: -1rem; overflow-wrap: anywhere; }
+.ev::before { content: "证据 "; color: var(--accent); }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: .9rem 1.1rem; margin: 1.2rem 0; border-radius: 0 6px 6px 0; }
+.callout.steel { border-left-color: var(--steel); }
+.callout.moss { border-left-color: var(--moss); }
+.callout.plum { border-left-color: var(--plum); }
+.callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+.quote { font-family: var(--serif); font-size: 1.05rem; color: var(--ink); border-left: 3px solid var(--line); padding: .3rem 1rem; margin: 1rem 0; }
+.quote .src { display: block; font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-top: .35rem; }
+.lesson { background: var(--accent-soft); border-radius: 6px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
+.lesson h4 { margin-top: 0; color: var(--accent-ink); }
+.lesson ul { margin-bottom: 0; }
+.tag { display: inline-block; font-family: var(--mono); font-size: .7rem; padding: .05rem .4rem; border-radius: 3px; border: 1px solid var(--line); color: var(--ink-2); vertical-align: middle; white-space: nowrap; }
+.tag.a { border-color: var(--accent); color: var(--accent); }
+.tag.s { border-color: var(--steel); color: var(--steel); }
+.tag.m { border-color: var(--moss); color: var(--moss); }
+.tag.p { border-color: var(--plum); color: var(--plum); }
+
+.tbl-wrap { overflow-x: auto; margin: 1rem 0 1.4rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .7rem; border-bottom: 1px solid var(--line); }
+th { font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); background: var(--surface-2); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+td.mono, th.mono { font-family: var(--mono); font-size: .8rem; }
+.tbl-wrap.compact th, .tbl-wrap.compact td { padding: .4rem .55rem; font-size: .84rem; }
+
+figure { margin: 1.4rem 0; }
+figure svg { max-width: 100%; height: auto; display: block; color: var(--ink); }
+figcaption { font-size: .84rem; color: var(--ink-2); margin-top: .5rem; }
+.fig-box { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem; overflow-x: auto; }
+
+.timeline { list-style: none; padding: 0; margin: 1rem 0; border-left: 2px solid var(--line); }
+.timeline li { position: relative; padding: 0 0 .9rem 1.3rem; margin: 0; }
+.timeline li::before { content: ""; position: absolute; left: -6px; top: .55rem; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.timeline li.turn::before { background: var(--accent); }
+.timeline .d { font-family: var(--mono); font-size: .76rem; color: var(--ink-3); }
+.timeline .t { display: block; }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .9rem 1rem; }
+.card h4 { margin-top: 0; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+.scale { display: grid; grid-template-columns: 1fr; gap: 1rem; margin: 1rem 0; }
+.scale .card { border-top: 3px solid var(--accent); }
+.scale .card.two { border-top-color: var(--steel); }
+.scale .card.three { border-top-color: var(--moss); }
+.scale .who { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; font-size: .92rem; margin: .8rem 0 1.2rem; }
+.kv dt { font-family: var(--mono); font-size: .8rem; color: var(--ink-3); }
+.kv dd { margin: 0; }
+.footnote { font-size: .84rem; color: var(--ink-2); }
+.small { font-size: .88rem; }
+
+/* skill anatomy specimen */
+.specimen { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem; }
+@media (max-width: 760px) { .specimen { grid-template-columns: 1fr; } }
+.specimen pre { margin: 0; border: 0; background: var(--code-bg); }
+.specimen .notes { font-size: .86rem; }
+.specimen .notes dt { font-family: var(--mono); font-size: .76rem; color: var(--accent); margin-top: .6rem; }
+.specimen .notes dt:first-child { margin-top: 0; }
+.specimen .notes dd { margin: .1rem 0 0; color: var(--ink-2); }
+
+/* pathology list */
+.patho { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .6rem; }
+.patho li { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .7rem .9rem; }
+.patho .q { font-family: var(--serif); font-size: 1rem; }
+.patho .why { display: block; font-size: .84rem; color: var(--ink-2); margin-top: .3rem; }
+.patho .src { display: block; font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-top: .2rem; }
+
+/* sparkline table */
+.spark { vertical-align: middle; }
+.bar-cell { position: relative; }
+.bar { height: 10px; background: var(--accent); border-radius: 2px; opacity: .85; display: inline-block; vertical-align: middle; }
+.bar.s { background: var(--steel); } .bar.m { background: var(--moss); } .bar.p { background: var(--plum); }
+</style>
+
+<div class="shell">
+<nav class="toc" aria-label="目录">
+  <div class="toc-title">目录 · 第四卷</div>
+  <ol>
+    <li><a href="#s1"><span class="n">01</span>三个「skill」，一份目录</a></li>
+    <li><a href="#s2"><span class="n">02</span>十一份档案卡</a></li>
+    <li><a href="#s3"><span class="n">03</span>出生顺序：每一份都对应一次疼痛</a></li>
+    <li><a href="#s4"><span class="n">04</span>解剖一份 SKILL.md</a></li>
+    <li><a href="#s5"><span class="n">05</span>文档簇：五个 skill 切分「散文」</a></li>
+    <li><a href="#s6"><span class="n">06</span>Git 簇：push 前、合并栈、评审</a></li>
+    <li><a href="#s7"><span class="n">07</span>笔记治理与 GIF：校准判断、封印证据</a></li>
+    <li><a href="#s8"><span class="n">08</span>skill 里的 agent 病历</a></li>
+    <li><a href="#s9"><span class="n">09</span>接线：一份文本、两家规范、一道闸门</a></li>
+    <li><a href="#s10"><span class="n">10</span>分工：skill 与手册、文档、闸门、笔记</a></li>
+    <li><a href="#s11"><span class="n">11</span>用没用：仓库能证明的与不能证明的</a></li>
+    <li><a href="#s12"><span class="n">12</span>陈旧、矛盾与上下文税</a></li>
+    <li><a href="#s13"><span class="n">13</span>抄什么、别抄什么</a></li>
+    <li><a href="#s14"><span class="n">14</span>方法、修正与未解</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">DeepSeek Harness 研究 · 第四卷 · Skills</div>
+  <h1>DeepSeek Harness 的十一个 Skill</h1>
+  <p class="lede">一个仓库、11 份 <code>SKILL.md</code>、13,578 词——这是这支团队把「这件事该怎么干」写给 Claude Code、Codex 和自家 agent 读的剧本。这一卷把每一份都拆开：它为什么出生、长什么样、写给谁看、专防 agent 的哪种病、和手册／文档／闸门／Agent Note 怎么分工、有没有真的被用、哪里已经过时；最后给从个人 vibe coding 走向团队的你一份「抄什么、别抄什么」。</p>
+  <div class="meta">快照 47f943859b · master · 2026-08-13 ｜ 所有数字可用文中命令在本地复算 ｜ 前三卷：<a href="https://claude.ai/code/artifact/451e61ec-6c62-4e48-b8d7-0b9a6ad359e8">解剖</a> · <a href="https://claude.ai/code/artifact/72e025d0-d2b4-4ee7-8395-ba884c6d5794">工作流</a> · <a href="https://claude.ai/code/artifact/4b7f1514-7631-4415-b80f-ac77b78ae87d">文档治理考古</a></div>
+  <div class="stats">
+    <div class="stat"><div class="v">11</div><div class="k">个 skill，都在 <code>.agents/skills/</code>；3 种读者：Claude Code、Codex、dsh 自己</div></div>
+    <div class="stat"><div class="v">13,578</div><div class="k">词 SKILL.md（含 references 16,957 词）；无字数预算、不双语</div></div>
+    <div class="stat"><div class="v">3 → 60 天</div><div class="k">建仓 3 天后出生第一份，60 天后最后一份</div></div>
+    <div class="stat"><div class="v">108</div><div class="k">次非合并提交 · 70 个 PR · 7 位作者（1 人占 72%）</div></div>
+    <div class="stat"><div class="v">6 / 11</div><div class="k">自称「guidance, not a …」；其余 5 份偏流程的不写这句</div></div>
+    <div class="stat"><div class="v">3 次</div><div class="k">翻车→蒸馏：砍过头的散文、763 文件的清扫提交、第一次归档</div></div>
+  </div>
+</header>
+
+<!-- ============ S1 ============ -->
+<section id="s1">
+  <div class="sec-eyebrow">01 · 定义与边界</div>
+  <h2>三个「skill」，一份目录：这一卷研究的是哪 11 个</h2>
+  <p class="sec-lede">在这个仓库里，「skill」这个词同时指三样东西。先把边界画清，后面的数字才不会串。</p>
+  <p>第一样是<strong>产品能力</strong>：<code>packages/skill/</code> 下的四个包（<code>skill</code>、<code>skill-badge</code>、<code>skill-filesystem</code>、<code>tool-skill</code>）让 dsh 这个 agent 运行时能发现、展示、加载技能。第二样是<strong>产品自带的技能</strong>：<code>apps/cli/config/agent-presets/cordis/skills/</code> 里的两份（<code>cordis-plugin-development</code> 3,104 词、<code>editing-cordis-compositions</code> 1,929 词），是 dsh 运行 cordis 预设时给自己的模型读的。第三样才是本卷主角：<code>.agents/skills/</code> 下的 11 份 <code>SKILL.md</code>——写给<em>在这个仓库上干活的编码 agent</em>（主要是 Codex 和 Claude Code）读的开发流程剧本。全仓库共 16 份 <code>SKILL.md</code>：11 份流程 skill、2 份产品预设 skill、3 份快照测试 fixture。</p>
+  <span class="ev">find . -name SKILL.md -not -path '*/node_modules/*' | sed 's|/[^/]*/SKILL.md$||' | sort | uniq -c → 11 .agents/skills · 2 apps/cli/config/agent-presets/cordis/skills · 3 examples/acp-agent/tests/snapshots/skill-load/…/.dsh/skills</span>
+  <p>仓库自己给这 11 份下过定义。<code>docs/AGENTS.md</code> 的文档分层表里有一行：<strong>Skills（<code>.agents/skills/</code>）— 可复用的工作流与专门的决策标准；不放产品与运行时约定（那些归 docs 或源码）</strong>。这句话是本卷所有分析的锚点：skill 是「怎么做」和「怎么判断」，不是「系统是什么」。</p>
+  <span class="ev">docs/AGENTS.md:32 「Skills (`.agents/skills/`) | Reusable workflows and specialized decision standards | Product and runtime contracts (→ docs or source)」</span>
+  <p>一个时间顺序值得先说：<code>.agents/skills/</code> 目录 06-13 出生，产品的技能系统（当时在 <code>packages/core/skill</code>，07-10 迁到 <code>packages/skill</code>）06-25 才有第一个提交——是「给开发者 agent 的技能」在先，「产品能力」在后，而后者第一版就把 <code>.agents/skills</code> 列为扫描根。它们有三种读者，读的是同一份文本。<code>.claude/skills</code> 是一个受 git 跟踪的软链接，指向 <code>../.agents/skills</code>——Claude Code 按自己的规范从 <code>.claude/skills/&lt;name&gt;/SKILL.md</code> 找技能，顺着软链接读到同一份文件；Codex 按自己的规范直接读 <code>$REPO_ROOT/.agents/skills</code>；而 dsh 产品自己的 <code>dsh-skill-filesystem</code> 把 <code>&lt;projectRoot&gt;/.agents/skills</code> 列为 rank 200 的技能根，所以在这个仓库里跑 dsh，模型的技能目录里也会出现这 11 个名字。第 9 节专门讲接线。</p>
+  <span class="ev">ls -la .claude/skills → skills -> ../.agents/skills（39b3db4b9c，2026-06-13）；packages/skill/skill-filesystem/README.md「| 200 | project-agents | &lt;projectRoot&gt;/.agents/skills |」</span>
+  <p>还有两批「曾经存在」的 skill 需要排除，它们都是<em>产品</em> skill、经 TUI 入口通过产品的 bundled 技能根（rank 600，<code>DSH_BUNDLED_SKILL_DIR</code>）随 dsh 一起发给最终用户（这条接线只在 07-28 → 08-04 TUI 入口存在期间生效），而不是给开发者 agent 读的。仓库根目录下曾有 <code>skills/</code>：<code>create-dsh-sdk-project</code>（07-17 → 08-11，随 PR #2242「remove unreleased project toolchain」删除）和 <code>dsh-customize</code>／<code>dsh-upgrade</code>／<code>dsh-upstream-customization</code>（07-27 → 08-10 的删除提交、08-11 随 PR #2152「remove managed source installer」合并，连同 425 行的 install.sh 一起删除，在 master 上只活了 14 天）。第二卷提过的「个人暂存维护 skill」指的就是后三份。它们用同一种 SKILL.md 格式，但不是本卷的对象。</p>
+  <span class="ev">git log --full-history --diff-filter=A --format='%h %ad %s' --date=short -- skills/ → 472a683bdc 07-17、5d2329e207 07-27（另有 e7c0a5b794 在分支上加过 skills/dsh-migrate，07-29 被 ff126751d8 删除，从未上 master）；…--diff-filter=D… → 34abf69730 2026-08-10 cleanup: remove managed source installer；daf90bda7e 2026-08-11 refactor(sdk): remove unreleased project toolchain；git log -S"join(SOURCE_ROOT, 'skills')" → 4c5f92e0fd 07-27 加、10bb9cbf4a 08-04 删；.agents/notes/archived/process/2026-07-23-personal-staging-maintenance-skills.md</span>
+</section>
+
+<!-- ============ S2 ============ -->
+<section id="s2">
+  <div class="sec-eyebrow">02 · 一览</div>
+  <h2>十一份档案卡：名字、触发词、体量、附件、出生、簇</h2>
+  <p class="sec-lede">按四个簇排列——它们不是仓库的正式分类，而是这一卷为叙述方便划的：五份管文档与散文，三份管 git／PR 流程，两份管 Agent Note 治理，一份管 GUI 证据。</p>
+  <div class="tbl-wrap wide compact">
+  <table>
+    <thead><tr><th>skill</th><th>簇</th><th>description 里的触发词（意译）</th><th class="num">词</th><th>附件</th><th>诞生</th><th class="num">非合并提交</th><th>类型</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">dsh-prose-standard</td><td><span class="tag a">文档</span></td><td>写、审、恢复、删、审计任何散文：Markdown、JSDoc、注释、提示词、诊断、CLI／UI 字符串</td><td class="num">1,240</td><td>openai.yaml · references/examples.md（1,220 词）</td><td>07-13（生为 dsh-trim-prose）</td><td class="num">11</td><td>标准</td></tr>
+      <tr><td class="mono">dsh-doc-standards</td><td><span class="tag a">文档</span></td><td>写、挪、审文档；层级与详略、教程 vs 参考、slop、verify-doc-budgets 变红、「文档太长了」</td><td class="num">903</td><td>—</td><td>07-04</td><td class="num">19</td><td>标准＋流程</td></tr>
+      <tr><td class="mono">dsh-trim-cot-leakage</td><td><span class="tag a">文档</span></td><td>审像「推理转录」的文本：死引用（decision N）、变更叙事、评审视角、控制流叙述</td><td class="num">1,005</td><td>references/examples.md（1,649 词）· recall-batteries.md（510 词）</td><td>08-09</td><td class="num">3</td><td>标准＋流程</td></tr>
+      <tr><td class="mono">dsh-translate-docs</td><td><span class="tag a">文档</span></td><td>手动运行扩展双语工作流；<strong>禁止模型自动调用</strong></td><td class="num">1,399</td><td>openai.yaml（allow_implicit_invocation: false）</td><td>07-02</td><td class="num">21</td><td>流程</td></tr>
+      <tr><td class="mono">dsh-doc-site-sync</td><td><span class="tag a">文档</span></td><td>发布、更新、挪、删网站页面；改 website/docs.ts；页面没出现在 VitePress</td><td class="num">910</td><td>openai.yaml</td><td>07-13</td><td class="num">8</td><td>流程</td></tr>
+      <tr><td class="mono">dsh-pre-push-checks</td><td><span class="tag s">Git</span></td><td>push、force-push、标 ready、宣称通过之前；gh stack sync 之后</td><td class="num">1,156</td><td>openai.yaml</td><td>07-06</td><td class="num">15</td><td>流程</td></tr>
+      <tr><td class="mono">dsh-merging-stacked-prs</td><td><span class="tag s">Git</span></td><td>合并依赖链 PR、「stacked PRs」「PR stack」</td><td class="num">1,161</td><td>—</td><td>07-06</td><td class="num">8</td><td>流程</td></tr>
+      <tr><td class="mono">dsh-code-review</td><td><span class="tag s">Git</span></td><td>评审本仓库的 PR</td><td class="num">1,073</td><td>—</td><td>06-13</td><td class="num">40</td><td>导向＋标准</td></tr>
+      <tr><td class="mono">dsh-archive-agent-notes</td><td><span class="tag m">笔记</span></td><td>增、审、剪、归档、恢复 Agent Note</td><td class="num">865</td><td>openai.yaml</td><td>07-26</td><td class="num">3</td><td>标准＋流程</td></tr>
+      <tr><td class="mono">dsh-find-simplifications</td><td><span class="tag m">笔记</span></td><td>找可删可折的东西，写 proposed 笔记或 TODO，合并被取代的笔记</td><td class="num">2,038</td><td>—</td><td>06-20</td><td class="num">17</td><td>标准＋流程</td></tr>
+      <tr><td class="mono">record-browser-gif</td><td><span class="tag p">GUI</span></td><td>录浏览器演示 GIF；<strong>每个改 GUI 的 PR MUST 附一段</strong></td><td class="num">1,828</td><td>openai.yaml · scripts/encode_gif.py（279 行）</td><td>07-23</td><td class="num">8</td><td>流程</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">wc -w .agents/skills/*/SKILL.md；git log --no-merges --oneline -- .agents/skills/&lt;name&gt; | wc -l（dsh-prose-standard 含旧路径 dsh-trim-prose）；git log --diff-filter=A --follow --format='%ad' --date=short -- .agents/skills/&lt;name&gt;/SKILL.md | tail -1（dsh-prose-standard 一行要改用旧路径 .agents/skills/dsh-trim-prose/SKILL.md 并加 --full-history：改名藏在合并提交里，--follow 跨不过去）。第二卷表里的「提交数」含合并（44/19/24…），本卷一律用非合并数；一次提交可能同时触碰多份 skill（08-09 的一次全仓库改词一口气动了 9 份），所以各行之和（153）大于去重后的 108。</span>
+  <p>几个一眼可见的形状。<strong>体量都在 865–2,038 词之间</strong>，中位数 1,156 词——都比根 AGENTS.md（1,900 词，正卡在预算上限）短，但每一份都比 AGENTS.md 里对应的一两句话长十倍以上：它们正是「不该塞进 AGENTS.md 的过程细节」的溢出地（第 10 节）。skill 本身不受 <code>verify-doc-budgets</code> 的字数上限约束（预算清单里只有 9 个文件，没有一个是 skill），也不在双语配对范围内——它们和各级 AGENTS.md 一样只写英文。<strong>最长的两份都不是被引用最多的</strong>：dsh-find-simplifications 2,038 词是因为它把「怎么证明一个删除候选」写成了完整方法论；record-browser-gif 1,828 词是因为录屏踩过的坑太多。<strong>提交最多的是最早的</strong>：dsh-code-review 40 次非合并提交，接近第二名（translate-docs 21 次）的两倍——第 6 节会讲它为什么长这么快、又为什么被砍掉四分之三。</p>
+  <p>类型一栏是本卷的划分：<em>流程</em>（有序步骤 + 命令）、<em>标准</em>（判断准则 + 校准例子）、<em>导向</em>（把读者指到权威来源）。多数 skill 是混合体，但重心不同：dsh-merging-stacked-prs 是纯流程，最后带一张 7 项 checklist；dsh-prose-standard 是纯标准，连一个命令代码块都没有（只在第 70 行点名 <code>git diff --check</code>）；dsh-code-review 开头就是「Sources of truth」的七条链接。</p>
+</section>
+
+<!-- ============ S3 ============ -->
+<section id="s3">
+  <div class="sec-eyebrow">03 · 起源</div>
+  <h2>出生顺序：每一份都对应一次疼痛</h2>
+  <p class="sec-lede">建仓第 3 天就有了第一份；此后每一份的诞生提交、落地 PR、分支名和当时的「疼痛」都能在 git 里找到。</p>
+    <p>仓库的第一个提交在 2026-06-10。第一份 skill 出现在第 3 天，最后一份在第 60 天。11 份里有 8 份挤在 06-29 到 07-26 这四周里，几乎每周两份；之后只在 08-09 又添了一份。把每一份的诞生提交、落地 PR、分支名和当时的「疼痛」放在一起看，会看到一个反复出现的模式：<strong>先做一次痛苦的清扫或迁移，再在同一个 PR 里把方法蒸馏成 skill</strong>。</p>
+  <ul class="timeline">
+    <li class="turn"><span class="d">06-13 · 第 3 天</span><span class="t"><code>dsh-code-review</code>（472 词）——随 <code>.agents/</code> 目录、<code>.claude/skills</code> 软链接和 .gitignore 里删掉 <code>.claude/</code> 一起，直接提交到 master，没有 PR。自述「a where-to-look map, not a rules list」。第二天就因为 Codex 评审发现它自己也带着那句过期的「doc-sync 没有闸门」而被改正。</span></li>
+    <li><span class="d">06-20</span><span class="t"><code>dsh-find-simplifications</code>（1,177 词）——PR #72 <code>codex/rfc-simplify-candidates</code> 做完一轮简化调研（22 篇 RFC：skill 出生时全在 proposed/，同日评审提交把 11 篇挪进 rejected/）之后，在同一 PR 中把方法写成 skill；「When Folding Another PR Or Branch」一节记录的正是那次把 PR #74 折进来的经历。它当天带了 openai.yaml，又在当天的评审里删掉。</span></li>
+    <li><span class="d">07-02</span><span class="t"><code>dsh-translate-docs</code>（736 词，作者 Ziya，PR #133）——提交正文明写「following the dsh-code-review pattern of deferring to docs as sources of truth」；配套 RFC 说出了疼痛：「靠手工维护第二种语言、没有任何机制，翻译就是这样烂掉的：英文文件往前走，中文文件悄悄撒谎，没有闸门察觉。」同一提交加了 <code>verify-translation-pairing</code> 闸门，也是第一份被根 AGENTS.md 点名的 skill。</span></li>
+    <li class="turn"><span class="d">07-04</span><span class="t"><code>dsh-doc-standards</code>（724 词，PR #142）——提交正文给了这一卷最量化的起源：「常设文档每个 PR 长一段、没有任何东西往回推；根 AGENTS.md 在 50 次提交里长到 8,130 词，同一条规则说两三遍。」skill 是「the thin placement/audit/red-gate workflow over the standard, mirroring the dsh-translate-docs split」；「闸门抓到的第一个超标者是标准本身（1,057 &gt; 1,000）」。同一天根 AGENTS.md 被重写到 1,495 词。</span></li>
+    <li><span class="d">07-06</span><span class="t"><code>dsh-merging-stacked-prs</code>（728 词，PR #176）与 <code>dsh-pre-push-checks</code>（765 词，作者 Yichen Jiang，PR #187 <code>codex/add-dsh-pre-push-checks</code>）同日出生。前者围绕「删 base 分支会自动关掉依赖它的 PR」这一个陷阱，把 34 小时前随 AGENTS.md 瘦身新写进 cookbook 的一句话扩成完整流程；后者的第一版 description 写着「Guides Codex to run the right local gates」，是明确写给 Codex 的，也是第一份带 openai.yaml 落到 master 的 skill。</span></li>
+    <li class="turn"><span class="d">07-13</span><span class="t"><code>dsh-trim-prose</code>（972 词）——PR #260 <code>codex/trim-ai-prose</code> 里先有两次大砍（−11,834 行、−4,079 行），再有一次「rebalance prose cleanup and add trimming skill」（392 文件、+2,802/−1,755）把删过头的合同细节补回来并附上这份 skill；<strong>次日在一次 merge-forward 提交里被改名为 <code>dsh-prose-standard</code></strong>——master 从来没见过 dsh-trim-prose 这个名字（第 5 节）。同日 <code>dsh-doc-site-sync</code>（657 词，Yichen Jiang，PR #270）随文档网站一起出生：网站是仓库 Markdown 的「tested projection」，skill 是编辑那份显式清单的流程。</span></li>
+    <li><span class="d">07-15 → 07-23</span><span class="t">一份幽灵 skill：<code>dsh-arch-diagram</code>（README 架构图的 HTML/CSS/render.sh 管线）在 PR #313 的分支上被加入又被删除，从未出现在 master 的树里；只有 <code>git log --all --full-history --name-only -- .agents/skills</code> 才会列出它（连同 dsh-trim-prose 共 13 个目录名），容易把 11 数多。</span></li>
+    <li><span class="d">07-23</span><span class="t"><code>record-browser-gif</code>（647 词，PR #563）——起因不是评审失败而是工具缺口：「浏览器演示一直靠一次性的截屏与编码命令拼出来，时长和体积不一致……还会模糊真实服务／API 流与 fixture 的边界。」第一版 description 也是写给 Codex 的（「Use when Codex is asked …」）。三天后 07-26 的一次提交把「每个改 GUI 的 PR MUST 附 GIF」和 assets 分支发布加进来，提交正文说是「Folds in the operational lessons from the Code Mode UI series」。</span></li>
+    <li><span class="d">07-26</span><span class="t"><code>dsh-archive-agent-notes</code>（759 词，PR #677）——与第一次归档大扫除同一提交出生：281 个文件、45 组三元组挪进 <code>archived/</code>；skill 里那些带字数的校准例子，就是那次清扫自己做过的判断。</span></li>
+    <li class="turn"><span class="d">08-09</span><span class="t"><code>dsh-trim-cot-leakage</code>（956 词，PR #2117）——同一天下午的 PR #2098（15:09 的清扫提交动了 763 个文件，21:28 合并）清扫了「推理转录泄漏」（<code>(decision 12/16/19/20/21)</code>、<code>(audit C2)</code> 这类只有设计会话能看懂的引用），三轮评审修正之后，晚上 22:27 的提交把它蒸馏成 skill：「references/ carry 24 few-shot calibration blocks（both citation-boundary directions plus the four overcorrection traps caught in the purge's review rounds）」。</span></li>
+  </ul>
+  <span class="ev">git log --diff-filter=A --follow --format='%h %ad %an %s' --date=short -- .agents/skills/&lt;name&gt;/SKILL.md | tail -1；对 dsh-prose-standard 用 git log --full-history -- .agents/skills/dsh-trim-prose；落地 PR 用 git rev-list --ancestry-path &lt;birth&gt;..master 与 first-parent 链求交；各提交正文用 git show -s --format=%B</span>
+  <p>三个统计能概括这条时间线。<strong>作者高度集中</strong>：11 次诞生提交里 8 次是 Tianyi Cui，2 次 Yichen Jiang（pre-push、doc-site-sync），1 次 Ziya（translate-docs）；10 次落地合并全部由 Tianyi Cui 按下。<strong>分支家族</strong>：codex/ 3 次（find-simplifications、pre-push、prose-standard）、worktree 6 次、docs/ 1 次、直推 master 1 次——用第二卷的口径，这些 skill 大约三分之一由 Codex 会话起草。<strong>有没有配 Agent Note</strong>：4 份与自己的 rationale 笔记同一提交出生（translate-docs、doc-standards、gif、archive），cot-leakage 的笔记早几小时诞生于同日的清扫 PR，6 份没有（code-review、find-simplifications、pre-push、stacked-prs、prose-standard、doc-site-sync）——「非平凡改动必须带 Agent Note」的规则 07-19 才写进 AGENTS.md（PR #414）；在那之前出生的 8 份里 6 份没有笔记，之后出生的 3 份都有。前者的「为什么」只留在提交正文里，而这个仓库自己的散文标准说提交正文不是持久的家。</p>
+  <span class="ev">git show --name-only --format= &lt;birth-hash&gt; | grep -E 'notes/|rfc/'；git log -S'MUST include at least one Agent Note' --format='%h %ad %s' -- AGENTS.md | tail -1 → b1b57a0ac5 2026-07-19 Require Agent Notes for non-trivial changes</span>
+  <div class="callout">
+    <p><strong>skill 是随着 AGENTS.md 缩水长起来的。</strong>07-03 的峰值 AGENTS.md 有 8,619 词，通篇只在 verify-md-links 的范围句里顺带提到一次 <code>.agents/skills/**/*.md</code>——那时也只有两份 skill。07-04 重写到 1,495 词之后，skill 才开始成为常设规则里被点名的「过程之家」；到 08-13，根 AGENTS.md 卡在 1,900 词的上限，11 份 skill 加起来 13,578 词。被删除的 <code>missions/</code> 编排账本（第二卷）里的 plan.md 也没有一处提到 skill：skill 不是任务编排层的机制，而是「怎么干」这一层的机制。</p>
+  </div>
+  <span class="ev">git show 907c8d3871:AGENTS.md | wc -w → 8619；git show 907c8d3871:AGENTS.md | grep -n -i skill；git show 0681ac47de:missions/plan.md | grep -c -i skill → 0</span>
+
+</section>
+
+<!-- ============ S4 ============ -->
+<section id="s4">
+  <div class="sec-eyebrow">04 · 解剖</div>
+  <h2>解剖一份 SKILL.md：从 frontmatter 到「汇报义务」</h2>
+  <p class="sec-lede">把 11 份叠在一起看，会浮现出一套稳定的写法。下面用一个合成的「标本」标出各部件，再给出它们在 11 份里各自出现了几次。</p>
+  <div class="specimen">
+<pre><code>---
+name: dsh-example
+description: Use when …; or requests like
+  "improve the docs", "this doc is too long".
+disable-model-invocation: true   # 仅 1/11
+user-invocable: true
+---
+# Verb-ing the DeepSeek Harness …
+
+**This skill is guidance, not a checklist.**
+
+## Sources of truth (read, don't re-summarize)
+- AGENTS.md / docs/AGENTS.md / notes/README.md
+- the &lt;X&gt; Agent Note owns why
+
+## Inputs and exclusions
+Require an explicit `scope`. If missing, stop.
+Never touch vendor/, .agents/notes/archived/.
+
+## Workflow / Classify the change
+1. Verify the live base; run
+   pnpm --silent run change-scope --base &lt;ref&gt;
+2. …
+Hard-stop if … Do not fall back to …
+
+## Validate and report
+Run doc-sync, lint, git diff --check;
+select more via dsh-pre-push-checks.
+Report scope inspected, changes, deferred
+cases, and checks actually run.
+
+## Checklist          # 仅 1/11
+- [ ] …</code></pre>
+    <dl class="notes">
+      <dt>frontmatter</dt><dd>10/11 只有 <code>name</code> + <code>description</code>；仅 dsh-translate-docs 多出 <code>disable-model-invocation: true</code> 与 <code>user-invocable: true</code>。没有一份用 <code>allowed-tools</code>、<code>model</code> 或 <code>context: fork</code>。</dd>
+      <dt>description = 触发器</dt><dd>8/11 以「Use when」开头，pre-push 是「Use before」，只有 translate-docs（「Manually run …」）与 record-browser-gif（「Record …」）以祈使短语开头。平均 49 词、最长 79 词（record-browser-gif）。两份直接列出用户会说的原话：doc-standards 的「improve the docs」「audit the docs」「this doc is too long」，stacked-prs 的「stacked PRs」「PR stack」「dependent PRs」。这不是摘要，是给模型的匹配样本。</dd>
+      <dt>「guidance, not a …」</dt><dd>6/11：code-review「not a complete checklist」、doc-standards／prose-standard／trim-cot-leakage「not a script」、find-simplifications「not a checklist」、translate-docs「not a translation memory」。剩下五份偏流程（pre-push、stacked-prs、doc-site-sync、gif、archive），步骤本身就是约束，不写这句免责。</dd>
+      <dt>Sources of truth</dt><dd>3 份把它写成标题（code-review、doc-standards、translate-docs，后两者的标题里还带着「read, don't re-summarize」）；archive-agent-notes 的「Read the contracts」、doc-site-sync 的「Read the owning contracts」、find-simplifications 的「Start With Repo Context」做的是同一件事——先把读者指到 AGENTS.md、docs、Agent Note，自己不复述。</dd>
+      <dt>硬停与禁令</dt><dd>11 份共 41 个「never」、54 个「do not／don't」、12 个「must」。密度最高的是 record-browser-gif（10 个 never）和 dsh-prose-standard（10 个 do not）。「hard-stop」只出现在 merging-stacked-prs。</dd>
+      <dt>汇报义务</dt><dd>9/11 明确写了「report／summarize／state …」：报告检查过的范围、做的改动、刻意保留的、推迟的、<em>实际跑过</em>的命令；pre-push 加一句「Report pending checks as pending」，gif 要求写明「录的是真 API 还是 fixture」。没有的两份：stacked-prs 只在遇阻时「stop and report it」，trim-cot-leakage 通篇没有「report」（以「Verify」收尾）。</dd>
+      <dt>命令逐字</dt><dd>四份带 fenced 代码块（stacked-prs 7 块、pre-push 6、doc-site-sync 3、gif 3——其中 1 块是 PR 正文里的 Markdown 嵌入模板），其余七份一块都没有；全部 11 份里共 54 处反引号包着的 pnpm／gh／git／rg／python3 命令，<code>pnpm run doc-sync</code> 与 <code>gh stack sync</code> 各被提到 5 次。带 fenced 块的四份恰好都是没有「guidance, not a …」句的——判断型 skill 不给命令，流程型 skill 不写免责。</dd>
+    </dl>
+  </div>
+  <span class="ev">rg -o -i '\bnever\b' .agents/skills/*/SKILL.md | wc -l → 41（按出现次数；按行数 rg -c 是 39）；rg -o -i "\b(do not|don't)\b" … → 54；rg -n 'guidance, not a' .agents/skills/*/SKILL.md → 6 份 7 处（prose-standard 第 56 行再提一次）；rg -n '^description:' … | awk 词数</span>
+
+  <h3>谁指向谁：skill 之间的链接图</h3>
+  <p>11 份之间有 17 处相互引用、去重后 15 条有向边。中心是 <code>dsh-prose-standard</code>（被 4 份指向：code-review、doc-standards、translate-docs、trim-cot-leakage）和 <code>dsh-pre-push-checks</code>（被 3 份指向：archive、doc-site-sync、translate-docs）——一个管「怎么写字」，一个管「怎么交作业」，几乎每条工作流最后都汇到这两处。dsh-pre-push-checks 自己一条 Markdown 链接都没有：它是纯终点，却又是根 AGENTS.md 唯一点名要求「经由」的 skill。三份文档 skill 互相引用成一个三角（prose-standard ↔ doc-standards、prose-standard ↔ trim-cot-leakage），其中两份开头就用同一个动词「owns」写明谁管什么——「This skill owns editorial judgment and required prose coverage」「the committed-artifact-citations note owns the citation rule's rationale」，doc-standards 则写「The documentation rules live in docs/AGENTS.md」；8 份 skill 里都能找到「X owns Y」这样的句子。</p>
+  <figure><div class="fig-box"><svg viewBox="0 0 880 470" width="880" role="img" aria-label="11 个 skill 之间的链接图" xmlns="http://www.w3.org/2000/svg" font-family="var(--mono)" font-size="12">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/></marker></defs>
+<text x="150" y="22" text-anchor="middle" fill="var(--ink-3)" font-size="11" letter-spacing="1">文档簇</text>
+<text x="470" y="22" text-anchor="middle" fill="var(--ink-3)" font-size="11" letter-spacing="1">Git 簇</text>
+<text x="760" y="22" text-anchor="middle" fill="var(--ink-3)" font-size="11" letter-spacing="1">笔记治理 / GUI</text>
+<path d="M660.0,280 C615.0,280 615.0,220 570.0,220" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M370.0,100 C310.0,100 310.0,60 250.0,60" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,380 C318.8,380 318.8,140 250.0,140" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,380 C310.0,380 310.0,220 370.0,220" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,140 C299.6,140 299.6,60 250.0,60" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,140 C299.6,140 299.6,220 250.0,220" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,140 C455.0,140 455.0,140 660.0,140" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M660.0,140 C603.2,140 603.2,280 660.0,280" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M50.0,60 C0.4000000000000057,60 0.4000000000000057,140 50.0,140" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,60 C309.2,60 309.2,220 250.0,220" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,300 C318.8,300 318.8,60 250.0,60" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,300 C310.0,300 310.0,220 370.0,220" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,300 C310.0,300 310.0,100 370.0,100" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M50.0,220 C-9.199999999999989,220 -9.199999999999989,60 50.0,60" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<path d="M250.0,220 C299.6,220 299.6,300 250.0,300" fill="none" stroke="var(--ink-3)" stroke-width="1.4" marker-end="url(#arr)" opacity=".85"/>
+<rect x="50.0" y="43.0" width="200" height="34" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="150" y="64" text-anchor="middle" fill="var(--ink)">dsh-prose-standard</text>
+<circle cx="248.0" cy="45.0" r="9" fill="var(--accent)"/><text x="248.0" y="49.0" text-anchor="middle" fill="var(--surface)" font-size="10" font-weight="700">4</text>
+<rect x="50.0" y="123.0" width="200" height="34" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="150" y="144" text-anchor="middle" fill="var(--ink)">dsh-doc-standards</text>
+<circle cx="248.0" cy="125.0" r="9" fill="var(--accent)"/><text x="248.0" y="129.0" text-anchor="middle" fill="var(--surface)" font-size="10" font-weight="700">2</text>
+<rect x="50.0" y="203.0" width="200" height="34" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="150" y="224" text-anchor="middle" fill="var(--ink)">dsh-trim-cot-leakage</text>
+<circle cx="248.0" cy="205.0" r="9" fill="var(--accent)"/><text x="248.0" y="209.0" text-anchor="middle" fill="var(--surface)" font-size="10" font-weight="700">2</text>
+<rect x="50.0" y="283.0" width="200" height="34" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="150" y="304" text-anchor="middle" fill="var(--ink)">dsh-translate-docs</text>
+<rect x="50.0" y="363.0" width="200" height="34" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="150" y="384" text-anchor="middle" fill="var(--ink)">dsh-doc-site-sync</text>
+<rect x="370.0" y="83.0" width="200" height="34" rx="5" fill="var(--steel-soft)" stroke="var(--steel)" stroke-width="1.5"/>
+<text x="470" y="104" text-anchor="middle" fill="var(--ink)">dsh-code-review</text>
+<rect x="370.0" y="203.0" width="200" height="34" rx="5" fill="var(--steel-soft)" stroke="var(--steel)" stroke-width="1.5"/>
+<text x="470" y="224" text-anchor="middle" fill="var(--ink)">dsh-pre-push-checks</text>
+<circle cx="568.0" cy="205.0" r="9" fill="var(--steel)"/><text x="568.0" y="209.0" text-anchor="middle" fill="var(--surface)" font-size="10" font-weight="700">3</text>
+<rect x="370.0" y="323.0" width="200" height="34" rx="5" fill="var(--steel-soft)" stroke="var(--steel)" stroke-width="1.5"/>
+<text x="470" y="344" text-anchor="middle" fill="var(--ink)">dsh-merging-stacked-prs</text>
+<rect x="660.0" y="123.0" width="200" height="34" rx="5" fill="var(--moss-soft)" stroke="var(--moss)" stroke-width="1.5"/>
+<text x="760" y="144" text-anchor="middle" fill="var(--ink)">dsh-find-simplifications</text>
+<rect x="660.0" y="263.0" width="200" height="34" rx="5" fill="var(--moss-soft)" stroke="var(--moss)" stroke-width="1.5"/>
+<text x="760" y="284" text-anchor="middle" fill="var(--ink)">dsh-archive-agent-notes</text>
+<rect x="660.0" y="403.0" width="200" height="34" rx="5" fill="var(--plum-soft)" stroke="var(--plum)" stroke-width="1.5"/>
+<text x="760" y="424" text-anchor="middle" fill="var(--ink)">record-browser-gif</text>
+</svg></div><figcaption>11 个 skill 之间的 15 条有向链接（17 处引用去重）。角标数字是入度：dsh-prose-standard 被 4 份指向，dsh-pre-push-checks 被 3 份指向且自身零出链；dsh-doc-site-sync 只出不入；dsh-merging-stacked-prs 与 record-browser-gif 是孤岛。存在一个 4 环：translate-docs → code-review → prose-standard → trim-cot-leakage → translate-docs。</figcaption></figure>
+  <span class="ev">rg -o '\]\((\.\./[a-z-]+/SKILL\.md[^)]*)\)' .agents/skills/*/SKILL.md</span>
+
+  <h3>skill 之外还有三种附件</h3>
+  <p><strong>agents/openai.yaml</strong>（6 份）：给 Codex 的展示名、一句话简介、默认提示——例如「Use $dsh-pre-push-checks before pushing this DeepSeek Harness branch.」；只有 dsh-translate-docs 带 <code>policy.allow_implicit_invocation: false</code>。<strong>references/</strong>（2 份）：dsh-prose-standard 的 examples.md 是 17 组校准例子（13 组是完整的「Over-trimmed／Balanced／Over-detailed」三联，其余几组用 Original／Current／Shorter-but-worse 等变体）；dsh-trim-cot-leakage 的 examples.md 有 24 个 few-shot 校准块（20 组 Leaked → Fixed + 4 个过度矫正陷阱，另有 5 条 keep／delete 裁定），recall-batteries.md 是 7 条英文 + 2 条中文正则电池外加 9 类已知误报。<strong>scripts/</strong>（1 份）：record-browser-gif 的 encode_gif.py，279 行 Python，是 11 份里唯一的可执行物。附件的分布本身说明了一件事：<em>判断型 skill 靠例子校准，流程型 skill 靠命令与脚本约束</em>。</p>
+  <span class="ev">find .agents/skills -type f | sort；wc -w .agents/skills/*/references/*.md → 1,220 / 1,649 / 510；05a4a41f4f 提交正文「references/ carry 24 few-shot calibration blocks」</span>
+</section>
+
+<!-- ============ S5 ============ -->
+<section id="s5">
+  <div class="sec-eyebrow">05 · 文档簇</div>
+  <h2>文档簇：五个 skill 怎么切分「散文」这件事</h2>
+  <p class="sec-lede">五份 skill 分掉「散文」这件事：写多少、放哪里、哪些像推理转录、怎么翻译、怎么上网站。它们中的三份是三次翻车之后的蒸馏物。</p>
+    <p>五份文档 skill 不是五个平行文件，而是一张分工明确的图：<strong>prose-standard</strong> 管「一段话该写多少、写什么」（编辑判断 + 必要覆盖），<strong>doc-standards</strong> 管「放在哪、分几层、超没超预算」，<strong>trim-cot-leakage</strong> 专门猎杀「像推理转录的文本」，<strong>translate-docs</strong> 是只许用户手动调用的扩展双语流程，<strong>doc-site-sync</strong> 管把仓库 Markdown 投影成网站。每一份开头都互相指向、把边界说死，其中两份用的是同一个动词「owns」：prose-standard 第 8 行「This skill owns editorial judgment and required prose coverage; use dsh-doc-standards for placement, budgets, bilingual pairs, and documentation gates, and dsh-trim-cot-leakage for hunting and fixing reasoning-transcript leakage」。第三卷讲过这套文档治理是怎么长出来的；这一节只讲 skill 这一层——尤其是三次「翻车→蒸馏」。</p>
+
+  <h3>07-12 → 07-14：一次砍过头，两天后「trim」变成「standard」</h3>
+  <p>PR #260（<code>codex/trim-ai-prose</code>）七个提交讲完了整个故事。07-12 <code>75838e10b5</code>「docs: trim generated prose」：323 个文件、+2,858/−11,834 行——第一次针对 agent 文风的大清洗；07-13 再砍一刀 −4,079 行；然后同日 <code>148046b9c8</code>「<strong>rebalance</strong> prose cleanup and add trimming skill」：392 个文件、+2,802/−1,755——把删过头的合同细节补回来，同时诞生 <code>dsh-trim-prose</code>。这份 skill 的第一版 description 直白地写着它的用途：「especially for … an earlier edit that may have removed contract detail」；同一提交把根 AGENTS.md 里前一天刚写的「Do not … list rejected local alternatives」改成「Keep every factual clause that affects behavior, failure, timing, ownership, or safe use」，把 docs/AGENTS.md 里的「Ceilings retain at least 5% headroom and ratchet down after trims」改成「Ceilings are guardrails, not reduction targets」。references/examples.md 出生时 13 组例子里就有 10 组标着「Over-trimmed」。其中第 19 行那组「Balanced」范例就是团队自己的一次过砍与复原：「**This skill is guidance, not a complete checklist.**」这句 06-18 写进评审 skill，07-12 被大砍删掉，07-13 在同一个创建 trim-prose 的提交里被放回去——免责句本身成了「什么不能砍」的校准样本。</p>
+  <span class="ev">git log --no-merges --format='%h %ad %s' fb126e164a^1..fb126e164a^2；git show --shortstat 75838e10b5 c45d7927cf 148046b9c8；git show 148046b9c8 -- AGENTS.md docs/AGENTS.md | grep '^[-+]'；git show 148046b9c8:.agents/skills/dsh-trim-prose/references/examples.md | grep -c Over-trimmed → 10</span>
+  <p>次日 07-14 00:40，一个 <code>Merge remote-tracking branch 'origin/master' into codex/trim-ai-prose</code> 的合并提交顺手做了改名：<code>dsh-trim-prose</code> → <code>dsh-prose-standard</code>（相似度 R060）。没有专门的提交、没有说明；<code>git log --diff-filter=R</code>、<code>--follow</code>、不带 <code>--full-history</code> 的 <code>git log -- .agents/skills/dsh-trim-prose</code> 全都找不到它。但 diff 本身说明了改名的意思：H1「Trim DeepSeek Harness Prose」→「DeepSeek Harness Prose Standard」；开头「Preserve the contract while removing…」→「<strong>Write enough</strong> to preserve the contract, then remove…」；一节「Calibrate by prose surface」→「Required coverage by prose surface」，并新增一句「This is not a one-way shortening pass. Add or restore prose when code, types, and structure do not communicate a required contract」；十二条按位置的规则里九个「retain」有八个换成了 document／orient／state／explain／include／name（Postmortems 一条仍是 retain，RFCs 一条反而从 presume 改成 retain）；分类结果里多了一个「add」。同一天 docs/AGENTS.md 里 skill 那一行的定义也从「Workflows: how to carry out a recurring task against the contracts」放宽为「Reusable workflows and specialized decision standards」——一份 skill 从此可以拥有一项<em>标准</em>，而不只是一套<em>流程</em>。</p>
+  <span class="ev">git diff 972e7cc77d^1 972e7cc77d -M -- .agents/skills；git show f0fc20ca42 -- docs/AGENTS.md | grep -E '^[-+]\| Skills'</span>
+  <p>值得记一笔的还有它的校准语料：examples.md 的 17 组对照（13 组是完整的「Over-trimmed／Balanced／Over-detailed」三联）全部写于 PR #260 期间（13 → 14 → 17），此后一个月只有机械改词，<strong>没有增加过一组</strong>。SKILL.md 第 81 行写着「After the user decides, distill the principle and versions into the examples」——这条把人的裁决蒸馏成范例的回路，在公开历史里还没有产出。同样，prose-standard 是唯一没有任何 Agent Note 承载其决策的文档 skill；它的「为什么」散在 07-04 的 doc-tiers 笔记、08-09 的两篇散文卫生笔记和上面那些提交 diff 里。</p>
+  <span class="ev">for c in 148046b9c8:…/dsh-trim-prose/references/examples.md 972e7cc77d:… f0fc20ca42:… HEAD:…; do git show $c | grep -c '^## '; done → 13/14/17/17；grep -o '\]\(\.\./\.\./notes/[^)]*' .agents/skills/dsh-prose-standard/SKILL.md → 空（正文只提到 .agents/notes/archived/ 这条排除规则，不链接任何具体笔记）</span>
+
+  <h3>08-09：763 个文件的清扫，同一天蒸馏成第 11 份 skill</h3>
+  <p>trim-cot-leakage 是「翻车→蒸馏」最干净的一例。起因写在它的 rationale 笔记里：一次全仓库审计发现 <code>packages/client</code> 里到处是 <code>(decision 12/16/19/20/21)</code>——只有 decision 21 在仓库里有对应文档——和 <code>(audit C2/S1/S3/S7)</code> 这种任何地方都不存在审计文档的代码。它们是设计会话里的编号从对话转录稿漏进了 JSDoc。08-09 下午 15:09 的 <code>25dcd7293c</code>「purge chain-of-thought leakage from prose」动了 763 个文件（+2,705/−1,710）：394 个 .md（203 英 + 191 中）、191 个 .i18n.yaml 重录、168 个 ts/tsx；按目录 <code>.agents/notes</code> 366 个、<code>packages/client</code> 127 个——清扫最大的成本其实是双语记账。之后三轮评审修正（38、8、11 个文件），晚上 22:27 <code>05a4a41f4f</code> 把整套东西蒸馏进 skill：SKILL.md 放「一个测试」（一个站在 HEAD、看不到任何会话转录、PR 线程或未提交草稿的读者，能否解析每一处引用、核实每一个断言？）、8 类分类法、9 条「什么不算泄漏」的白名单和 5 步流程；references/examples.md 放 20 组「Leaked → Fixed」和 4 个「过度矫正陷阱」；recall-batteries.md 放 7 条英文 + 2 条中文正则电池和 9 类已知误报。</p>
+  <span class="ev">.agents/notes/implemented/process/2026-08-09-committed-artifact-citations.md:9；git show --name-only --format= 25dcd7293c | awk -F/ '{print $1}' | sort | uniq -c；git log --no-merges --format='%h %s' c1ee0f6e3e^1..c1ee0f6e3e^2</span>
+  <p>那 4 个「过度矫正陷阱」不是编出来的：把「exceptions pending migration to slots」写成了「sanctioned exceptions」——把一项义务写成了背书（评审修正 e697bb3ca1 改回 pending migration）、把一个假想的「IPC bridge subclass」当成已上线的东西、删掉了一句真话、丢掉了「measured」这个出处词（ee7458b2df）——每一个都能在评审修正提交里找到原案。examples.md 第 213 行说得很直：「Every trap below shipped in the original purge and was caught in review.」这份 skill 也把 doc-standards 里原本内联的一行正则 <code>rg -n "no longer|used to|previously|was moved|renamed"</code> 收编成一个链接——从此猎杀泄漏只有一个家。</p>
+  <span class="ev">git show e697bb3ca1 | grep -n 'sanctioned exceptions\|pending migration'；git show ee7458b2df | grep -n 'IPC\|measured'；git show 05a4a41f4f -- .agents/skills/dsh-doc-standards/SKILL.md | grep '^[-+]'</span>
+
+  <h3>translate-docs：从「总是委托」到「常规不委托」，最后被关掉自动调用</h3>
+  <p>它是文档簇里最老、也是改动方向最戏剧的一份。07-02 出生时是英文为源、中文为译的单向流程；同一 PR 的评审里被重设计成「两种语言同等权威」的三文件对（<code>foo.md</code>／<code>foo.zh.md</code>／<code>foo.i18n.yaml</code>）。07-20 加入子 agent 委托——同一天五个提交先要求「子 agent 用独立 worktree 并开 draft PR」，再删掉 worktree 机制，再删掉 draft PR 要求，最后剩一句「delegation is just: use a subagent」。07-27 加入 briefing 驱动的更新路径，背后是一份少见的实测：十例真实的 pair 更新回放，briefed 路径在忠实度、保留度、流畅度上与现状持平，而 token 与时长约为三分之一（中位数 276k vs 595k 相对 token 单位、14 vs 32 轮）；整篇重译则把「保留度」从 9.8 打到 4.4。于是 skill 里出现了那句「Never re-translate a whole document to apply an update」。</p>
+  <span class="ev">git show -s --format=%B ec05295a0c；git log --format='%h %ad %an %s' --date=short 55cb8a7c63^1..55cb8a7c63^2；.agents/notes/implemented/process/2026-07-26-briefed-minimal-translation-updates.md:23</span>
+  <p>然后是 08-08 的反转。理由笔记写道：「Routine bilingual edits automatically selected the full translation skill … That orchestration consumed more time, context, and model tokens than translating the changed text itself, and automatic skill discovery exposed the workflow on ordinary documentation turns.」于是它成了 11 份里唯一的 <code>disable-model-invocation: true</code>：常规双语改动由当前 agent「一枪一遍」直接改对面文件（不调 skill、不生成 briefing、不派子 agent），只有用户在 Claude Code 里敲 <code>/dsh-translate-docs</code>、在 Codex 里敲 <code>$dsh-translate-docs</code> 才进入扩展流程；同一 PR 给它加了 <code>agents/openai.yaml</code> 的 <code>policy.allow_implicit_invocation: false</code>，并写了一道闸门 <code>verify-skill-invocation-metadata</code> 保证两家永远一致（第 9 节）。被否决的备选里有一条尤其值得抄：「Keep automatic invocation only for new pairs or large changes — rejected: size-based inference is another hidden policy … The user, not the agent, chooses when the extended path is worth its cost.」所以今天 skill 里的「the orchestrating agent does not translate: spawn a subagent」只在<em>手动调用的扩展路径</em>里成立；常规路径明令不委托——同一份 skill 里的委托规则，一个月内从「总是」变成了「只在被点名时」。</p>
+  <span class="ev">.agents/notes/implemented/process/2026-08-08-lightweight-routine-documentation-translation.md:9,22,29；docs/i18n/README.md:60；git show c5dd99124c --stat</span>
+
+  <h3>doc-standards 与 doc-site-sync：一份被自己的闸门抓住，一份没有免责句</h3>
+  <p>doc-standards 出生于 07-04 那次「AGENTS.md 8,130 词」的危机（第 3 节）；它的 rationale 笔记里有一条被否决的备选，是理解整套 skill 体系的钥匙：「Housing the standard inside the skill — rejected: contracts live in docs and workflows in skills; <strong>a standard packed into SKILL.md is invisible to an agent that edits docs without invoking the skill</strong>, and docs/AGENTS.md already loads as subtree instructions for anyone working under docs/.」——AGENTS.md 按目录自动加载，skill 只在 description 匹配时才加载，所以标准要放在前者、流程放在后者。今天它的正文有一处小小的自我矛盾：一边说自己「only supplies the workflow probes」，一边把 docs/AGENTS.md 里一句「Author in this order」展开成了五个编号步骤（08-04 Turtle 加入）。doc-site-sync 则是五份里唯一没有「guidance, not a …」句的一份（不链接决策笔记这一点它与 prose-standard 相同）：它是纯流程——分类改动、逐字段填 <code>DocsPage</code>、六条链接投影规则、<code>pnpm docs:dev</code>／<code>docs:check</code>／<code>doc-sync</code>——外加一条「同步进 VitePress 不等于发布到公网；除非用户明确要求，不加 GitHub Pages 权限、部署工作流、自定义域名」。</p>
+  <span class="ev">.agents/notes/implemented/process/2026-07-04-doc-tiers-and-budgets.md:25；.agents/skills/dsh-doc-standards/SKILL.md:8,18-27,52；grep -c -i guidance .agents/skills/dsh-doc-site-sync/SKILL.md → 0</span>
+
+</section>
+
+<!-- ============ S6 ============ -->
+<section id="s6">
+  <div class="sec-eyebrow">06 · Git 簇</div>
+  <h2>Git 簇：push 前挑最窄证据、只用原生 PR 栈、评审 skill 从人的评审意见里长出来</h2>
+  <p class="sec-lede">三份 skill 管的是同一条路：把改动推出去、把依赖链合进去、把别人的改动审一遍。它们最有意思的不是今天的文本，而是文本被推翻的次数——pre-push 的哲学翻转过一次，stacked-prs 被整体重写过一次，code-review 被砍掉过四分之三。</p>
+    <h3>dsh-pre-push-checks：从「必备基线」到「没有基线」</h3>
+  <p>它诞生于 2026-07-06（Yichen Jiang，PR #187 <code>codex/add-dsh-pre-push-checks</code>），第一版的 description 第二句是「Guides Codex to run the right local gates」——写给 Codex 的。正文有一节「Required Baseline」：每次非平凡 push 前跑 <code>pnpm run typecheck</code>、<code>pnpm run lint</code>、<code>pnpm run test:coverage</code>，还解释了「为什么是 test:coverage 而不只是 test：CI 强制每文件 100% 覆盖率，一个分支可以 test 全绿却在 CI 挂掉」；后面附了一段 10 条命令的「Full Local CI Approximation」。</p>
+  <span class="ev">git show 671cbe173e:.agents/skills/dsh-pre-push-checks/SKILL.md | sed -n '3p;30,40p;68,83p'</span>
+  <p>16 天后，07-22 的一次提交（31c0589439「chore: keep local git hooks fast」，PR #509）把它整个翻了过来。现在的第 29 行写着：「<strong>There is no universal local baseline beyond the hooks.</strong> Every behavior change needs the narrowest available test or purpose-built check that would fail for its regression」；第 37 行甚至禁止「在 push 前手动跑 typecheck，只为了重复 pre-push 钩子已经做的事」；第 64 行明确「do not recreate the removed <code>check:pre-push</code> aggregate」。同一提交把 lefthook 的 pre-push 从整套聚合砍到只剩增量 <code>tsc -b</code>。理由写在同日的 Agent Note 里：</p>
+  <blockquote class="quote">An agent already runs the tests and checks that exercise its change, while commit, push, and CI can each repeat increasingly broad subsets of the same work. A full pre-push suite therefore delays every publication, amplifies unrelated local flakes, and gives no new signal when CI immediately runs the exhaustive matrix again.<span class="src">.agents/notes/implemented/process/2026-07-22-fast-local-git-hooks.md:9</span></blockquote>
+  <p>这条哲学翻转背后是一段来回摇摆的钩子史，值得完整列出来，因为它说明「push 前跑什么」在这个团队里不是常识而是反复试错的结论：</p>
+  <ul class="timeline">
+    <li><span class="d">06-11</span><span class="t">pre-push 跑 <code>yarn test</code> + <code>yarn hygiene</code>；typecheck 在 pre-commit</span></li>
+    <li><span class="d">06-14</span><span class="t">加 <code>doc-sync</code>；到 06-19 是 test / snapshot / hygiene / doc-sync / module-graph 五项</span></li>
+    <li class="turn"><span class="d">07-06</span><span class="t">凌晨 00:52 摊平成 21 个并行 leaf 闸门；01:47 同一分支内的一次合并提交把它折叠成一个 <code>pnpm run check:pre-push</code> 聚合；18:40 pre-push skill 诞生（此时 master 上的钩子还是五项版本，skill 第 8 行写着「不要把本地 pre-push 钩子当成完整的 CI 契约」）</span></li>
+    <li class="turn"><span class="d">07-22</span><span class="t">PR #509：pre-push 只剩 <code>tsc -b</code>，<code>check:pre-push</code> 从 package.json 删除，skill 同步改写为「没有普适基线」</span></li>
+    <li><span class="d">07-23</span><span class="t">13:21 PR #543 把 pre-push 改回「跑完整主 CI 清单」并附一篇 Agent Note（理由：托管 CI 可能因账单／配额／runner 故障不可用）；<strong>14:11 PR #544 全部回滚</strong>——在 master 上存活 50 分钟，那篇笔记今天只能从 <code>git show 00d5b69882:…</code> 读到</span></li>
+    <li><span class="d">08-08</span><span class="t">钩子改为 <code>pnpm run typecheck</code>（先构建 host lib），沿用至今</span></li>
+  </ul>
+  <span class="ev">git log --no-merges --format='%h %ad %s' --date=short -- lefthook.yml；git show 0452261b5b:lefthook.yml；git log -1 --format='%h %ci %s' 0401fd52b9 fe22e5e955。注意 <code>git log -S'check:pre-push' -- package.json</code> 看不到 07-06 的引入——它发生在分支内的合并提交里，需要 <code>--full-history -m</code></span>
+  <p>07-27 之后，三份 skill 都多了同一条指令：「先核实并抓取 PR 的真实 base，然后运行 <code>pnpm --silent run change-scope --base &lt;verified-base-ref&gt;</code>」（code-review 放在开头，pre-push 在工作流第 2 步，doc-standards 在审计段）。<code>scripts/change-scope.ts</code>（248 行）是一个只读的 git 拓扑报告器：它拒绝猜 base、拒绝查 GitHub、拒绝选测试，只输出一份带版本号的 JSON（committed / staged / unstaged / untracked 四组路径）。它的 Agent Note 把「从 upstream 推断 base」列为被否决的备选：「An upstream may be <code>origin/master</code> before the first push, the same feature branch after a push, or a head branch whose PR targets another feature branch. No inference is correct for every topology.」这就是根手册里「Explicit &gt; implicit」在开发工具上的样子。</p>
+  <span class="ev">scripts/change-scope.ts；git show --stat 61703d224b -- .agents/skills（一次提交同时改了 code-review、doc-standards、pre-push-checks 三份）；.agents/notes/implemented/process/2026-07-27-explicit-change-scope-report.md:19,27</span>
+  <p>一处可核实的漂移：skill 第 8 行说 pre-commit 做三件事（staged lint、staged whitespace、vendor 清单守卫），而今天的 lefthook.yml 里 pre-commit 有六项（多了翻译配对、归档笔记封印、第三方声明），外加一个 pre-merge-commit 钩子。pre-push 那半句「只跑增量 typecheck」也不全准：今天的 <code>pnpm run typecheck</code> 先做一次 host 构建（tsc -b + tsdown）再跑 client typecheck。这不是大问题，但说明连这个仓库的「一个事实一个家」也会滞后于配置。</p>
+
+  <h3>dsh-merging-stacked-prs：教了一个月的手工流程，变成被禁止的兜底</h3>
+  <p>第一版（07-06 00:35，Tianyi Cui，PR #176）围绕一个 GitHub 陷阱写成：「<strong>删掉一个 PR 的 base 分支会自动关闭那个 PR</strong>。在 A ← B ← C 的栈里……如果带 <code>--delete-branch</code> 合并 A，GitHub 会在 B 合并前把它关掉——悄无声息地毁掉整条链。」于是流程是：从底往上 <code>gh pr merge A --merge</code>（不删分支）、<code>gh pr edit B --base master</code>、把 master 合进 B、最后 <code>gh pr list</code> 扫一遍。同一天有四次评审修补，提交正文罕见地写明了每一处是评审发现的哪个缺陷：「Codex review caught three procedure defects: the dependent check used bare 'gh pr list', whose default pagination can hide an open dependent…」，以及一段对 gh 行为的实测：「<code>--jq length</code> counts the fetched page and gh's default <code>--limit</code> is 30… The printed number is min(actual, limit), so the skill no longer claims it as the auto-close count; only 0 clears a delete.」</p>
+  <span class="ev">git show bb4cc0ff60:.agents/skills/dsh-merging-stacked-prs/SKILL.md | sed -n '10,27p'；git show -s --format=%B dd44402871 89e7005cfd</span>
+  <p>08-02（9a07380c23，PR #1134）它被整体重写，53 行变 127 行（出生时 52 行）：必须先 <code>gh stack --version</code>，没有原生栈支持就硬停；用 GraphQL 的 <code>PullRequest.stack</code> 作为栈成员资格的唯一权威；<code>gh stack link</code> 只在所有作者一致时自动执行；落地一律 <code>gh stack merge &lt;stack-number&gt; --yes --merge</code>；「never fall back to <code>gh pr merge</code>」。七月那套手工流程如今是明令禁止的文字：「do not fall back to manually merging and retargeting PRs one at a time」。同一提交还改写了根 AGENTS.md 里一条基本纪律：07-26 的版本写「never squash, rebase, or rewrite pushed history」，07-28 Turtle 的 PR #840 先放宽为「Pushed history may be rewritten before review; afterward prefer new commits」，08-02 再改为「Standalone PRs and official stacks may merge-forward or rebase after review. Rewrites use <code>--force-with-lease</code>… never raw <code>--force</code>」——因为「对已评审分支的一刀切重写禁令会把 <code>gh stack</code> 原生同步（级联 rebase）也排除在外」。</p>
+  <span class="ev">git show 9a07380c23 --stat；git show 9a07380c23 -- AGENTS.md；git show 047e48bd8d -- AGENTS.md；.agents/notes/implemented/process/2026-08-02-native-github-stacks-and-optional-rebases.md:11,21</span>
+  <p>两份 skill 在这里分工：merging 决定<em>何时</em>调用 <code>gh stack sync</code>，pre-push 负责<em>之后</em>怎么验证。同一句例外在三处出现——pre-push 第 8 行、merging 第 72 行、根 AGENTS.md 第 88 行：「<code>gh stack sync</code> 会在重写层被验证之前就发布级联 rebase；之后立即验证，证据通过前不合并」。这是整套「先证据后发布」规则里唯一被明知故犯的一处，而且三处措辞一致。</p>
+
+  <h3>dsh-code-review：砍掉四分之三，再从人的评审意见里长回来</h3>
+  <p>它是 11 份里最老的，2026-06-13 随 <code>.agents/</code> 目录一起出生——那次提交直接落在 master 上，没有 PR。第一版 472 词，自我定位是「This is a where-to-look map, not a rules list. The rules live in the docs below and are the source of truth — read them there so this skill never drifts out of sync with them」，回应评审的口吻也已定调：「Technical, specific, non-performative — no "great catch", no "you're absolutely right"」。</p>
+  <span class="ev">git show 39b3db4b9c:.agents/skills/dsh-code-review/SKILL.md（28 行 / 472 词）；git log --first-parent --format=%h master | grep 39b3db4b9c</span>
+  <p>它的字数曲线是 11 份里最戏剧的：472 → 06-18 「frame skill as guidance」加入「How to think about a review」后 1,013 → 07-04 峰值 2,103 → <strong>07-12 「docs: trim generated prose」一刀砍到 537</strong>（那次提交动了 323 个文件、删 11,834 行，第三卷讲过的第一次 agent 文风大清洗）→ 之后从人的评审意见里一点点长回 1,073。今天的骨架「Blocking requirements / Manual checks / Reporting findings」不是出生时的，正是那次砍伐后立起来的：07-12 是 4 条阻塞 + 8 条人工；07-15 <code>d0910a2ed7</code>「distill adopted review feedback」（NI0317）一次加了 6 条人工检查；同日「require critical prose review」把阻塞项加到 5；07-19「distill human review principles」人工检查到 15；07-20「codify semantic review rules」阻塞项到 6——之后再没变过。</p>
+  <figure><div class="fig-box"><svg viewBox="0 0 880 300" width="880" role="img" aria-label="三份 Git 簇 skill 的字数轨迹" xmlns="http://www.w3.org/2000/svg" font-family="var(--mono)" font-size="11">
+<line x1="56" y1="208.7" x2="860" y2="208.7" stroke="var(--line)" stroke-width="1"/>
+<text x="50" y="212.7" text-anchor="end" fill="var(--ink-3)">500</text>
+<line x1="56" y1="157.4" x2="860" y2="157.4" stroke="var(--line)" stroke-width="1"/>
+<text x="50" y="161.4" text-anchor="end" fill="var(--ink-3)">1000</text>
+<line x1="56" y1="106.1" x2="860" y2="106.1" stroke="var(--line)" stroke-width="1"/>
+<text x="50" y="110.1" text-anchor="end" fill="var(--ink-3)">1500</text>
+<line x1="56" y1="54.8" x2="860" y2="54.8" stroke="var(--line)" stroke-width="1"/>
+<text x="50" y="58.8" text-anchor="end" fill="var(--ink-3)">2000</text>
+<line x1="118.8" y1="24" x2="118.8" y2="260" stroke="var(--line)" stroke-dasharray="2 4"/>
+<text x="118.8" y="276" text-anchor="middle" fill="var(--ink-3)">06-15</text>
+<line x1="319.8" y1="24" x2="319.8" y2="260" stroke="var(--line)" stroke-dasharray="2 4"/>
+<text x="319.8" y="276" text-anchor="middle" fill="var(--ink-3)">07-01</text>
+<line x1="495.7" y1="24" x2="495.7" y2="260" stroke="var(--line)" stroke-dasharray="2 4"/>
+<text x="495.7" y="276" text-anchor="middle" fill="var(--ink-3)">07-15</text>
+<line x1="709.2" y1="24" x2="709.2" y2="260" stroke="var(--line)" stroke-dasharray="2 4"/>
+<text x="709.2" y="276" text-anchor="middle" fill="var(--ink-3)">08-01</text>
+<path d="M93.7,211.6 L106.2,208.9 L131.4,208.8 L156.5,156.1 L156.5,140.4 L156.5,137.2 L156.5,137.4 L156.5,191.8 L156.5,120.9 L169.1,110.4 L181.6,90.2 L181.6,75.0 L181.6,74.8 L181.6,74.8 L332.4,73.5 L344.9,72.6 L357.5,57.8 L357.5,59.1 L357.5,44.2 L458.0,204.9 L470.6,203.6 L470.6,201.6 L483.1,201.4 L495.7,178.1 L495.7,174.0 L495.7,169.3 L545.9,154.5 L545.9,167.9 L545.9,169.3 L545.9,167.2 L545.9,167.3 L558.5,159.5 L583.6,159.0 L633.9,154.9 L646.4,152.5 L659.0,152.4 L659.0,152.4 L721.8,152.4 L797.2,149.9 L809.8,151.3" fill="none" stroke="var(--steel)" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="93.7" cy="211.6" r="2.5" fill="var(--steel)"/>
+<circle cx="106.2" cy="208.9" r="2.5" fill="var(--steel)"/>
+<circle cx="131.4" cy="208.8" r="2.5" fill="var(--steel)"/>
+<circle cx="156.5" cy="156.1" r="2.5" fill="var(--steel)"/>
+<circle cx="156.5" cy="140.4" r="2.5" fill="var(--steel)"/>
+<circle cx="156.5" cy="137.2" r="2.5" fill="var(--steel)"/>
+<circle cx="156.5" cy="137.4" r="2.5" fill="var(--steel)"/>
+<circle cx="156.5" cy="191.8" r="2.5" fill="var(--steel)"/>
+<circle cx="156.5" cy="120.9" r="2.5" fill="var(--steel)"/>
+<circle cx="169.1" cy="110.4" r="2.5" fill="var(--steel)"/>
+<circle cx="181.6" cy="90.2" r="2.5" fill="var(--steel)"/>
+<circle cx="181.6" cy="75.0" r="2.5" fill="var(--steel)"/>
+<circle cx="181.6" cy="74.8" r="2.5" fill="var(--steel)"/>
+<circle cx="181.6" cy="74.8" r="2.5" fill="var(--steel)"/>
+<circle cx="332.4" cy="73.5" r="2.5" fill="var(--steel)"/>
+<circle cx="344.9" cy="72.6" r="2.5" fill="var(--steel)"/>
+<circle cx="357.5" cy="57.8" r="2.5" fill="var(--steel)"/>
+<circle cx="357.5" cy="59.1" r="2.5" fill="var(--steel)"/>
+<circle cx="357.5" cy="44.2" r="2.5" fill="var(--steel)"/>
+<circle cx="458.0" cy="204.9" r="2.5" fill="var(--steel)"/>
+<circle cx="470.6" cy="203.6" r="2.5" fill="var(--steel)"/>
+<circle cx="470.6" cy="201.6" r="2.5" fill="var(--steel)"/>
+<circle cx="483.1" cy="201.4" r="2.5" fill="var(--steel)"/>
+<circle cx="495.7" cy="178.1" r="2.5" fill="var(--steel)"/>
+<circle cx="495.7" cy="174.0" r="2.5" fill="var(--steel)"/>
+<circle cx="495.7" cy="169.3" r="2.5" fill="var(--steel)"/>
+<circle cx="545.9" cy="154.5" r="2.5" fill="var(--steel)"/>
+<circle cx="545.9" cy="167.9" r="2.5" fill="var(--steel)"/>
+<circle cx="545.9" cy="169.3" r="2.5" fill="var(--steel)"/>
+<circle cx="545.9" cy="167.2" r="2.5" fill="var(--steel)"/>
+<circle cx="545.9" cy="167.3" r="2.5" fill="var(--steel)"/>
+<circle cx="558.5" cy="159.5" r="2.5" fill="var(--steel)"/>
+<circle cx="583.6" cy="159.0" r="2.5" fill="var(--steel)"/>
+<circle cx="633.9" cy="154.9" r="2.5" fill="var(--steel)"/>
+<circle cx="646.4" cy="152.5" r="2.5" fill="var(--steel)"/>
+<circle cx="659.0" cy="152.4" r="2.5" fill="var(--steel)"/>
+<circle cx="659.0" cy="152.4" r="2.5" fill="var(--steel)"/>
+<circle cx="721.8" cy="152.4" r="2.5" fill="var(--steel)"/>
+<circle cx="797.2" cy="149.9" r="2.5" fill="var(--steel)"/>
+<circle cx="809.8" cy="151.3" r="2.5" fill="var(--steel)"/>
+<path d="M382.6,181.5 L382.6,175.7 L395.2,181.4 L495.7,181.4 L495.7,181.3 L545.9,181.2 L558.5,181.0 L558.5,181.2 L583.6,201.0 L583.6,177.9 L596.2,175.1 L596.2,177.9 L646.4,173.3 L659.0,173.8 L721.8,141.4" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="382.6" cy="181.5" r="2.5" fill="var(--accent)"/>
+<circle cx="382.6" cy="175.7" r="2.5" fill="var(--accent)"/>
+<circle cx="395.2" cy="181.4" r="2.5" fill="var(--accent)"/>
+<circle cx="495.7" cy="181.4" r="2.5" fill="var(--accent)"/>
+<circle cx="495.7" cy="181.3" r="2.5" fill="var(--accent)"/>
+<circle cx="545.9" cy="181.2" r="2.5" fill="var(--accent)"/>
+<circle cx="558.5" cy="181.0" r="2.5" fill="var(--accent)"/>
+<circle cx="558.5" cy="181.2" r="2.5" fill="var(--accent)"/>
+<circle cx="583.6" cy="201.0" r="2.5" fill="var(--accent)"/>
+<circle cx="583.6" cy="177.9" r="2.5" fill="var(--accent)"/>
+<circle cx="596.2" cy="175.1" r="2.5" fill="var(--accent)"/>
+<circle cx="596.2" cy="177.9" r="2.5" fill="var(--accent)"/>
+<circle cx="646.4" cy="173.3" r="2.5" fill="var(--accent)"/>
+<circle cx="659.0" cy="173.8" r="2.5" fill="var(--accent)"/>
+<circle cx="721.8" cy="141.4" r="2.5" fill="var(--accent)"/>
+<path d="M382.6,185.3 L382.6,178.6 L382.6,172.4 L382.6,171.9 L382.6,170.1 L633.9,166.8 L721.8,141.3 L809.8,140.9" fill="none" stroke="var(--moss)" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="382.6" cy="185.3" r="2.5" fill="var(--moss)"/>
+<circle cx="382.6" cy="178.6" r="2.5" fill="var(--moss)"/>
+<circle cx="382.6" cy="172.4" r="2.5" fill="var(--moss)"/>
+<circle cx="382.6" cy="171.9" r="2.5" fill="var(--moss)"/>
+<circle cx="382.6" cy="170.1" r="2.5" fill="var(--moss)"/>
+<circle cx="633.9" cy="166.8" r="2.5" fill="var(--moss)"/>
+<circle cx="721.8" cy="141.3" r="2.5" fill="var(--moss)"/>
+<circle cx="809.8" cy="140.9" r="2.5" fill="var(--moss)"/>
+<text x="101.7" y="225.6" text-anchor="start" fill="var(--ink-2)" font-size="10.5">06-13 出生 472</text>
+<text x="148.5" y="150.1" text-anchor="end" fill="var(--ink-2)" font-size="10.5">06-18 「guidance」+514</text>
+<text x="365.5" y="46.2" text-anchor="start" fill="var(--ink-2)" font-size="10.5">07-04 峰值 2,103</text>
+<text x="466.0" y="220.9" text-anchor="start" fill="var(--ink-2)" font-size="10.5">07-12 砍到 537（−74%）</text>
+<text x="803.2" y="145.9" text-anchor="start" fill="var(--ink-2)" font-size="10.5">1,073</text>
+<text x="589.6" y="217.0" fill="var(--ink-2)" font-size="10.5">07-22 pre-push「没有基线」575</text>
+<text x="715.8" y="131.0" text-anchor="end" fill="var(--ink-2)" font-size="10.5">08-02 原生栈 1,156 / 1,161</text>
+</svg><div style="display:flex;gap:1.2rem;flex-wrap:wrap;font-family:var(--mono);font-size:.74rem;color:var(--ink-2);margin-top:.4rem"><span><span style="display:inline-block;width:14px;height:3px;background:var(--steel);vertical-align:middle;margin-right:.4rem"></span>dsh-code-review</span><span><span style="display:inline-block;width:14px;height:3px;background:var(--accent);vertical-align:middle;margin-right:.4rem"></span>dsh-pre-push-checks</span><span><span style="display:inline-block;width:14px;height:3px;background:var(--moss);vertical-align:middle;margin-right:.4rem"></span>dsh-merging-stacked-prs</span></div></div><figcaption>三份 Git 簇 skill 的 SKILL.md 字数轨迹（每个点是一次非合并提交；按日期排序）。dsh-code-review 的「峰值→砍到四分之一→再长回一倍」是 11 份里最大的起伏；dsh-pre-push-checks 在 07-22 哲学翻转时反而变短，08-02 因为要写 gh stack sync 之后的验证流程而变长。</figcaption></figure>
+  <span class="ev">for c in $(git log --no-merges --reverse --format=%h -- .agents/skills/dsh-code-review/SKILL.md); do git show $c:.agents/skills/dsh-code-review/SKILL.md | wc -w; done；git show --stat 75838e10b5 | tail -1 → 323 files changed, 2858 insertions(+), 11834 deletions(-)</span>
+  <p>「从评审意见里长出来」有两条路。手工的一条：07-19 的两次提交先「distill human review principles」进 skill，再「promote review principles」——把 8 条已经成熟的原则从 skill 里<em>升格</em>到 <code>packages/AGENTS.md</code> 当常设规则，skill 里只留下「怎么检查」并回链过去。规则的流向是双向的：评审意见 → skill 检查项 → 手册规则。自动的一条：一个只在维护者本机上跑的私有工具，每天扫过去两天合并的 PR、抓取人类的行内评审意见、用<strong>两个独立配置的 reviewer adapter</strong>判断「是不是人写的、最终代码采纳了没有」、再判断「当前 skill 覆盖了没有」，然后起草一份完整的新 SKILL.md、双 adapter 互审、跑 doc-sync 与 lint，把候选 diff 连同 promotion manifest 落在 <code>~/dsh-code-review-outputs/</code>；操作者三选一：丢弃、攒着、或用 <code>dsh-code-review-promote &lt;timestamp&gt;</code> 开一个 draft PR。cookbook 特意写道：「Read the diff on its own merits. Do not defer to "the reviewers approved"」「Do not commit adapter output verbatim」。</p>
+  <span class="ev">git show 4ab5a76317 --stat（packages/AGENTS.md +8 行、SKILL.md 20 行改写）；docs/cookbook/maintaining-dsh-code-review.md:9-15,23,45；.agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md</span>
+  <div class="callout steel">
+    <p><strong>老实说这条自动管线还没被证明。</strong>那篇笔记至今 <code>Status: proposed</code>；六条验收标准里只有两条带「Observed on 2026-07-15」：一次运行扫了 62 个已合并 PR、跳过 5 个、考察 426 条人类反馈、<strong>0 条候选</strong>；两个 adapter 约 8 分钟跑完，「batch fail-closed handled one adapter id-hallucination」。最后一条标准——「至少一个候选 diff 经操作者检查后通过常规 PR 评审进入 master」——没有观察记录。40 次非合并提交的主题里没有一条提到 promote helper；<code>d0910a2ed7</code> 那 6 条人工检查与笔记落在同一个 PR #336 里，而那次唯一有记录的运行说的是 0 候选。工具源码、adapter、凭据和调度器按设计留在一台机器上（「单一 skill、单一操作者，把机制提交进仓库过评审的成本超过收益」），笔记自己把「Single-maintainer bus factor」列为风险。公开仓库能证明的只是：管线被规范化并试跑过一次；有没有真的产出过规则，无法从 git 判定。</p>
+  </div>
+
+</section>
+
+<!-- ============ S7 ============ -->
+<section id="s7">
+  <div class="sec-eyebrow">07 · 笔记治理与 GUI 证据</div>
+  <h2>笔记治理与 GIF：用带字数的例子校准判断，用脚本封印证据</h2>
+  <p class="sec-lede">两份管 Agent Note 的进出口，一份管 GUI 证据。它们共同回答一个问题：当判断必须交给模型时，怎么把「判断力」写成文件——答案是带字数的例子、被评审抓过的反例、和一个会拒绝坏输入的脚本。</p>
+    <p>这三份 skill 里，两份管 Agent Note 的进出口——find-simplifications 教 agent 找可删的东西并写 proposed 笔记，archive-agent-notes 管把没有未来价值的 implemented 笔记冻结封存；第三份 record-browser-gif 是 11 份里唯一带可执行脚本的，它自己的三篇笔记恰好演示了「写→被取代→归档」的整个生命周期。</p>
+
+  <h3>dsh-archive-agent-notes：用带字数的例子说「字数不是标准」，用脚本封印「冻结」</h3>
+  <p>它 07-26 出生时就带着第一次大扫除：同一提交动了 281 个文件，把 45 组 implemented 三元组挪进 <code>archived/</code>、删掉 6 组 rejected、写下 <code>archived/AGENTS.md</code> 和 <code>verify-archived-agent-notes</code> 验证器。此后只有两次修改（07-27 加「新增笔记时必须查取代关系」一节；08-09 一次全仓库改词），是提交次数最少的两份之一（与 cot-leakage 并列 3 次）。机制本身写得很具体：整组 <code>foo.md</code>／<code>foo.zh.md</code>／<code>foo.i18n.yaml</code> 从 <code>implemented/&lt;kind&gt;/</code> 挪到 <code>archived/&lt;kind&gt;/</code>（路径里刻意没有 implemented）；正文一个字不改，只在 <code>Status: implemented</code> 下面插一行 <code>Archived: YYYY-MM-DD</code>；重录 sidecar 哈希；修好指向它的入链，永不修它指出去的链接；最后 <code>pnpm run verify-archived-agent-notes --write</code>——「append-only 模式先证明每一个既有封印仍然吻合，然后只追加新三元组的哈希」。根目录的 <code>.rgignore</code> 把归档从 rg 搜索里排除，让冻结的事实不混进活跃的决策发现。</p>
+  <span class="ev">git show --stat=200 --format='' 37140bf823 | tail -1 → 281 files；git log --format='%h %ad %s' -- .agents/skills/dsh-archive-agent-notes → 3 commits；.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:13-25；cat .rgignore</span>
+  <p>「冻结」这个承诺是被机械执行的、也确实守住了：今天归档里有 142 组三元组（feature 54、simplification 27、process 20、bug-fix 19、architecture 14、testing 8），manifest 里 426 个哈希；master 首父链上动过 manifest 的 14 次提交里，<strong>0 个已封印条目被改动、0 个被删除</strong>；HEAD 上跑验证器得到「426 frozen artifact(s) checked across 6 kind(s).」活跃语料 541 篇（implemented 505、proposed 25、rejected 11）——两周半里约五分之一的 implemented 历史被冻结了。归档不是匀速的：07-26 一天 59 篇（出生扫除 45 + 恢复 14），07-27「aggressive archive sweep」一次提交 21 篇，08-04 删除 TUI 包的提交一次冻结 31 篇（其中 27 篇标 Archived 08-04），08-07 又 18 篇。笔记从写下到被归档的年龄（按文件名日期与 Archived 行之差）：中位数 8.5 天，19 篇在 3 天内，7 篇 1 天内；有一篇（08-12 的 collapsed-sidebar-shared-entry-motion）直接「生在归档里」——先按规定写下必需的 Agent Note，然后立刻冻结。</p>
+  <span class="ev">ls .agents/notes/archived/*/*.md | grep -v '\.zh\.md' | wc -l → 142；python3 遍历 git log --first-parent -- .agents/notes/archived/manifest.json 比较各版本 files（14 commits, changed 0, removed 0）；pnpm run verify-archived-agent-notes；按 Archived: 行统计年龄</span>
+  <p>skill 里那 11 个「带字数的校准例子」全部能在 git 里对上：三个「该归档」的例子都在 <code>archived/</code>，今天的字数恰好比 skill 里写的多 2 词——那行 <code>Archived: 2026-07-26</code>；五个「该保留」的例子都还在 <code>implemented/</code>，其中四篇的字数各自漂移了（single-harness-home-resolver 596 → 353，parallel-pre-push-gates 400 → 558；只有 project-session-directories 仍是 628）——正好演示了它自己的论点：<em>活跃笔记是持续的维护义务，归档的不是</em>；两个「该删除」的 rejected 例子（972 词、362 词）确实在出生提交里被删掉了。</p>
+  <span class="ev">cd .agents/notes && wc -w archived/bug-fix/2026-07-22-collapsed-sidebar-control-rail.md → 535（skill 写 533）；git show 37140bf823:.agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.md | wc -w → 596，今天 353；git show 37140bf823^:.agents/notes/rejected/feature/2026-07-13-stream-workflow-progress-through-tool-calls.md | wc -w → 972</span>
+  <div class="callout moss">
+    <p><strong>归档是对「合并后删除」的一次纠偏。</strong>07-25/26 的 PR #639（<code>codex/consolidate-agent-notes</code>）给 find-simplifications 加了「Coalesce Superseded Agent Notes」一节，并<em>删除</em>了 14 篇被完全取代的 implemented 笔记；21 小时后，archive PR 里的一次提交「restore PR 639 history to archive」把这 14 篇请回了 <code>archived/</code>——12 篇只多一行 Archived，2 篇另补了语言切换链接。今天两种出口并存：冻结（archive）与合并删除（README「When to write one」一节第 50–52 行仍允许），07-27 之后 master 首父链上又有约 19 篇 implemented 笔记被真正删除（把改名也算进去是 27 篇）。还有一个细节说明「冻结」从何时算起：07-23 那篇 GIF 笔记 07-26 被封印时哈希是 17b3f267…，但同分支上的一次 merge-forward 把 PR #678 对活跃副本的同日修改带进了归档副本并重新封印为 4d3a3dc8…——落到 master 的是后者；封印只保证「从到达 master 那一刻起不变」。</p>
+  </div>
+  <span class="ev">git diff --name-status b5bba5adee^1 b5bba5adee | grep '^D' | grep -v zh.md（14）；git show --name-status --format='' b458a97907 | grep '^A' | grep archived（同 14 个 basename）；git log --format='%h %ad %P %s' -- .agents/notes/archived/process/2026-07-23-browser-demo-gif-recording.md</span>
+
+  <h3>dsh-find-simplifications：每一节都对应一次真实的调研</h3>
+  <p>它是 11 份里最长的（2,038 词），因为它每长一节都对应一场真实的调研：06-20 出生于 PR #72（那次调研本身产出 12 篇 proposed + 11 篇 rejected 简化 RFC；「When Folding Another PR Or Branch」记录的是把 PR #74 折进来的经验）；07-12「Audit Trust And Lifecycle Boundaries」来自 PR #224 的 agent-scope 设计；07-25「Coalesce Superseded Agent Notes」来自上面那次 PR #639；07-26「Hand-Rolled Code Versus A Dependency」来自 PR #667 的 NIH 审计——提交正文说它做了「ten parallel domain surveys covering every package group, scripts/, native/, vendor/ edges, python/, test infrastructure, and CI」，同时立下「dependencies over hand-rolling」政策笔记、7 篇 proposed 与一篇列了 38 条裁定的 rejected 笔记（提交正文自述「约 30」）。那 7 篇提案今天的去向：1 篇 implemented 且活跃（pnpm-action-setup）、2 篇 rejected、4 篇 implemented 后已归档（其中 consolidate-gate-scripts 在 07-26 15:54 proposed → 23:14 implemented → 次日 23:56 archived，32 小时走完整个生命周期）。</p>
+  <span class="ev">git log --format='%h %ad %an %s' --date=short 906705e353^1..906705e353^2；for c in …; do git show $c -- .agents/skills/dsh-find-simplifications/SKILL.md | grep -E '^[-+]#'; done；git show -s --format=%B 3a88912a22；git log --name-status --follow -- .agents/notes/archived/simplification/2026-07-26-consolidate-gate-scripts-on-existing-deps.md</span>
+  <p>它被用过多少次，只能用代理量估：simplification 类笔记今天共 87 篇（implemented 48、proposed 2、rejected 10、archived 27），其中 12 篇日期是 06-20、11 篇是 07-04——两次集中调研日；984 个已合并 PR 里 18 个分支名带 <code>simplif</code>。它也有一处可核实的陈旧：第 12 行让读者去 AGENTS.md 里读「the tests-are-not-golden-truth and Agent Notes-are-not-golden-truth doctrines」，而「golden truth」这个措辞 07-12 就从 AGENTS.md 里删掉了（换成「Tests describe behavior, not correctness」）——链接全部有效，闸门不会报，只有人读到才会发现。</p>
+  <span class="ev">cd .agents/notes && ls */simplification/*.md | grep -v zh.md | wc -l → 87；git log --merges --format='%s' | grep -ic simplif → 18；git log -S'golden truth' --format='%h %ad %s' -- AGENTS.md</span>
+
+  <h3>record-browser-gif：一个脚本、三篇笔记、一条无法从公开仓库核实的强制令</h3>
+  <p>07-23 出生时 647 词，随身带着 <code>scripts/encode_gif.py</code>（279 行、只依赖标准库 + 外部 ffmpeg/ffprobe）和一篇笔记；14 分钟后就修了编码器（palettegen 的 stats_mode、颜色下限、ffconcat 引号）。07-26 的一次提交让它翻倍（+757 词）：加入「每个改 GUI 的 PR MUST 附 GIF」、「Stage the application」和「Publish to an assets branch」，并把 <code>.playwright-mcp/</code> 加进 .gitignore——提交正文说是把「Code Mode UI series」的实操教训折进来。08-08 又加了 345 词的「证据链」：一个分镜 = 一次隔离运行，钉住确切的 PR head，fresh 的 <code>DSH_HOME</code>／<code>DSH_AGENTS_HOME</code>，抓帧失败就丢帧重来，Playwright 兜底，发布前后重读 PR 的 live head。它的三篇笔记前后相继：07-23 的「录屏笔记」明文把发布策略让给 07-26 的「GUI PR 证据与 assets 分支」，08-08 的「evidence chain」再接管——后一步没有引用前两篇，把三篇串成一条链是本卷的归纳；前两篇分别在写完 3 天和<strong>1 天</strong>后被归档，07-26 那篇冻结时正文里还写着「The record-browser-gif skill remains the current contract」。</p>
+  <span class="ev">git show --stat f7103c833c；git show -s --format=%B 8ceb638bb5；git log --no-merges --format='%h %ad %an %s' --date=short --follow -- .agents/skills/record-browser-gif/SKILL.md；sed -n '3,4p' .agents/notes/archived/process/2026-07-2*gif*.md</span>
+  <p>encode_gif.py 的每一条校验都能用两张 16×16 的 PNG 复现：帧目录不存在、输出不以 .gif 结尾、未加 <code>--force</code> 就覆盖、<code>--colors</code> 不在 4..256、<code>--fps</code> 超过 30、少于两帧、<code>--durations</code> 个数与帧数不符、各帧尺寸不一致——全部拒绝；编码后再用 ffprobe 反查时长、宽度、帧数与字节数（默认上限 5 MiB），输出一份排好序的 JSON 摘要。一个小瑕疵：字节上限的检查发生在 ffmpeg 写完之后，超限的文件会留在磁盘上。仓库里没有任何测试覆盖这个脚本——它是 11 份 skill 里唯一的可执行物，也是唯一不受测试保护的可执行物。</p>
+  <span class="ev">cat -n .agents/skills/record-browser-gif/scripts/encode_gif.py（174-202、248-258 行）；在 scratch 里用两张 PNG 逐条触发；rg -l 'encode_gif' . → 只有 SKILL.md</span>
+  <p>最后，那条 MUST 有没有被执行，公开仓库无法回答：master 上不追踪任何 .gif（skill 明令禁止把 GIF 提交到代码分支），PR 正文拿不到，本地和公开上游都看不到任何 <code>*-assets</code> 分支（公开镜像只暴露 <code>refs/heads/master</code>；08-06 的一篇笔记说开发仓库是私有的）。能给的只有一个上界：07-27 零点以来 551 个已合并 PR 里，236 个动过 <code>packages/client/**/src/**</code>。第 11 节会把这类「仓库证明不了」的事集中列出来。</p>
+  <span class="ev">git ls-files | grep -ci '\.gif$' → 0；git ls-remote --heads upstream → 只有 master；git log --first-parent --merges --since='2026-07-27 00:00:00 +0800' master -- 'packages/client/**/src/**' | wc -l → 236（裸日期 --since 以当前时刻为界，数字会随运行时间漂移）</span>
+
+</section>
+
+<!-- ============ S8 ============ -->
+<section id="s8">
+  <div class="sec-eyebrow">08 · 病历</div>
+  <h2>skill 里的 agent 病历：那些「只有对模型才需要说」的句子</h2>
+  <p class="sec-lede">给人写的操作手册不会写「不要 push 然后指望 CI 结果会不一样」。这 11 份里散落着几十条这样的句子，每一条背后都是一次 agent 的翻车。按病因归成六类，原文照录。</p>
+    <p>下面 35 条（含 37 段引文）全部逐字摘自 <code>.agents/skills/**</code>（含 references），每条附文件与行号。它们的共同点是：<strong>对一个细心的人类工程师而言要么是废话，要么是侮辱；对一个会「顺手补全」「相信自己上一轮的记忆」「把命令跑通当成事情做成」的模型来说，却是必要的护栏。</strong>读者可以拿这份清单反照自己的 agent 会话——每一类都对应一种你大概率见过的翻车。</p>
+
+  <h3>一、别信自己的记忆，去看现在的状态</h3>
+  <ul class="patho">
+    <li><span class="q">Read the current <code>DocsPage</code> type and entries in website/docs.ts before changing the manifest; <strong>do not rely on a remembered field set</strong>.</span><span class="why">模型会凭训练记忆或上一次会话「记得」一个类型有哪些字段。</span><span class="src">dsh-doc-site-sync/SKILL.md:16</span></li>
+    <li><span class="q">Fetch current PR metadata and exact head OIDs <strong>rather than trusting branch names or an earlier report</strong>.</span><span class="why">「an earlier report」——包括 agent 自己几轮前的输出。</span><span class="src">dsh-merging-stacked-prs/SKILL.md:14</span></li>
+    <li><span class="q">Commit hashes and inline-comment anchors from before the rewrite <strong>are not current evidence</strong>.</span><span class="why">rebase 之后旧 SHA 还在上下文里，看起来仍然「有效」。</span><span class="src">dsh-pre-push-checks/SKILL.md:70</span></li>
+    <li><span class="q">The command <strong>never guesses or fetches a base</strong>. Supply the ref verified from current remote or stack state.</span><span class="why">change-scope 脚本被刻意设计成不猜——猜错的 base 会让整个「最窄证据」选择失效。</span><span class="src">dsh-pre-push-checks/SKILL.md:25</span></li>
+  </ul>
+
+  <h3>二、「没搜到」「没报错」不等于「没有」</h3>
+  <ul class="patho">
+    <li><span class="q"><strong>A zero-hit pattern proves nothing until you have seen it match</strong>: test it against a known-positive string before trusting the negative.</span><span class="why">正则写错了，grep 安静地返回空，模型会汇报「已确认无泄漏」。</span><span class="src">dsh-trim-cot-leakage/references/recall-batteries.md:10</span></li>
+    <li><span class="q"><strong>Do not use a fixed delay as proof</strong> that the application reached the state.</span><span class="why">sleep 3 然后截图，是最常见的假证据。</span><span class="src">record-browser-gif/SKILL.md:42</span></li>
+    <li><span class="q">Visually read the encoded GIF itself, not only the source frames … <strong>the pre-encode screenshots do not prove the encoded order, palette, or final hold</strong>.</span><span class="why">输入对了不代表输出对了。</span><span class="src">record-browser-gif/SKILL.md:75</span></li>
+    <li><span class="q"><strong>Coverage is necessary but not evidence that the scenario is correct.</strong></span><span class="why">100% 覆盖率是这个仓库的硬门槛，所以要专门提醒它不是正确性。</span><span class="src">dsh-code-review/SKILL.md:41</span></li>
+    <li><span class="q">An anonymous <code>404</code> <strong>does not disprove</strong> a private-repository asset; authenticate the verification instead.</span><span class="why">「我 curl 了一下是 404 所以没发上去」。</span><span class="src">record-browser-gif/SKILL.md:100</span></li>
+  </ul>
+
+  <h3>三、别为了指标作弊（反古德哈特）</h3>
+  <ul class="patho">
+    <li><span class="q"><strong>Do not archive toward a quota.</strong> … Judge every note semantically; <strong>word count and age are discovery aids, never archive criteria</strong>.</span><span class="why">「归档 20 篇」这种任务，模型会先挑最长最老的。</span><span class="src">dsh-archive-agent-notes/SKILL.md:8, 28</span></li>
+    <li><span class="q"><strong>A smaller word count alone is not an improvement.</strong> … <strong>do not manufacture edits to satisfy a deletion target</strong>.</span><span class="why">「trim the docs」被理解成「让 wc -w 变小」——正是 dsh-trim-prose 改名成 dsh-prose-standard 的原因（第 5 节）。</span><span class="src">dsh-prose-standard/SKILL.md:38, 68</span></li>
+    <li><span class="q">Do not use <code>--passWithNoTests</code>, lower coverage thresholds, or narrow <code>--coverage.include</code> <strong>merely to hide an uncovered affected file</strong>.</span><span class="why">三种让红灯变绿的捷径，一条命令里全点了名。</span><span class="src">dsh-pre-push-checks/SKILL.md:60</span></li>
+    <li><span class="q">If credentials or the server are unavailable, <strong>report that limitation instead of substituting a fixture</strong>.</span><span class="why">「真 API 跑不了，那我用 mock 录一段吧」——证据链就断了。</span><span class="src">record-browser-gif/SKILL.md:22</span></li>
+    <li><span class="q"><strong>Do not let the first good candidate stop the survey.</strong></span><span class="why">找到一个就交差。</span><span class="src">dsh-find-simplifications/SKILL.md:43</span></li>
+    <li><span class="q">Thin candidates are usually not enough for an Agent Note: … flagging "this looks complex" <strong>without call-site proof</strong>.</span><span class="why">「这里看起来很复杂」不是证据。</span><span class="src">dsh-find-simplifications/SKILL.md:31</span></li>
+  </ul>
+
+  <h3>四、别表演、别宣称没做过的事</h3>
+  <ul class="patho">
+    <li><span class="q">If a relevant check fails before an ordinary push, stop and fix or explain the blocker. <strong>Do not push and hope CI differs.</strong></span><span class="why">本地红了先推上去看看——人也会，但模型更会。</span><span class="src">dsh-pre-push-checks/SKILL.md:85</span></li>
+    <li><span class="q"><strong>Report pending checks as pending.</strong> Inspect failures before attributing them to the branch or the environment.</span><span class="why">把「还在跑」说成「通过了」，把失败归咎于「环境抖动」。</span><span class="src">dsh-pre-push-checks/SKILL.md:113</span></li>
+    <li><span class="q"><strong>Do not claim the sync made the stack ready merely because the command succeeded.</strong></span><span class="why">命令返回 0 ≠ 事情做成。</span><span class="src">dsh-pre-push-checks/SKILL.md:81</span></li>
+    <li><span class="q">When receiving review, verify each claim and fix or rebut it on technical grounds <strong>without performative agreement</strong>.</span><span class="why">「You're absolutely right!」然后照改——哪怕评审是错的。</span><span class="src">dsh-code-review/SKILL.md:49</span></li>
+    <li><span class="q">assertions … verify external state, logs, events, or disposal <strong>rather than restating the implementation or trusting an agent's report</strong>.</span><span class="why">这一条写在评审 skill 里，评审者与被评审者都是 agent。</span><span class="src">dsh-code-review/SKILL.md:41</span></li>
+    <li><span class="q">Verify the final diff contains no <code>vendor/</code> path and <strong>report any accidental vendor match rather than claiming a clean exclusion history</strong>.</span><span class="why">「我全程排除了 vendor/」是一句无法核实的自述；diff 里有没有才是。</span><span class="src">dsh-prose-standard/SKILL.md:70</span></li>
+    <li><span class="q"><strong>Do not claim archived outbound links are valid</strong>: the archive verifier intentionally never checks them.</span><span class="why">闸门绿了不代表它检查过你以为它检查的东西。</span><span class="src">dsh-archive-agent-notes/SKILL.md:68</span></li>
+    <li><span class="q">The yaml diff in your PR is the reviewable statement "I confirmed these two say the same thing" — <strong>only run it after you actually have</strong>.</span><span class="why">--write 是一枚签章，不是一步流程。</span><span class="src">dsh-translate-docs/SKILL.md:67</span></li>
+  </ul>
+
+  <h3>五、工具与运行环境的物理陷阱</h3>
+  <ul class="patho">
+    <li><span class="q">A broad <code>pkill -f</code> pattern can match and kill the shell that launched it — <strong>including your own</strong>.</span><span class="why">agent 杀掉了自己的 bash 会话。这句一定是事故之后写的。</span><span class="src">record-browser-gif/SKILL.md:32</span></li>
+    <li><span class="q">Export <code>GIF_SKILL_DIR</code> … on its own line before the python command — an inline <code>GIF_SKILL_DIR=... python3 "$GIF_SKILL_DIR/..."</code> assignment fails, <strong>because the argument expands before the assignment takes effect</strong>.</span><span class="why">shell 求值顺序；人踩一次记住，模型每次会话都是第一次。</span><span class="src">record-browser-gif/SKILL.md:55</span></li>
+    <li><span class="q">Capture a transient state … inside <em>one</em> browser-script call that also takes the screenshot. <strong>State polled across separate tool calls is lost, because the turn settles between calls.</strong></span><span class="why">这是 agent 特有的物理定律：两次工具调用之间，世界会继续转。</span><span class="src">record-browser-gif/SKILL.md:45</span></li>
+    <li><span class="q">Make completion predicates match an exact-text element … <strong>never a substring check such as <code>body.textContent.includes(...)</code>, which the echo of the user's own prompt also satisfies</strong>.</span><span class="why">等待「done」出现——而 prompt 里就写着「reply with the single word done」。</span><span class="src">record-browser-gif/SKILL.md:43</span></li>
+    <li><span class="q"><strong>Never read or expose credential values.</strong> Use the application's normal configuration path and a benign demonstration prompt.</span><span class="why">「让我先 cat 一下 .env 确认 key 在」。</span><span class="src">record-browser-gif/SKILL.md:23</span></li>
+    <li><span class="q"><strong>Write only the final text to the file, never drafts or notes.</strong></span><span class="why">译文文件里留下「TODO: 这里不确定」或整段英文草稿。</span><span class="src">dsh-translate-docs/SKILL.md:53</span></li>
+  </ul>
+
+  <h3>六、范围纪律与该停就停</h3>
+  <ul class="patho">
+    <li><span class="q">Require an explicit <code>scope</code>. If it is missing, report the required input and stop; <strong>do not infer a repository-wide scope or begin an interview</strong>.</span><span class="why">两种失败模式一句话全堵：自作主张扫全仓库，或者反过来问十个问题。</span><span class="src">dsh-prose-standard/SKILL.md:16</span></li>
+    <li><span class="q"><strong>Hard-stop</strong> if the official extension or server-side stack feature is unavailable; <strong>do not fall back</strong> to manually merging and retargeting PRs one at a time.</span><span class="why">「工具没有就手动模拟一遍」是模型最爱的兜底，也是把 GitHub 状态弄乱的最快方式。</span><span class="src">dsh-merging-stacked-prs/SKILL.md:12</span></li>
+    <li><span class="q"><strong>Never re-translate a whole document to apply an update</strong> — a minimal update preserves the reviewed phrasing of everything that didn't change; a re-translation throws that review away.</span><span class="why">改一句就整篇重译，顺手把已评审过的措辞全换掉。</span><span class="src">dsh-translate-docs/SKILL.md:20</span></li>
+    <li><span class="q">Load it BEFORE translating, not when a term feels uncertain; <strong>the terms you don't notice are the ones that drift</strong>.</span><span class="why">「有不确定的我再查」——但漂移的恰恰是你没觉得不确定的那些。</span><span class="src">dsh-translate-docs/SKILL.md:44</span></li>
+    <li><span class="q"><strong>Do not compress a reasoning transcript into shorter narration; remove it.</strong></span><span class="why">「trim」的另一种作弊：把废话缩短而不是删掉。</span><span class="src">dsh-prose-standard/references/examples.md:121</span></li>
+    <li><span class="q">Unaided citation passes <strong>fail in both directions</strong> by deleting durable references and keeping dead ones.</span><span class="why">所以 skill 附了「什么不算泄漏」的白名单——单向清扫会把有用的引用也删掉。</span><span class="src">dsh-trim-cot-leakage/SKILL.md:27</span></li>
+  </ul>
+
+  <div class="callout">
+    <p><strong>它们从哪来。</strong>用 <code>git log -S"&lt;句子&gt;"</code> 可以给每一句找到首次出现的提交。有些是<em>与 skill 同生</em>的——「Do not push and hope CI differs」在 dsh-pre-push-checks 诞生的 07-06 提交里就有，「A smaller word count alone is not an improvement」「do not manufacture edits to satisfy a deletion target」两句都写在 07-13 dsh-trim-prose 的第一版里，「without performative agreement」来自 06-18 那次把评审 skill「从清单改写为指导」的提交，「do not rely on a remembered field set」在 07-13 doc-site-sync 的第一版里；另一些则是<em>事后补的补丁</em>——record-browser-gif 07-23 出生时 <code>GIF_SKILL_DIR</code> 那行只是一句平淡的「Set … then encode」，三天后 07-26 的一次提交同时把它改成「inline 赋值会失败，因为参数先于赋值展开」，并加上「<code>pkill -f</code> 会杀掉自己」和「跨工具调用的轮询状态会丢失」——三条物理陷阱同一次落地，提交正文说是从 Code Mode UI 系列里折进来的实操教训；「--passWithNoTests」那句是 07-22「explain focused local coverage」补上的；「A zero-hit pattern proves nothing」出自 08-09 同日把那次 763 文件清扫蒸馏成 skill 的 PR #2117。第二卷第 11 节按病因给 AGENTS.md 里的规则做过同类清单；本卷只看 skill 里的——skill 是这类句子密度最高的地方，因为它们描述的是<em>动作序列</em>，而 agent 的病发作在动作里。</p>
+  </div>
+
+</section>
+
+<!-- ============ S9 ============ -->
+<section id="s9">
+  <div class="sec-eyebrow">09 · 接线</div>
+  <h2>接线：一份文本、两家规范、一道闸门</h2>
+  <p class="sec-lede">Claude Code 与 Codex 各有一套 skill 规范；这个仓库没有维护两份，而是用软链接让两家读同一目录，再用一道机械闸门保证两家的调用策略永远一致。</p>
+    <h3>两家规范，各读各的目录</h3>
+  <p>Claude Code 的官方文档规定项目级技能放在 <code>.claude/skills/&lt;name&gt;/SKILL.md</code>，个人级放 <code>~/.claude/skills/</code>；一个 <code>&lt;skill-name&gt;</code> 条目可以是指向别处目录的软链接（「Claude Code follows the symlink and reads SKILL.md from the target directory」）；frontmatter 认 <code>name</code>、<code>description</code>、<code>disable-model-invocation</code>、<code>user-invocable</code>、<code>allowed-tools</code>、<code>disallowed-tools</code>、<code>model</code>、<code>effort</code>、<code>context</code> 等；用户用 <code>/name</code> 调用；「the rendered SKILL.md content enters the conversation as a single message and stays there for the rest of the session」。Codex 的官方文档规定仓库级技能放在 <code>$REPO_ROOT/.agents/skills</code>（还有 <code>$CWD/.agents/skills</code>、<code>~/.agents/skills</code>、<code>/etc/codex/skills</code>）；frontmatter 只需 <code>name</code> 与 <code>description</code>（「Explain exactly when this skill should and should not trigger」）；可选的 <code>agents/openai.yaml</code> 里 <code>interface</code> 块放 <code>display_name</code>、<code>short_description</code>、<code>default_prompt</code>、图标与品牌色，<code>policy.allow_implicit_invocation</code>（默认 true，「When false, Codex won't implicitly invoke the skill based on user prompt」）；用户用 <code>$skill-name</code> 或 <code>/skills</code> 调用；支持 <code>scripts/</code>、<code>references/</code>、<code>assets/</code> 子目录，「start with each skill's name and description, then load the full SKILL.md instructions when they decide to use that skill」。</p>
+  <span class="ev">https://code.claude.com/docs/en/skills（Where skills live；Frontmatter reference；Skill content lifecycle）；https://learn.chatgpt.com/docs/build-skills（developers.openai.com/codex/skills 的 308 跳转目标）。两页均于 2026-08-19 抓取。</span>
+  <p>这个仓库的做法是让两家读同一份文件：把真实目录放在 Codex 的位置 <code>.agents/skills/</code>，再把 Claude Code 的位置 <code>.claude/skills</code> 做成受 git 跟踪的软链接指过去。这件事发生在建仓 3 天后的那次直推 master 的提交里，同一提交从 .gitignore 里删掉了 <code>.claude/</code>（提交正文：「exposed to Claude Code via a tracked .claude/skills symlink (gitignore carve-out)」）。<code>.claude/skills</code> 从来没有做过真实目录；<code>.codex/</code> 目录从来没有存在过。仓库里没有任何一处散文<em>解释</em>Codex 会读 <code>.agents/skills</code>——最接近的是 08-08 那篇笔记里的一句「The repository's <code>.claude/skills</code> symlink projects the same skill directory to Claude Code, so both products share one committed workflow」和「<code>/dsh-translate-docs</code> in Claude Code or <code>$dsh-translate-docs</code> in Codex」——两家规范本身才是这个设计成立的前提。两个细节值得记：Codex 文档明确写了「supports symlinked skill folders」，而 Claude Code 文档只写了「一个 <code>&lt;skill-name&gt;</code> 条目可以是软链接」——整个目录级的软链接没有被文档承诺，但实际可用——写这一卷的 Claude Code 会话就是在仓库根目录打开的，它的可用技能列表里列着其中 <strong>10 个</strong>名字，唯独没有 dsh-translate-docs：正是 <code>disable-model-invocation: true</code> 穿过软链接在起作用；另外 11 份 skill 全部满足 agentskills.io 公开规范的约束（name 等于目录名、description ≤ 1,024 字符，以及建议的 SKILL.md 少于 500 行），只用了两个规范之外的字段，都是 Claude Code 的（其中「少于 500 行」是规范的建议而非硬约束，11 份也都满足）。</p>
+  <span class="ev">git show 39b3db4b9c --stat -- .claude/skills .gitignore；git log --full-history --diff-filter=T -- .claude/skills → 空；git log --all --diff-filter=A -- '.codex/**' → 空；.agents/notes/implemented/process/2026-08-08-lightweight-routine-documentation-translation.md:14,29</span>
+  <p>第三个读者是 dsh 自己。产品的 <code>dsh-skill-filesystem</code> 按 rank 扫五个根：100 <code>&lt;projectRoot&gt;/.dsh/skills</code>、<strong>200 <code>&lt;projectRoot&gt;/.agents/skills</code></strong>、300 自定义目录、400 <code>&lt;dshHome&gt;/skills</code>、500 <code>&lt;agentsHome&gt;/skills</code>（外加 600 bundled）；projectRoot 是最近的含 <code>.git</code> 的祖先目录；它同样认 <code>disable-model-invocation</code>／<code>user-invocable</code>（07-28 的一篇 feature 笔记记录了产品采纳「kebab-case Claude skills contract」的决定），但从不读 <code>agents/openai.yaml</code>。所以在仓库根目录跑 <code>pnpm dsh --profile headless</code>，模型的技能目录里就会出现 11 个名字中的 10 个（translate-docs 只对用户可见）。本卷的一个研究 agent 直接用构建好的 <code>FileSystemSkillProvider</code> 扫了仓库根目录：11 个候选、0 条解析警告、10 个 model-invocable、translate-docs user-only——产品解析器与开发者 skill 的格式完全兼容。<code>dsh-base</code> bundle（headless profile 用它）与 code／standard 两个 preset 以默认配置挂载该 provider（cordis preset 额外传入自带技能目录 <code>customSkillDirs</code>，默认根仍在；web profile 则关掉 base 里的技能行、由各 preset 自行挂载），所以这是「按构造成立的 dogfooding」；但仓库里没有任何一处声明、测试或转录记录这件事，「dogfood」一词在 .md/.ts/.yml 里出现 0 次，快照 harness 会把 fixture 工作区复制进临时目录，因此仓库自己的 skill 从不会漏进 fixture。</p>
+  <span class="ev">packages/skill/skill-filesystem/README.md:31-41；packages/skill/skill-filesystem/src/index.ts:241-258；packages/bundle/base/cordis.patch.yml:240-241；.agents/notes/implemented/feature/2026-07-28-skill-invocation-policy.md；rg -n -i 'openai' packages/skill/ → 无</span>
+
+  <h3>一道闸门守住两家的调用策略</h3>
+  <p>唯一需要「两边同时改」的字段是<em>能不能被模型自动调用</em>：Claude Code 看 SKILL.md 的 <code>disable-model-invocation: true</code>，Codex 看 <code>agents/openai.yaml</code> 的 <code>policy.allow_implicit_invocation: false</code>。08-08 translate-docs 被关掉自动调用时，同一 PR 写了 <code>scripts/verify-skill-invocation-metadata.ts</code>（122 行）并挂进 doc-sync：对每个<em>带 openai.yaml</em> 的 skill 目录，解析两边、要求三个字段若存在必须是布尔、要求「Claude 手动专用 ⇔ Codex 手动专用」，并且「手动专用的 skill 必须仍对用户可调用」。今天它输出「6 cross-product skill policy pair(s) aligned」。它有一个明确的盲区：不带 openai.yaml 的 5 份 skill（code-review、doc-standards、find-simplifications、stacked-prs、trim-cot-leakage）不在它的检查范围内——如果有人只在其中一份的 SKILL.md 里加 <code>disable-model-invocation: true</code>，Codex 那边会照旧自动调用而闸门不会报警。它的 spec 只有两个用例，第三条拒绝分支（手动专用 + <code>user-invocable: false</code>）没有测试；scripts/ 又在每文件 100% 覆盖率闸门之外。这与根 AGENTS.md「prove each changed acceptance path rejects an invalid case」那句有一点点张力——如实记下。</p>
+  <span class="ev">scripts/verify-skill-invocation-metadata.ts:35,94-104；scripts/verify-skill-invocation-metadata.spec.ts（2 个 it）；scripts/run-gates.ts:605；pnpm run --silent verify-skill-invocation-metadata；git log --diff-filter=A --format='%h %ad %s' -- scripts/verify-skill-invocation-metadata.ts → ef7195a00a 2026-08-08</span>
+  <p>为什么只有 6 份带 openai.yaml？没有笔记解释。第一份 openai.yaml 06-20 出现在 find-simplifications 里、当天被评审删掉；第一份真正落到 master 的是 07-07 的 pre-push；6 份里 5 份是在自己的诞生提交里带来的，唯一的例外是 translate-docs——07-02 出生时没有，08-08 被关成手动专用时才补上，目的就是承载 <code>allow_implicit_invocation: false</code>；除此之外从没有过为另外五份「补齐」的提交。openai.yaml 里的 <code>interface.*</code> 字段（展示名、简介、默认提示）仓库里没有一处解释——那是 Codex 侧 UI 元数据，只能查 Codex 文档；<code>default_prompt</code> 用的正是 <code>$name</code> 语法：「Use $dsh-pre-push-checks before pushing this DeepSeek Harness branch.」</p>
+  <span class="ev">git log --full-history --format='%h %ad %s' --date=short -- .agents/skills/dsh-find-simplifications/agents/openai.yaml → 99a203f445 添加、80179a5ed0 同日删除；for f in .agents/skills/*/agents/openai.yaml; do git log --diff-filter=A --follow --format='%h %ad' -- $f; done</span>
+
+  <h3>哪些是照规范做的，哪些是自己加的</h3>
+  <div class="grid2">
+    <div class="card"><h4>规范里本来就有</h4><ul><li><code>SKILL.md</code> + <code>name</code>/<code>description</code> frontmatter；description 当触发器写</li><li><code>disable-model-invocation</code>／<code>user-invocable</code>（Claude Code）；<code>agents/openai.yaml</code> 的 <code>interface</code>／<code>policy</code>（Codex）</li><li><code>references/</code>、<code>scripts/</code> 子目录与「先读 name/description、用到再展开全文」的渐进披露</li><li>项目级目录：<code>.claude/skills</code>、<code>.agents/skills</code>；软链接被 Claude Code 明确支持</li></ul></div>
+    <div class="card"><h4>这个仓库自己加的</h4><ul><li>一份目录、两家读：真实目录放 Codex 位置，Claude 位置做软链接（第 3 天就定了）</li><li>一道 doc-sync 闸门保证两家的「手动专用」策略永远一致</li><li>skill 也在 <code>verify-md-links</code> 范围内：链接坏了 CI 红</li><li>「guidance, not a script」写进散文标准，作为 skill 的必备要素；「X owns Y」把理由留在 Agent Note</li><li>产品自己也把 <code>.agents/skills</code> 当技能根——三个读者、一份文本</li><li>translate-docs 的「只许手动」有五层防线：frontmatter、openai.yaml policy、正文「Invocation boundary」一节、根 AGENTS.md 一句常设规则、以及那道闸门</li><li>没做的：不用 <code>allowed-tools</code>、<code>model</code>、<code>context: fork</code>；不双语；不设字数预算</li></ul></div>
+  </div>
+
+</section>
+
+<!-- ============ S10 ============ -->
+<section id="s10">
+  <div class="sec-eyebrow">10 · 分工</div>
+  <h2>分工：skill 与 AGENTS.md、docs、闸门、Agent Note 各管什么</h2>
+  <p class="sec-lede">AGENTS.md 一定会被读到，skill 只在被点名或匹配时展开，docs 承载合同，Agent Note 承载理由，闸门管能机械判定的部分——这一节看这五层怎么分工、内容怎么在层间流动、以及「一个事实一个家」在 skill 里漏在哪。</p>
+    <p>这个仓库把「给 agent 的文字」分成五层，每层的加载方式不同，因此装的东西也不同。理解这张表，就理解了 skill 为什么长成这样。</p>
+  <div class="tbl-wrap wide">
+  <table>
+    <thead><tr><th>层</th><th>装什么</th><th>怎么进入 agent 的上下文</th><th>预算／闸门</th><th>规模</th></tr></thead>
+    <tbody>
+      <tr><td><strong>AGENTS.md</strong>（根 + packages/ + docs/ + examples/ + website/ …）</td><td>常设规则：一到三行 + 一个链接到理由</td><td>按目录自动加载（Codex 读 AGENTS.md，Claude Code 读 CLAUDE.md 软链接）</td><td>verify-doc-budgets 字数上限（根 1,900、docs/ 1,320…）；双语除外</td><td>四份带预算的共 4,129 词；根文件 0 词余量</td></tr>
+      <tr><td><strong>skill</strong>（<code>.agents/skills/</code>）</td><td>可复用的工作流 + 专门的判断标准；命令逐字；校准例子</td><td>只在 description 命中或被 <code>/name</code>、<code>$name</code> 点名时整份加载</td><td>无字数预算、无双语、无 wrap 检查；只查链接有效、mermaid、两家调用策略一致</td><td>11 份 13,578 词，是四份带预算 AGENTS.md 的三倍多</td></tr>
+      <tr><td><strong>docs/</strong>（含 docs/AGENTS.md、cookbook、subsystems、i18n）</td><td>合同与标准本身、分步教程、参考</td><td>被 skill 或 AGENTS.md 链接时按需读</td><td>分层、预算、双语配对、链接、片段、生成物新鲜度</td><td>936 对双语文档（第二卷）</td></tr>
+      <tr><td><strong>Agent Note</strong>（<code>.agents/notes/</code>）</td><td>为什么、放弃了什么、被否决的备选</td><td>被 skill／docs 以「X owns Y」链接</td><td>格式、分类、归档封印、双语</td><td>683 篇（第二卷口径）</td></tr>
+      <tr><td><strong>闸门</strong>（<code>scripts/verify-*</code>、run-gates.ts）</td><td>能机械判定的不变式</td><td>agent 不读它，只被它拦</td><td>—</td><td>62 个 gate id（第二卷）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">docs/AGENTS.md:21,32；scripts/doc-budgets.manifest.json；pnpm run --silent verify-doc-budgets --list → AGENTS.md 1900/1900、docs/AGENTS.md 1320/1320；grep -n 'agents/skills' scripts/verify-md-links.ts scripts/verify-md-wrap.ts</span>
+  <p>那条被否决的备选（第 5 节引过）是这张表的理由：「a standard packed into SKILL.md is invisible to an agent that edits docs without invoking the skill」。AGENTS.md 是「一定会被读到的一句话」，skill 是「需要时才展开的一整页」。Claude Code 的官方文档用几乎相同的话定义 skill 的用途：「Create a skill when … a section of CLAUDE.md has grown into a procedure rather than a fact. Unlike CLAUDE.md content, a skill's body loads only when it's used」——这个仓库在 06-13 就这么用了。</p>
+
+  <h3>内容真的从 AGENTS.md 流进 skill 了吗？只有一次是搬家，其余是新写</h3>
+  <p>有一个干净的搬家案例。07-22 之前，根 AGENTS.md 有一节 14 行的 shell 块「Run the CI gates locally before marking a PR ready」（typecheck、lint、duplication、test:coverage、test:snapshot、doc-sync、website:build、verify-module-graph、build、hygiene、built-bin e2e），而 pre-push skill 里写着「The authoritative command list is the root AGENTS.md § Run the CI gates locally…; run that block rather than copying a local variant into this skill」——AGENTS.md 是家，skill 指向它。07-22 <code>31c0589439</code> 删掉了那 14 行，换成一句「Agents MUST run the tests and checks relevant to changed behavior before pushing; use dsh-pre-push-checks to select them and report only commands actually run」（今天第 88 行的措辞是 07-28 与 08-02 之后再改的），同一提交把 skill 里的「Required Baseline」换成「There is no universal local baseline」。<strong>指向关系反了过来</strong>：现在 AGENTS.md 那一节 109 词，skill 1,156 词。</p>
+  <span class="ev">git show 31c0589439 -- AGENTS.md | sed -n 1,60p；git show 31c0589439^:.agents/skills/dsh-pre-push-checks/SKILL.md | grep -n 'authoritative command list'；sed -n 86,92p AGENTS.md | wc -w</span>
+  <p>但更常见的不是搬家。stacked PR 的 391 词流程 07-04 从 AGENTS.md 挪进的是 <code>docs/cookbook/responding-to-pr-review-on-a-stack.md</code>，两天后的 merging skill 是新写的兄弟（「Commit the stacked-PR landing procedure as a repo skill so every collaborator's agent discovers it」）；今天 cookbook 第 5 行写着分工：「This guide owns review-fix placement and propagation; the dsh-merging-stacked-prs skill owns linkage checks and landing」。用 <code>git log -S</code> 拿 skill 里的特征短语（<code>gh stack merge</code>、storyboard、「toward a quota」、explicit <code>scope</code>）去 AGENTS.md 历史里找，一处都没有——多数 skill 文本自始就是为 skill 这层写的。</p>
+  <span class="ev">git show 907c8d3871:AGENTS.md | sed -n 27,35p | wc -w → 391；for p in 'gh stack merge' storyboard 'toward a quota'; do git log --no-merges --oneline -S"$p" -- AGENTS.md | wc -l; done → 0 0 0</span>
+  <p>还有一股反向的流。第 6 节讲过：07-19「promote review principles」把评审 skill 里 8 条已经成熟的原则升格成 <code>packages/AGENTS.md</code> 的常设规则，skill 里删掉 130 词、只留检查动作并回链。07-04 加「no-hardcoded-tunables」时也是一次提交同时把规则放进 AGENTS.md、把检查项放进 skill。在这个仓库里，「promote」指的是<em>把 skill 里的检查提拔成规则</em>，而不是把工具候选提拔成 skill。</p>
+
+  <h3>闸门管形状，skill 管意思</h3>
+  <p>每一份 skill 都能拆成「它调用哪些闸门」和「闸门查不了、只能留给它判断的部分」。几条最有代表性的分界：</p>
+  <div class="tbl-wrap wide compact">
+  <table>
+    <thead><tr><th>skill</th><th>它跑的／覆盖同一表面的闸门</th><th>只能留给 skill 的判断（原文）</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">archive-agent-notes</td><td>verify-archived-agent-notes（append-only 封印）、note 格式／分类、md-links</td><td>「Judge every note semantically; word count and age are discovery aids, never archive criteria」；「the archive verifier intentionally never checks [outbound links]」</td></tr>
+      <tr><td class="mono">code-review</td><td>change-scope；整套 CI</td><td>「review the semantic gaps neither can detect」；「omit issues already enforced by a green gate」；「a green pairing hash does not prove translation quality」</td></tr>
+      <tr><td class="mono">pre-push-checks</td><td>change-scope、按范围的 vitest --coverage.include、doc-sync、build、hygiene；钩子里的 typecheck</td><td><em>选择</em>本身：「There is no universal local baseline beyond the hooks」；「vitest related cannot discover behavior reached only through configuration, dynamic loading, subprocesses…」</td></tr>
+      <tr><td class="mono">prose-standard</td><td>verify-export-jsdoc、readme-model-experience、readme-limitations、doc-typecheck</td><td>「This is not a one-way shortening pass」；笔记原话：「The gate checks presence, shape, and the allowlist. Review under the documentation and prose standards owns coverage and accuracy.」</td></tr>
+      <tr><td class="mono">translate-docs</td><td>gen-translation-brief、verify-translation-pairing（--list／--write／scoped）、doc-sync</td><td>「In Pass 2, manually verify list and table order, noncanonical list numbering, inline code, emphasis, meaning, terminology, and tone」</td></tr>
+      <tr><td class="mono">trim-cot-leakage</td><td>rg 电池、doc-sync、verify-type-equiv、pairing——<strong>没有</strong>针对词汇的闸门</td><td>笔记明说：「A mechanical gate for the banned vocabulary. Deferred: the vocabulary is unbounded natural language」；「The batteries are probes, not the definition」</td></tr>
+      <tr><td class="mono">merging-stacked-prs</td><td>仓库里没有闸门；GitHub 拥有规则、CI、顺序（gh stack、GraphQL PullRequest.stack）</td><td>作者不一致时是否 link 要问人；部分落地的边界 PR；「Never dissolve, reorder, or rebuild an existing stack automatically」</td></tr>
+      <tr><td class="mono">record-browser-gif</td><td>build + build:web；自带 encode_gif.py（拒少于两帧、尺寸／时长不匹配、超字节）；<strong>CI 与 PR 模板都不检查 GIF</strong></td><td>「three to six states that tell one story」；出处必须如实；「Visually read the encoded GIF itself, not only the source frames」</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">scripts/run-gates.ts:571-617（docSyncLeafGates）；.agents/notes/implemented/process/2026-07-10-readme-known-limitations-gate.md:17；2026-08-09-committed-artifact-citations.md:26；grep -rn -i gif .github/pull_request_template.md .github/workflows/ci.yml → 无</span>
+  <p>这条分界有它的哲学出处，最早一批流程笔记之一（06-11，原 ADR-0007）就写了：「This codebase is developed primarily by coding agents. Agents follow enforced gates far more reliably than prose conventions」「Every mechanically checkable AGENTS.md promise gets a command that exits non-zero」。能机械化的进闸门，剩下的进 skill——但 skill 只在被触发时才生效，所以 packages/AGENTS.md 第 25 行把这一层的义务说得很谨慎：「<code>doc-sync</code> gates what it can; apply dsh-prose-standard for complete, concise prose and verify accuracy against code.」</p>
+  <span class="ev">.agents/notes/implemented/process/2026-06-11-quality-gates.md:11,15；packages/AGENTS.md:25</span>
+
+  <h3>「一个事实一个家」在 skill 内部也会漏</h3>
+  <p>这个仓库最响亮的文档原则在 skill 层执行得并不完美，而且没有闸门能查——没有任何机械检查会跨文件比对散文。四处可核实的重复：dsh-find-simplifications 第 87 行说「Follow the deletion rule in the Agent Note rules; do not duplicate or weaken it here」，随后第 95–97 行几乎逐字复述了 <code>.agents/notes/README.md:52</code>（两处出自同一提交 45034edd1a）；dsh-doc-site-sync 第 27 行「Never edit or commit website/.generated/…」与 website/AGENTS.md:11 相同；翻译配对闸门检查的那张清单（heading depths、fenced blocks、table row and column counts…）在 translate-docs、translation-rules.md、i18n/README.md 三处各有一份措辞略异的版本；<code>gh stack sync</code> 之后必须立即验证这条规则有四个家（AGENTS.md:88、pre-push:8,72–81、merging:72、cookbook:21）外加一篇 owner 笔记，而 merging skill 从头到尾没有链接 pre-push skill。另有一条常设规则只住在 skill 里：「每个改 GUI 的 PR MUST 附 GIF」写在 record-browser-gif 的 description 和正文里，不在任何 AGENTS.md、PR 模板或 CI 里；做出这个决定的 Agent Note 写完次日就被归档冻结了——于是一条冻结笔记和一份 skill 的 description 是它仅有的两个家，能不能被执行，完全取决于 description 有没有被匹配上。</p>
+  <span class="ev">sed -n '87p;95,97p' .agents/skills/dsh-find-simplifications/SKILL.md 与 sed -n 52p .agents/notes/README.md；grep -rn 'gh stack sync' --include='*.md' . | grep -v '\.zh\.md'；grep -rln 'product-user-visible GUI' --include='*.md' .；grep -n 'Archived:' .agents/notes/archived/process/2026-07-26-gui-pr-gif-evidence-and-assets-branch.md</span>
+
+</section>
+
+<!-- ============ S11 ============ -->
+<section id="s11">
+  <div class="sec-eyebrow">11 · 使用证据</div>
+  <h2>用没用：仓库能证明的与不能证明的</h2>
+  <p class="sec-lede">skill 被调用这件事不进 git。能拿到的只有间接证据：它们被怎样修改、被谁点名、以及它们规定的行为留下的痕迹。</p>
+    <p>先把最重要的限制说清：<strong>skill 被调用这件事不会留在 git 里。</strong>Claude Code 把 SKILL.md 加载进会话上下文，Codex 在 <code>$name</code> 被提及时展开它，dsh 把它注入模型消息——三者都不往仓库里写任何东西。PR 正文拿不到（公开镜像的 API 返回空、Issues 关闭，第二卷讲过），会话转录不在仓库里。所以「用没用」只能从三类间接证据回答：skill 自身被修改的历史、别的文件点名它的方式、以及它规定的行为在 PR 里留下的痕迹。</p>
+
+  <h3>能证明的</h3>
+  <ul>
+    <li><strong>它们被持续修改</strong>：108 次非合并提交、70 个 PR；但只有 21 次是「只改 skill」的专门提交，其余 87 次都是<em>顺带</em>——改代码或改规则的同一提交里把对应的 skill 也改了（第 6 节 code-review 的 40 次提交里 14 次是「新规则和它的检查项一起落地」）。一份从不被用的文件不会有这种顺带修改。</li>
+    <li><strong>提交信息点名</strong>：按名字搜非合并提交的主题与正文——dsh-code-review 19 次、dsh-translate-docs 6 次、dsh-doc-standards 3 次、find-simplifications／prose-standard／trim-cot-leakage 各 2 次、merging-stacked-prs／record-browser-gif 各 1 次；<strong>archive-agent-notes、doc-site-sync、pre-push-checks 在非合并提交的主题与正文里从未被点名</strong>（合并提交的分支名会带出 pre-push-checks 与 archive-agent-notes；只有 doc-site-sync 在所有提交信息里都找不到）——pre-push 是根 AGENTS.md 唯一点名要求「经由」的 skill，却是提交史里最沉默的之一。再收紧一层：这些点名里绝大多数是在<em>改 skill 自己</em>的提交里；不碰 skill 目录却提到 skill 名字的非合并提交全仓库只有 7 次，其中真正写明「用了这份 skill」的只有 2 次——两次都是 translate-docs（「translated with the dsh-translate-docs skill」「translated whole-document per dsh-translate-docs」）。</li>
+    <li><strong>被当作机制引用</strong>：16 篇 Agent Note（12 implemented、1 proposed、3 archived）把某份 skill 链接为自己的执行机制，translate-docs 4 篇最多，doc-site-sync 0 篇；skill 反过来引用 10 篇笔记作为理由之家。</li>
+    <li><strong>评审回合留下的痕迹</strong>：早期提交正文里能看到 skill 文本被评审推着改——06-18「Codex adversarial review flagged that "guidance not authority" over-rotated」，07-06 stacked-prs 的「Codex review caught three procedure defects」，06-14「Codex review of PR1 found … SKILL.md said "the doc-sync rule has no gate"」。这说明 skill 至少被评审 agent 读过、挑过错。</li>
+    <li><strong>规定的行为留下的痕迹</strong>：自 07-03 翻译配对 sidecar 诞生起，约 6,240 次非合并提交里 2,566 次（41%）动过某个 <code>.i18n.yaml</code>——这就是 translate-docs（及其轻量路径）所维护的产物；27 篇 simplification 笔记从 proposed 升到 implemented（26 次提交，07-04 一天 10 次）；07-26 的 NIH 审计 48 小时内走完「4 篇提案 → 3 个实现 PR + 1 次试验后否决」；<code>scripts/doc-budgets.manifest.json</code> 被改过 56 次、23 次提交的主题提到预算或上限（doc-standards 的「红灯」路径）；网站清单 <code>website/docs.ts</code> 被 5 位作者改过 31 次（doc-site-sync）；一个研究 agent 统计的合并拓扑显示，「PR 分支把另一个非 master 分支合进自己」这种手工 merge-forward 的痕迹从 6 月的 38%、7 月的 21% 降到 08-02 原生栈政策之后的 9%，还出现了两个 <code>stack/</code> 前缀的 PR 分支——与 <code>gh stack</code> 接管了重定向和 rebase 相符，但从 git 无法证明。</li>
+    <li><strong>唯一一处设计过的「使用遥测」</strong>：dsh-code-review 的私有维护工具扫过 62 个 PR、426 条人类评审意见——那是在测「评审意见有没有被 skill 覆盖」，它给出的答案是 0 条候选（第 6 节）。</li>
+  </ul>
+  <span class="ev">git log --no-merges --format='%s%n%b' | grep -c -- dsh-&lt;name&gt;；grep -rlE 'skills/(…)/SKILL\.md' .agents/notes --include='*.md' | grep -v '\.zh\.md' | grep -v '/AGENTS.md$\|/README.md$' | wc -l → 16；git show -s --format=%B 5f6ccf91ec dd44402871 bcfff6f1ee</span>
+
+  <h3>只能估的：这些 skill「本该」被用多少次</h3>
+  <p>07-06（pre-push 与 stacked-prs 出生日）零点之后 master 上合并了 825 个 PR。其中 627 个（76%）动过 <code>.zh.md</code>——每一个都是一次翻译配对更新，也就是 translate-docs 的常规路径（或 08-08 之后「一枪一遍」的轻量路径）本该介入的场合；567 个（69%）动过 <code>.agents/notes</code>——archive 与 find-simplifications 的相关场合；07-27 之后 236 个动过 <code>packages/client/**/src/**</code>——record-browser-gif 那条 MUST 的上界。simplification 类笔记今天 87 篇、分支名带 <code>simplif</code> 的 PR 18 个；08-02 原生栈之后合并了 322 个 PR，但合并提交的主题无法区分 <code>gh stack merge</code> 与 <code>gh pr merge</code>。这些数字说的是<em>场合</em>的频率，不是<em>调用</em>的频率。</p>
+  <span class="ev">git log --first-parent --merges --since='2026-07-06 00:00:00 +0800' --format=%h master | wc -l → 825；… -- '*.zh.md' → 627；… -- .agents/notes → 567；… --since='2026-07-27 00:00:00 +0800' -- 'packages/client/**/src/**' → 236；… --since='2026-08-02 00:00:00 +0800' → 322（裸日期 --since 以当前时刻为界）</span>
+
+  <h3>证明不了的，和明确没有的</h3>
+  <ul>
+    <li>没有任何一篇事故复盘（docs/postmortem 共 4 篇）提到过 skill——既没有「因为没照 skill 做而出事」，也没有「skill 本身写错了」。</li>
+    <li>CI 工作流和 git 钩子不调用、不检查任何 skill 的内容（只有 doc-sync 里那道链接／元数据闸门）。</li>
+    <li>被删除的 <code>missions/</code> 编排账本（07-20 建立、07-22 删除、07-26 彻底移除）里 plan.md 对 skill 零提及；峰值 AGENTS.md 只顺带提过一次。</li>
+    <li>Codex 是否真的读到了这些 skill，仓库里没有直接证据：这依赖 Codex 的公开约定（<code>.agents/skills</code> + <code>$name</code>）；仓库正文里唯一的痕迹是 08-08 那篇笔记里的「<code>$dsh-translate-docs</code> in Codex」（另有 5 份 openai.yaml 的 default_prompt 用 <code>$name</code> 形式）。</li>
+    <li>GUI PR 的 GIF 合规率、stacked PR 的原生落地率、私有维护工具 07-15 之后有没有再跑——三者都在仓库之外。</li>
+  </ul>
+  <div class="callout steel">
+    <p>把这些放在一起，能下的结论是克制的：<strong>skill 被团队当作活的文档维护（并被 agent 评审挑错），被规则与笔记当作机制引用，与它们对应的工作场合高频出现；但没有一条公开证据能把某一次具体的 agent 行为归因到某一份 skill 的加载。</strong>第二卷从分支名推断「谁在写代码」时也是同样的性质：强间接、零直接。</p>
+  </div>
+
+</section>
+
+<!-- ============ S12 ============ -->
+<section id="s12">
+  <div class="sec-eyebrow">12 · 税与债</div>
+  <h2>陈旧、矛盾与上下文税</h2>
+  <p class="sec-lede">闸门能查的都没坏；坏的是闸门查不了的——过期的事实、打架的规则、和一笔上下文的账。这一节把能核实的全列出来，并且分清哪些是缺陷、哪些是有意的设计。</p>
+    <p>先给一个公正的总评：<strong>机械上健康，语义上在漂。</strong>11 份 skill 里 95 条真实的相对链接（含 14 个 <code>#fragment</code>）在 HEAD 全部可解析（98 处里另有 2 处是行内代码里的示例、1 处是 GIF 嵌入模板里的占位 https 地址）；点名的 12 个 <code>pnpm</code> 脚本（外加 <code>pnpm exec vitest</code>）在 package.json 里全部存在；引用的每一条仓库路径都在（不在的那几条——<code>.playwright-mcp/</code>、<code>website/.generated/</code>——是刻意 gitignore 或被禁止的布局）；没有一个 TODO/FIXME/XXX；拿 trim-cot-leakage 自己的召回电池去扫另外十份，只命中已知的误报家族——它们遵守了自己宣讲的散文纪律。闸门能查的，都没坏。坏的是闸门查不了的：事实过期、两处规则打架、以及上下文的账。</p>
+  <span class="ev">自写脚本解析 .agents/skills/**/*.md 的链接并 test -e（98 处，2 处是 translate-docs:66 行内代码里的示例，1 处是 record-browser-gif:107 的占位 URL）；pnpm --silent run verify-md-links → 1893 file(s) checked；rg -o 'pnpm (run |exec )?[a-z:-]+' 与 package.json scripts 比对；rg -n 'TODO|FIXME|XXX' .agents/skills → 15 行全是对标记概念本身的提及</span>
+
+  <h3>一处真正的规则冲突：并行 PR 的竞争</h3>
+  <p>dsh-trim-cot-leakage 第 43 行写「bilingual pairs → update the counterpart and re-record per dsh-translate-docs」；而 dsh-translate-docs 第 12 行写「Never select or load it … from another skill」，根 AGENTS.md 第 141 行写「only explicit user invocation may run dsh-translate-docs」，08-08 的笔记第 15 行写「Automatic workflows do not chain into the manual skill」。四处里三处一致，一处相反。原因是两条并行的 PR：#2117（trim-cot-leakage，08-09 合并）与 #2046（轻量翻译，08-10 合并）——后者改写了 code-review、doc-site-sync、doc-standards、prose-standard、translate-docs 五份 skill，唯独没改前一天才诞生的这一份。一个照 trim-cot-leakage 处理双语文档的 agent，会被指向团队刚刚决定「只许用户点名」的重流程。</p>
+  <span class="ev">sed -n 43p .agents/skills/dsh-trim-cot-leakage/SKILL.md；sed -n 12p .agents/skills/dsh-translate-docs/SKILL.md；sed -n 141p AGENTS.md；git show --stat c5dd99124c | grep skills；git log --merges --oneline --ancestry-path 05a4a41f4f..HEAD | tail -1 → ddbc07a067（#2117，08-09）；… c5dd99124c..HEAD | tail -1 → 243ed09aaf（#2046，08-10）</span>
+
+  <h3>六处可核实的过期事实</h3>
+  <div class="tbl-wrap wide compact">
+  <table>
+    <thead><tr><th>在哪</th><th>写着</th><th>实际</th><th>何时过期、为什么没修</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">doc-site-sync:36-37</td><td>复用 sidebar <code>en-docs</code>；新 section 要放进 VitePress 配置的 <code>sectionOrder</code></td><td><code>en-docs</code> 已不存在（现在是 zh-guide／zh-develop／zh-reference／en-guide／en-develop／en-reference）；<code>sectionOrder</code> 已被删除，section 顺序在 website/docs.ts 的 <code>const sections</code></td><td><code>en-docs</code> 在 skill 写完两小时后的同 PR 评审修正里就被删了（07-13）；<code>sectionOrder</code> 08-12 删除；skill 08-13 被改过两次，没人动这两行。讽刺在于这份 skill 自己第 16 行写着「do not rely on a remembered field set」——它自己就是那份被记住的字段集。</td></tr>
+      <tr><td class="mono">find-simplifications:68</td><td>生产语料 = <code>packages/*/src</code>、<code>examples/*/src</code></td><td>前者匹配 0 个目录（<code>packages/*/*/src</code> 才是 219 个），后者 0 个（唯一带 src/ 的示例 07-20 删了）</td><td>这行写于 06-20 20:09，包目录重组落地于同日 22:55——晚了 2 小时 46 分；之后 15 次提交改过这个文件，没人改这一行。按这个 glob 跑 rg 会什么也搜不到，而「区分生产／非生产调用者」正是这份 skill 的承重步骤。</td></tr>
+      <tr><td class="mono">find-simplifications:12</td><td>去 AGENTS.md 读「tests-are-not-golden-truth and Agent Notes-are-not-golden-truth doctrines」</td><td>AGENTS.md 里没有「golden」；现在那条是「Tests describe behavior, not correctness」</td><td>07-12 的散文大砍把措辞换掉了；07-19 这行还因 RFC → Agent Note 改名被碰过一次，没顺手改。</td></tr>
+      <tr><td class="mono">code-review:3（description）</td><td>「…AGENTS.md conventions, defensive patterns, <strong>ADRs</strong>, quality gates…」</td><td>ADR 06-18 并入 RFC，RFC 07-19 改名 Agent Note；正文早已全是「Agent Notes」</td><td>40 次提交里这一行字节级未变——它恰恰是 Claude Code／Codex 用来决定要不要加载这份 skill 的那一行。</td></tr>
+      <tr><td class="mono">pre-push-checks:8</td><td>pre-commit 做三件事；pre-push「只跑增量 typecheck」</td><td>pre-commit 六项（多了翻译配对、归档封印、第三方声明）；<code>pnpm run typecheck</code> 自 08-08 起先做一次 Host tsdown 构建</td><td>skill 最后一次改动在 08-02，之后 lefthook.yml 又改了 6 次提交／5 个 PR；但第三方声明那项 07-30 就有了——08-02 改写这一行时它就已经不全。find-simplifications:135 也复述「the pre-push hook contributes typecheck only」。</td></tr>
+      <tr><td class="mono">record-browser-gif:29</td><td><code>pnpm run build &amp;&amp; pnpm run build:web</code></td><td><code>build</code> 自 07-28 起已包含 <code>build:web</code>——前端会被构建两次</td><td>这行 07-26 写下时是对的；08-08 重写这一行时保留了冗余。</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">sed -n 36,37p .agents/skills/dsh-doc-site-sync/SKILL.md 与 sed -n 14,20p website/docs.ts；ls -d packages/*/src | wc -l → 0；git log -1 --format='%ad' --date=iso 99a203f445 vs d02e9f1bd6；git log -S'golden truth' -- AGENTS.md；git blame -L 3,3 .agents/skills/dsh-code-review/SKILL.md；grep -n 'name:' lefthook.yml；grep -n '"build"' package.json</span>
+  <p>还有一处不是过期而是左右手打架：archive-agent-notes 第 60、66 行要求手动运行 <code>pnpm run verify-archived-agent-notes</code> 及其专项测试，而 08-10 起 pre-commit 与 pre-merge-commit 钩子在 <code>.agents/notes/archived/**</code> 被暂存时会自动跑同一个验证器；pre-push-checks 第 37 行却说「Do not manually repeat a passing check merely because commit or push follows」。无伤大雅，但说明 skill 层比钩子层慢几天，读者该以钩子清单为准。</p>
+
+  <h3>三处小而具体的「闸门查不到」</h3>
+  <p><strong>描述被产品截断</strong>：record-browser-gif 的 description 有 504 个字符，而产品 <code>dsh-tool-skill</code> 的目录默认只渲染前 500 个——在 dsh 自己的模型目录里它以「…real server and mode…」收尾，那句 MUST 被截在半截。<strong>仓库闸门比产品解析器松</strong>：一个研究 agent 把 5 份 skill 复制到临时目录故意弄坏（name 不合语法、缺 description、两处 camelCase 键、一个非布尔值），<code>verify-skill-invocation-metadata</code> 只报 1 条违规，产品的解析器则拒绝全部 5 份——没有任何仓库闸门或测试用产品解析器读过 <code>.agents/skills</code>。<strong>泄漏会回流</strong>：用 trim-cot-leakage 自己的召回电池扫 HEAD，能找到清扫之后又长回来的三处——<code>packages/client/runtime/README.md:5</code> 与 <code>ui-trajectory/README.md:5</code> 的「Contract: api-contracts v3 §4/§8」（仓库里没有叫 api-contracts 的文件；清扫删掉了它们，次日 08-10 的 PR #2188 又加了回来）、07-19 那篇 web-styling 笔记里五处「web-styling.md §1/§2/§3/§5」（目标文档 08-05 改成三个无编号小节，引用随之成了孤儿）、以及 <code>ui-agent-preset/README.md:41</code> 里一句「a create button used to imply」（08-08 在清扫够不到的分支上写下、08-10 合并）。它们都印证了笔记里那句「no gate rejects a new ordinal citation — review owns the rule」。</p>
+  <span class="ev">sed -n 17p packages/skill/tool-skill/README.md（catalogDescriptionMaxLength 默认 500）；research agent 的临时目录实验（verify-skill-invocation-metadata 1 条 vs 产品 5 条）；git ls-files | xargs rg -n 'api-contracts v3'；git log --format='%h %ad %s' --date=short -S'api-contracts' -- packages/client/runtime/README.md；git show 8af3babaea --stat -- docs/web-styling.md</span>
+
+  <h3>四份 skill 要求的「docs 基线」其实检查不到 Markdown</h3>
+  <p>archive-agent-notes、doc-site-sync、doc-standards、find-simplifications 都要求纯文档改动跑 <code>pnpm run doc-sync</code>、<code>pnpm run lint</code>、<code>git diff --check</code>。第一个是对的；第二个——<code>pnpm run lint</code> 如今等于「先构建 Host lib，再跑 Oxlint」，而 Oxlint 只看 JS/TS，旧的 eslint 配置也从没有 Markdown 规则：对一次只改 Agent Note 的 PR，lint 检查不到 diff 里的任何东西，却要付一次构建的时间；第三个——<code>git diff --check</code> 比较的是工作区与暂存区，<code>git add</code> 之后就是空操作，钩子跑的其实是 <code>git diff --cached --check</code>。pre-push 一边说「There is no universal local baseline beyond the hooks」，一边写「run full lint when the documentation workflow requires it」——绕回来了。</p>
+  <span class="ev">grep -n 'pnpm run lint' .agents/skills/*/SKILL.md；grep -n '"lint"' package.json → build:lib:host && lint:contracts-ready；git show 95a995968b^:eslint.config.mjs | grep -in markdown → 无；sed -n 29p;32p .agents/skills/dsh-pre-push-checks/SKILL.md；grep -n 'git diff --cached --check' AGENTS.md</span>
+
+  <h3>上下文的账</h3>
+  <p>skill 本身就是成本。11 份 description 合计 540 词（约 750 token），每个会话的技能索引都会加载；一旦某份被触发，整份 SKILL.md 进入上下文并停留到会话结束（Claude Code 文档原话）。更大的一笔在「先读权威来源」：</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>触发这份 skill 并照它说的读完来源</th><th class="num">词</th><th class="num">≈ token</th><th>包含</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">dsh-code-review</td><td class="num">9,912</td><td class="num">13,900</td><td>SKILL + AGENTS.md + packages/AGENTS.md + defensive-patterns + docs/AGENTS.md + testing.md + prose-standard SKILL + notes/README + quality-gates 笔记；双语 PR 再加 translation-rules + terminology → 13,165 词 ≈ 18,400</td></tr>
+      <tr><td class="mono">dsh-doc-standards</td><td class="num">7,757</td><td class="num">10,900</td><td>SKILL + docs/AGENTS.md + notes/README + postmortem/README + i18n/README + AGENTS.md + archived/AGENTS.md；若按它的委托再读 prose-standard 与 trim-cot-leakage（后者含 references）→ 12,161 词 ≈ 17,000（再加 prose-standard 的 references 则 13,381 词）</td></tr>
+      <tr><td class="mono">dsh-translate-docs（整篇翻译路径）</td><td class="num">12,474</td><td class="num">17,500+</td><td>SKILL + i18n/README + translation-rules + terminology + translation-prompt + prose-standard + style-samples + docs/AGENTS.md；其中三份含大量中文（合计约 49.7 KB），真实 token 更高；translation-prompt.md（2,842 词）被列为「来源」但 skill 自己说「Agents using this skill do not render it」</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">wc -w &lt;各文件&gt;；token ≈ 词 × 1.4；wc -c docs/i18n/terminology.md docs/i18n/style-samples.md docs/i18n/translation-prompt.md</span>
+  <p>这笔账解释了两件事。一是 08-08 为什么要把 translate-docs 关成手动——团队自己的笔记说自动选中它「consumed more time, context, and model tokens than translating the changed text itself」。二是 skill 为什么长得起来：根 AGENTS.md 卡在 1,900/1,900、docs/AGENTS.md 卡在 1,320/1,320（根文件的上限自 07-04 以来被改了约 30 次（07-04 当天先定 8,200、同日砍到 1,500，后来最低 1,370，现在 1,900；master 上一共出现过 24 个不同的值）），而 skill 层没有预算、没有双语义务，doc-standards 第 30 行还明说「prefer an unpaired home for content that will churn」——激励的梯度把过程性内容推向这一层。对一个中文读者还有一层含义：仓库里只有两层文字没有中文对照——各级 AGENTS.md 与 <code>.agents/skills</code>；前者在 docs/i18n/README.md 第 51 行写明是有意的（「agent instructions, maintained in English only」），后者则没有任何文件点名——skill 只是不在翻译配对的 scope 里。而这一层恰恰是中文贡献者被要求遵循的工作流层。</p>
+  <span class="ev">pnpm --silent run verify-doc-budgets --list；git log --full-history --no-merges -p -- scripts/doc-budgets.manifest.json | grep -c '^+  "AGENTS.md"' → 29 次改动；… | sort -u | wc -l → 24 个不同值；sed -n 30p .agents/skills/dsh-doc-standards/SKILL.md；sed -n 44p;51p docs/i18n/README.md</span>
+
+</section>
+
+<!-- ============ S13 ============ -->
+<section id="s13">
+  <div class="sec-eyebrow">13 · 给你的</div>
+  <h2>抄什么、别抄什么：三种规模下的 skill</h2>
+  <p class="sec-lede">这一节是写给正在从个人 vibe coding 走向团队的你的：哪些是写法、哪些是这个团队的规模才需要的机器、哪些只因为写代码的是 agent 才存在。</p>
+    <p>先说这一节的立场：下面是从证据推出来的建议，不是仓库自己说的；标了「意见」的地方就是意见。另外先给一个总的判断：<strong>这 11 份是一支约 25 人（37 个 git 作者名合并别名后，第二卷口径）、65 天合并 984 个 PR、代码主要由 agent 写的团队的产物，直接照搬会给一个五人小组塞进近两万词的上下文，其中一半在讲你根本没有的工具（gh stack、VitePress、翻译配对、归档验证器）</strong>。该抄的是写法和几条句子，不是文件。</p>
+
+  <h3>三种规模</h3>
+  <div class="scale">
+    <div class="card"><div class="who">单人 + agent</div>
+      <h4>先抄两份、一张清单</h4>
+      <ul>
+        <li><strong>一份 300 词的 pre-push skill</strong>：看 diff、挑「会因这个回归而变红的最窄测试」跑一次、「不要 push 然后指望 CI 结果不一样」、push 完核对远端 == 本地 HEAD、只汇报真正跑过的命令。不要抄 gh stack sync 那两节。</li>
+        <li><strong>一份 code-review skill 的 v1 形态</strong>（472 词就够）：几条「权威来源」链接 + 五条「先看哪里」+ 一段「怎么回应评审」——v1 的原话是「Technical, specific, non-performative — no "great catch", no "you're absolutely right"」，后来写成「逐条核实、在技术层面修或驳、不表演性附和」。你让 Claude 和 Codex 互相评审时尤其需要这段。</li>
+        <li><strong>一张自己的「病历」</strong>：第 8 节的写法——每被 agent 坑一次，就写一句 never／do not 进 skill，并写清「因为」。你的版本会不一样，但机制一样。</li>
+        <li>把「Sources of truth（read, don't re-summarize）」当习惯：skill 里链接你的 CLAUDE.md/AGENTS.md，不复述。</li>
+        <li>意见：<em>不要</em>在这个阶段写 prose-standard 之外的任何文档 skill；也不需要 openai.yaml、闸门、Agent Note。</li>
+      </ul></div>
+    <div class="card two"><div class="who">2–5 人</div>
+      <h4>把「怎么干」从手册里搬出来，让两家工具读同一份</h4>
+      <ul>
+        <li>当 CLAUDE.md/AGENTS.md 里某一段变成了<em>流程</em>而不是<em>事实</em>，就把它挪成 skill，手册里留一句 + 链接（这是 Claude Code 官方文档给 skill 下的定义，也是这个仓库 07-22 对 pre-push 做的事）。</li>
+        <li>目录放一处、软链接给另一家；如果有人用 Codex、有人用 Claude Code，这一招立刻省掉双份维护。</li>
+        <li>加「guidance, not a script/checklist」；加结尾的汇报义务（报告范围、改了什么、留了什么、实际跑过什么）。</li>
+        <li>加一份 prose-standard 的最小版：3 组 Over-trimmed／Balanced／Over-detailed 例子 + 「A smaller word count alone is not an improvement」+ trim-cot-leakage 的「一个测试」（站在 HEAD 的读者能否解析每个引用）。agent 写的散文最容易在这两处出问题。</li>
+        <li>给 skill 上一道最便宜的 CI：链接有效性。其他闸门按疼痛加。</li>
+        <li>意见：stacked PR、翻译、网站投影、GIF 证据链、归档——一个都不要提前抄；等真的开始 stack、真的有第二语言读者、真的有看不到分支的 GUI 评审人时再说。</li>
+      </ul></div>
+    <div class="card three"><div class="who">5–10+ 人、agent 写大部分代码</div>
+      <h4>这时候仓库里的整套才开始划算</h4>
+      <ul>
+        <li>把「为什么」搬进 Agent Note、让 skill 用「X owns Y」链接过去；skill 只留动作与判断标准。</li>
+        <li>用带字数的校准例子（archive skill 那种）和「Leaked → Fixed」对照（cot skill 那种）代替形容词——尤其当判断要交给不同的模型和不同的人。</li>
+        <li>给手册设字数上限、让 skill 当溢出区；但也要定期审 skill——它们没有预算，会一直长；找一次「一个事实一个家」的重复（第 10 节那四处就是例子）。</li>
+        <li>把「skill 里成熟的检查项升格进 AGENTS.md」当成常规动作（07-19 的 promote review principles）。</li>
+        <li>意见：私有的评审意见挖掘工具不值得抄——它的公开记录是一次试跑、0 候选、单点维护者；先把「人在评审里说了什么 → 手动写进 skill」这条路走顺。</li>
+      </ul></div>
+  </div>
+
+  <h3>只因为「写代码的是 agent」才存在的东西</h3>
+  <p>如果你的团队 agent 只写一小部分代码，下面这些可以晚一点：dsh-trim-cot-leakage 整份（人不会把「(decision 21)」写进 JSDoc）；prose-standard 的「require an explicit scope … do not infer a repository-wide scope or begin an interview」输入协议；pre-push 里的反作弊句（--passWithNoTests、降阈值、缩 include）和「Report pending checks as pending」；code-review 里的「rather than … trusting an agent's report」「a hand-mounted plugin does not catch invalid Loader exports」（来自事故 0001）；record-browser-gif 的「Never substitute fixture queries, mock transports, synthetic event injection」；archive skill 的「Do not archive toward a quota」。粗略估计，11 份里约一半的句子属于这一类。它们不是坏东西，只是它们的对象是模型。</p>
+
+  <h3>三个可以直接抄的写法</h3>
+  <div class="grid2">
+    <div class="card"><h4>1 · description 当触发器写</h4><p>「Use when …」开头；把用户会说的原话放进去（「improve the docs」「this doc is too long」「stacked PRs」）。这决定了 skill 会不会在对的时候被加载。别写摘要。</p></div>
+    <div class="card"><h4>2 · 反古德哈特句</h4><p>凡是 skill 给出了一个可度量目标（更少的词、更多的候选、绿灯），就在旁边写一句它<em>不许</em>怎么达成：「Do not archive toward a quota」「do not manufacture edits to satisfy a deletion target」「Do not port duplicate or lower-confidence proposals just to preserve the count」。</p></div>
+    <div class="card"><h4>3 · 命令逐字 + 汇报契约</h4><p>命令写进 fenced 块，不描述；结尾写清要报告什么、并禁止过度宣称（「Report pending checks as pending」「Do not claim archived outbound links are valid」）。评审者拿到的就是这份报告。</p></div>
+  </div>
+
+  <h3>一个最小 skill 的骨架（照这 11 份的公约数）</h3>
+<pre><code>---
+name: my-pre-push
+description: Use before pushing, force-pushing, or claiming
+  "checks pass" on a branch in this repo.
+---
+# Pre-push checks
+
+**This skill is guidance, not a checklist.**
+
+## Sources of truth (read, don't re-summarize)
+- CLAUDE.md § Commands · docs/testing.md
+
+## Workflow
+1. `git status --short --branch`; find the live base; `git diff --name-only &lt;base&gt;...HEAD`
+2. For each behavior change, run the narrowest test that would fail
+   for its regression. There is no universal baseline.
+3. Docs changed → run the docs gate. Model-visible output changed → the snapshot.
+
+## Never
+- Do not push and hope CI differs.
+- Do not use --passWithNoTests or lower thresholds to hide a file.
+- Raw --force is never allowed; use --force-with-lease=&lt;branch&gt;:&lt;oid&gt;.
+
+## Report
+List the commands actually run, their results, and pending checks as pending.</code></pre>
+  <p class="footnote">这份骨架的每一句都能在第 4、6、8 节找到出处；它不到 150 词（约 135）。这个仓库同名的那份 1,156 词——差额就是 gh stack、change-scope、覆盖率范围选择和三次策略翻转留下的沉积。</p>
+
+  <h3>别忘了这些成本</h3>
+  <ul>
+    <li><strong>上下文税</strong>：11 份 description 合计约 550 词、每次会话都进索引；整份 SKILL.md 加上它要求先读的「权威来源」，dsh-code-review 一次要读约 9,900 词（≈ 1.4 万 token，双语 PR 再加 3 千词；第 12 节有账）。这个团队自己就因为这笔账把 translate-docs 关成了手动。</li>
+    <li><strong>没有闸门的规则会变成一纸空文</strong>：「MUST 附 GIF」没有任何机械检查；CoT 引用规则的笔记自己写「no gate rejects a new ordinal citation — review owns the rule」。你抄一条规则时先问：谁来拦？</li>
+    <li><strong>skill 也会陈旧、也会重复</strong>：第 12 节列了这个仓库里的实例。skill 需要和文档一样被 review。</li>
+    <li><strong>单点</strong>：72% 的 skill 提交出自一人、90%（63/70）的落地合并由同一人按下。skill 是团队记忆的一部分，但这里的记忆主要由一个人书写。</li>
+  </ul>
+
+</section>
+
+<!-- ============ S14 ============ -->
+<section id="s14">
+  <div class="sec-eyebrow">14 · 方法与边界</div>
+  <h2>这一卷是怎么做的、哪些地方修正过、还有什么没弄清</h2>
+    <p><strong>怎么做的。</strong>先由我本人通读 11 份 SKILL.md 及其 references／scripts／openai.yaml（共 18,021 词），并抓取了 Claude Code 与 Codex 的公开 skill 规范页面；然后用 13 个并行研究 agent 分头覆盖 13 个角度（清单与解剖、起源、演化与流失、接线与调用策略、写法与修辞、分工、文档簇、Git 簇、笔记治理与 GIF、公开规范比对、矛盾与陈旧、产品技能 vs 流程技能、规模化教训），每条结论都要求附可重跑的命令或 file:line；第 14 个角度（使用证据）的 agent 在一次 API 错误后停摆，该角度由我手工补做。随后一个「完整性评审」agent 通读全部结果找矛盾与遗漏并派出补漏 agent；初稿写成后再由 7 个对抗式核查 agent 逐节复核数字与引文，逐条复核了 767 条数字与引文，找出 80 处需要修正或收窄的地方（17 处错、56 处不够精确、7 处仓库无法核实；按严重度 1 高、10 中、69 低），全部已按核查结果改正或标注。我本人另对最关键的数字在本地重算：11 份字数与行数、106／108 次提交与 70 个 PR、dsh-prose-standard 的改名合并提交、dsh-code-review 的 40 次提交与字数轨迹、07-12 的 323 文件大砍、08-09 的 763 文件清扫、两家公开规范的原文。</p>
+  <p><strong>口径。</strong>提交数一律为非合并提交；「108」含只有 <code>--full-history</code> 才看得见的两次（默认历史简化给 106）；第二卷表里的「提交数」含合并，两卷不能直接相减。字数用 <code>wc -w</code>（与 verify-doc-budgets 同一算法），含 frontmatter；只去 frontmatter 是 12,979 词，再去掉代码块是 12,724 词。诞生日期取首次新增 SKILL.md 的提交的作者日期；落地日期取 master 首父链上首个包含该提交的合并。Token 估算按词 × 1.4，中文内容会被低估。三个容易踩的坑：仓库根目录有一个受 git 跟踪的 <code>.rgignore</code>（08-10 加入）让裸 <code>rg</code> 跳过 <code>.agents/notes/archived/</code> 的 428 个文件，计数要用 <code>git ls-files | xargs rg</code> 或 <code>--no-ignore</code>；dsh-prose-standard 的改名藏在合并提交里，<code>--follow</code>、<code>--diff-filter=R</code>、不带 <code>-m</code> 的 <code>-S</code> 都看不见；<code>git log --grep</code> 的多选一要加 <code>-E</code>，否则 <code>a|b</code> 静默匹配 0 条。「11 份」以 <code>.agents/skills/</code> 为准：不含 2 份产品预设 skill、3 份快照 fixture、已删除的 4 份产品 skill、从未上过 master 的 dsh-arch-diagram，也不把 dsh-trim-prose 与 dsh-prose-standard算作两份。</p>
+  <p><strong>修正过的地方。</strong>研究过程中被推翻或收窄的判断：第一稿把四份已删除的产品 skill 都归到 PR #2242，实际三份在同一天早些时候合并的 PR #2152（其删除提交的作者日期是 08-10；agent 实测 git 后纠正）；「10/11 有汇报义务」收窄为 9/11；「without performative agreement」的出处从 07-19 纠正到 06-18 的 guidance 重构提交；「四处出现的 gh stack sync 规则」确认为四处正文加一篇笔记；一个研究 agent 称 dsh-code-review 经 PR #12 落地，本地核对为直推 master（它在首父链上位于 PR #12 合并之前）。核查阶段改正的典型例子：「所有 openai.yaml 都随诞生 PR 带来」——错，translate-docs 的是 08-08 补的；「Agent Note 强制规则 07-26 写进 AGENTS.md」——实为 07-19（PR #414）；「AGENTS.md 从 never rewrite 直接翻到 may rebase」——中间还有 07-28 的一次放宽；「过度矫正陷阱」一例的方向写反了（清扫把义务写成了背书）；「doc-site-sync 是唯一不链接 Agent Note 的文档 skill」——prose-standard 也不链接；「skill 是唯一没有中文对照的文档层」——各级 AGENTS.md 也没有且被明文记录为有意；examples.md 出生时「11 组 Over-trimmed」实为 10 组；合并 PR 的统计因 git 裸日期 --since 以当前时刻为界而漂移，已统一改用零点时间戳（820 → 825 等，比例不变）；postmortem 4 篇而非 5 篇；归档年龄中位数 8.5 天而非 9 天。</p>
+  <p><strong>没弄清的。</strong>为什么 5 份 skill 没有 openai.yaml（没有任何笔记或提交说明；有的 6 份里 5 份在诞生提交里带来，translate-docs 的是 08-08 为关成手动而补上的，另五份从无补齐提交）；为什么 record-browser-gif 是唯一没有 <code>dsh-</code> 前缀的；dsh-trim-prose 的改名是刻意的「evil merge」还是本地改名随合并一起暂存；private 评审挖掘工具 07-15 之后有没有再跑过、有没有产出过进入 master 的候选；Codex 在团队实践里有没有真的读到这些 skill；GUI PR 的 GIF 合规率与 stacked PR 的原生落地率；docs/AGENTS.md 07-14 放宽 skill 定义（允许「decision standards」）与 07-04 笔记否决「把标准放进 skill」之间有没有过一次明确的调和——没有笔记记录。</p>
+  <p><strong>没做的事。</strong>没有访问私有 org 里的 PR 与 Issue；没有任何会话转录，所以所有「被用了」的说法都是间接的；没有运行 dsh 的真实 API 会话去验证产品目录里出现 11 个 skill（该结论来自用构建好的 provider 扫仓库根目录）；公开规范页面以 2026-08-19 抓取的版本为准，它们会变。数字截至快照 47f943859b（2026-08-13）。</p>
+  <p class="footnote">主要一手材料：<code>.agents/skills/**</code> 及其全部历史、<code>.agents/notes/**</code>（尤其 implemented/process/ 下 2026-06-11 quality-gates、07-04 doc-tiers-and-budgets、07-22 fast-local-git-hooks、07-26 frozen-agent-note-archive、07-26 briefed-minimal-translation-updates、07-27 explicit-change-scope-report、08-02 native-github-stacks、08-08 lightweight-routine-documentation-translation、08-08 browser-gif-evidence-chain、08-09 committed-artifact-citations，proposed/process/ 下 07-13 human-review-skill-maintenance）、docs/AGENTS.md、docs/i18n/、docs/cookbook/maintaining-dsh-code-review.md、scripts/verify-skill-invocation-metadata.ts、scripts/change-scope.ts、lefthook.yml 的历史、packages/skill/*/README.md，以及 code.claude.com/docs/en/skills 与 learn.chatgpt.com/docs/build-skills。前三卷：<a href="https://claude.ai/code/artifact/451e61ec-6c62-4e48-b8d7-0b9a6ad359e8">解剖</a>、<a href="https://claude.ai/code/artifact/72e025d0-d2b4-4ee7-8395-ba884c6d5794">工作流</a>（第 5 节是本卷的种子）、<a href="https://claude.ai/code/artifact/4b7f1514-7631-4415-b80f-ac77b78ae87d">文档治理考古</a>。所有引文为原文或忠实译文；原文为英文处已译为中文或保留原句。</p>
+
+</section>
+
+</main>
+</div>
