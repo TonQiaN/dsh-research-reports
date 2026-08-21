@@ -1,0 +1,750 @@
+<title>27 个文件的控制面</title>
+
+<style>
+:root{
+  --ground:#FBF8F6;
+  --panel:#F4EDEA;
+  --panel-2:#EFE6E3;
+  --ink:#241C1E;
+  --ink-soft:#4A3B3E;
+  --muted:#7A686B;
+  --rule:#E2D5D2;
+  --rule-strong:#CDB9B6;
+  --accent:#7A2E39;
+  --accent-soft:#A8515C;
+  --accent-wash:#F2E4E4;
+  --pass:#3F6B4C;
+  --fail:#A93E2A;
+  --idle:#8A7C7E;
+  --pass-wash:#E4EDE5;
+  --fail-wash:#F7E3DE;
+  --idle-wash:#EDE7E7;
+  --shadow:0 1px 2px rgba(59,32,36,.05),0 8px 24px -16px rgba(59,32,36,.28);
+
+  --f-display:"Iowan Old Style","Palatino Linotype","Book Antiqua","Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  --f-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+  --col:40rem;
+  --wide:68rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#161113;
+    --panel:#1F1719;
+    --panel-2:#251C1F;
+    --ink:#EFE3E4;
+    --ink-soft:#CDBBBD;
+    --muted:#9C8A8D;
+    --rule:#33262A;
+    --rule-strong:#4A383C;
+    --accent:#D98A95;
+    --accent-soft:#C0707C;
+    --accent-wash:#2C1D21;
+    --pass:#7FB08C;
+    --fail:#E08A73;
+    --idle:#9A8B8E;
+    --pass-wash:#1D2A21;
+    --fail-wash:#2E1D19;
+    --idle-wash:#241C1E;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#161113;
+  --panel:#1F1719;
+  --panel-2:#251C1F;
+  --ink:#EFE3E4;
+  --ink-soft:#CDBBBD;
+  --muted:#9C8A8D;
+  --rule:#33262A;
+  --rule-strong:#4A383C;
+  --accent:#D98A95;
+  --accent-soft:#C0707C;
+  --accent-wash:#2C1D21;
+  --pass:#7FB08C;
+  --fail:#E08A73;
+  --idle:#9A8B8E;
+  --pass-wash:#1D2A21;
+  --fail-wash:#2E1D19;
+  --idle-wash:#241C1E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:16px;
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:var(--wide);margin:0 auto;padding:0 1.5rem 8rem}
+.col{max-width:var(--col);margin-left:auto;margin-right:auto}
+.wide{max-width:var(--wide);margin-left:auto;margin-right:auto}
+
+/* ---------- hero ---------- */
+.hero{padding:5.5rem 0 3rem;border-bottom:1px solid var(--rule)}
+.eyebrow{
+  font-family:var(--f-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 1.6rem
+}
+h1{
+  font-family:var(--f-display);font-weight:700;
+  font-size:clamp(2.6rem,7vw,4.4rem);line-height:1.02;letter-spacing:-.02em;
+  margin:0 0 1.2rem;text-wrap:balance
+}
+.dek{font-size:1.12rem;color:var(--ink-soft);margin:0 0 2rem;text-wrap:pretty}
+.byline{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);line-height:2}
+
+/* ---------- stats ---------- */
+.stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:3rem auto 0;border-radius:2px;overflow:hidden
+}
+.stat{background:var(--ground);padding:1.15rem 1.2rem}
+.stat b{
+  display:block;font-family:var(--f-display);font-weight:600;
+  font-size:1.85rem;line-height:1.1;letter-spacing:-.015em;
+  font-variant-numeric:tabular-nums;color:var(--accent)
+}
+.stat span{display:block;font-size:.78rem;color:var(--muted);margin-top:.3rem;line-height:1.5}
+
+/* ---------- toc ---------- */
+.toc{margin:3.5rem auto 0;padding:1.5rem 1.6rem;background:var(--panel);border:1px solid var(--rule);border-radius:2px}
+.toc h2{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 1rem;font-weight:400}
+.toc ol{margin:0;padding:0;list-style:none;counter-reset:t;
+  columns:2;column-gap:2rem}
+.toc li{counter-increment:t;margin:0 0 .55rem;break-inside:avoid;font-size:.9rem;line-height:1.5}
+.toc li::before{content:counter(t,decimal-leading-zero);font-family:var(--f-mono);font-size:.72rem;color:var(--accent);margin-right:.6rem}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover,.toc a:focus-visible{border-bottom-color:var(--accent)}
+@media(max-width:640px){.toc ol{columns:1}}
+
+/* ---------- sections ---------- */
+section{padding-top:4.5rem}
+.sec-head{margin-bottom:1.8rem}
+.sec-num{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.16em;color:var(--accent);display:block;margin-bottom:.6rem}
+h2.sec{font-family:var(--f-display);font-weight:600;font-size:clamp(1.6rem,3.4vw,2.1rem);line-height:1.15;letter-spacing:-.015em;margin:0;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:1.16rem;line-height:1.35;margin:2.6rem 0 .8rem;letter-spacing:-.005em}
+p{margin:0 0 1.15rem}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:normal;background:var(--accent-wash);padding:.05em .3em;border-radius:2px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+a:hover,a:focus-visible{border-bottom-color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--panel-2);padding:.1em .35em;border-radius:2px;word-break:break-word}
+ul,ol{margin:0 0 1.15rem;padding-left:1.3rem}
+li{margin:.35rem 0}
+
+/* ---------- evidence line ---------- */
+.ev{
+  font-family:var(--f-mono);font-size:.78rem;line-height:1.7;
+  color:var(--muted);border-left:2px solid var(--rule-strong);
+  padding:.5rem 0 .5rem .9rem;margin:0 0 1.4rem;
+  overflow-x:auto;white-space:pre-wrap;word-break:break-word
+}
+.ev b{color:var(--accent);font-weight:400}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:0 0 1.6rem;border:1px solid var(--rule);border-radius:2px;background:var(--ground)}
+table{border-collapse:collapse;width:100%;font-size:.83rem;line-height:1.6}
+th,td{text-align:left;padding:.62rem .8rem;border-bottom:1px solid var(--rule);vertical-align:top}
+th{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);font-weight:400;background:var(--panel);white-space:nowrap
+}
+tr:last-child td{border-bottom:none}
+td.m,th.m{font-family:var(--f-mono);font-size:.76rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.78rem}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-block;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.04em;
+  padding:.1rem .45rem;border-radius:2px;white-space:nowrap;line-height:1.6
+}
+.chip.pass{background:var(--pass-wash);color:var(--pass)}
+.chip.fail{background:var(--fail-wash);color:var(--fail)}
+.chip.idle{background:var(--idle-wash);color:var(--idle);border:1px solid var(--rule)}
+
+/* ---------- callout ---------- */
+.note{
+  background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--accent);
+  border-radius:2px;padding:1.15rem 1.3rem;margin:0 0 1.6rem
+}
+.note p:last-child{margin-bottom:0}
+.note .lbl{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);display:block;margin-bottom:.5rem
+}
+
+/* ---------- layer cards ---------- */
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1rem;margin:0 0 1.6rem}
+.layer{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:1.1rem 1.2rem}
+.layer h4{margin:0 0 .5rem;font-family:var(--f-display);font-size:1.02rem;font-weight:600}
+.layer .cnt{font-family:var(--f-mono);font-size:.7rem;color:var(--accent);letter-spacing:.08em;display:block;margin-bottom:.5rem}
+.layer p{font-size:.85rem;line-height:1.7;color:var(--ink-soft);margin:0}
+
+/* ---------- timeline ---------- */
+.tl{margin:0 0 1.6rem;border-left:2px solid var(--rule-strong);padding-left:1.4rem}
+.tl-item{margin:0 0 2rem;position:relative}
+.tl-item::before{
+  content:"";position:absolute;left:calc(-1.4rem - 5px);top:.62rem;
+  width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 0 3px var(--ground)
+}
+.tl-date{font-family:var(--f-mono);font-size:.74rem;color:var(--accent);letter-spacing:.06em}
+.tl-item h4{margin:.2rem 0 .5rem;font-family:var(--f-display);font-size:1.05rem;font-weight:600;line-height:1.35}
+.tl-item p{font-size:.9rem;line-height:1.75;margin:0 0 .6rem;color:var(--ink-soft)}
+
+/* ---------- growth bars ---------- */
+.growth{margin:0 0 1.6rem}
+.grow-row{display:grid;grid-template-columns:5.4rem 1fr 3.4rem;align-items:center;gap:.7rem;margin:.28rem 0}
+.grow-row .d{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.grow-row .v{font-family:var(--f-mono);font-size:.72rem;color:var(--ink-soft);text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:.62rem;background:var(--accent-soft);border-radius:1px;min-width:2px}
+.bar.peak{background:var(--accent);}
+
+/* ---------- footer ---------- */
+footer{margin-top:6rem;padding-top:2rem;border-top:1px solid var(--rule);font-size:.83rem;color:var(--muted)}
+footer p{margin:0 0 .7rem}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header class="hero">
+  <div class="col">
+    <p class="eyebrow">deepseek-harness · 仓库考古</p>
+    <h1>27 个文件的控制面</h1>
+    <p class="dek">deepseek-harness 的 <code>.github/</code> 目录里有 27 个文件、15 条 workflow、一个 891 行的 CI，以及一套用 JavaScript 写成的 Issue 策略引擎。它们是在 70 天里、由 251 次提交、一层层长出来的。这份报告拆开它现在的样子，并逐段还原它是怎么变成这样的。</p>
+    <p class="byline">
+      证据基线 <b>141eb6fef8</b>（dsh-v0.1.0-rc.8，2026-08-19）<br>
+      统计口径 <code>git log --full-history --no-merges -- .github</code><br>
+      调研日期 2026-08-21
+    </p>
+  </div>
+
+  <div class="stats wide">
+    <div class="stat"><b>27</b><span>.github 下的文件</span></div>
+    <div class="stat"><b>15</b><span>workflow</span></div>
+    <div class="stat"><b>251</b><span>非 merge 提交</span></div>
+    <div class="stat"><b>891</b><span>ci.yml 行数</span></div>
+    <div class="stat"><b>15</b><span>ci.yml 里的 job</span></div>
+    <div class="stat"><b>70</b><span>天（06-11 → 08-19）</span></div>
+  </div>
+
+  <nav class="toc col">
+    <h2>目录</h2>
+    <ol>
+      <li><a href="#s1">四层结构</a></li>
+      <li><a href="#s2">全目录清单</a></li>
+      <li><a href="#s3">ci.yml：15 个 job 与唯一的必需检查</a></li>
+      <li><a href="#s4">为什么是 15 条 workflow 而不是 1 条</a></li>
+      <li><a href="#s5">发布面：四条互不耦合的序列</a></li>
+      <li><a href="#s6">治理面：一个 706 行的策略引擎</a></li>
+      <li><a href="#s7">时间线：四个时期</a></li>
+      <li><a href="#s8">ci.yml 的七个阶段</a></li>
+      <li><a href="#s9">支配这套设计的原则</a></li>
+      <li><a href="#s10">诚实的另一面</a></li>
+      <li><a href="#s11">方法与一个陷阱</a></li>
+      <li><a href="#s12">在你的规模上抄什么</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <div class="col sec-head">
+    <span class="sec-num">01</span>
+    <h2 class="sec">四层结构</h2>
+  </div>
+  <div class="col">
+    <p>GitHub 的 <code>.github/</code> 是一个约定目录：放在这里的文件会被 GitHub 平台本身读取并赋予特殊行为——<code>workflows/</code> 下的 YAML 会被 Actions 执行，<code>ISSUE_TEMPLATE/</code> 会变成开 Issue 时的选项，<code>dependabot.yml</code> 会驱动依赖机器人。它不是普通源码目录，而是<strong>这个仓库对 GitHub 平台的配置面</strong>。</p>
+    <p>deepseek-harness 用满了这个约定，并且按职责分成四层。理解这四层，就理解了整个目录：</p>
+  </div>
+  <div class="layers wide">
+    <div class="layer">
+      <span class="cnt">1 个文件 · 891 行</span>
+      <h4>主闸门</h4>
+      <p><code>ci.yml</code>。每个 PR 都跑，完全无密钥，对外只暴露一个稳定的必需检查 <code>all checks passed</code>。它是全目录改动最频繁的文件，占 251 次提交里的 176 次。</p>
+    </div>
+    <div class="layer">
+      <span class="cnt">7 个文件</span>
+      <h4>专项验证</h4>
+      <p>需要密钥、需要特定内核、或只在特定路径变更时才有意义的检查，各自独立成文件：真实 API e2e、E2B 云沙箱、第三方 provider、真内核沙箱证明、原生 Landlock、文件名不变量、文档站部署。</p>
+    </div>
+    <div class="layer">
+      <span class="cnt">5 个文件</span>
+      <h4>发布流水线</h4>
+      <p>四条互不共享版本线的发布序列：226 个 dsh npm 包、9 个 vendored 框架包、3 个原生 addon 包、2 个 Python wheel 分发。全部是「无凭据打包 → 人工触发 → 受保护环境审批」。</p>
+    </div>
+    <div class="layer">
+      <span class="cnt">14 个文件</span>
+      <h4>协作治理</h4>
+      <p>5 个 Issue 模板 + PR 模板 + Dependabot + 一个 706 行的策略引擎（<code>issue-management/policy.mjs</code>）及其 413 行测试，由两条 workflow 分别以「只读判定」和「写入执行」两种身份调用。</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>第五层是<strong>目录自己的说明书</strong>：<code>.github/AGENTS.md</code>，全文只有一段，讲的全是 Windows CI 的三态拓扑。这个仓库主要由 coding agent 开发，每个目录都有一份给 agent 看的就地约定。</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <div class="col sec-head">
+    <span class="sec-num">02</span>
+    <h2 class="sec">全目录清单</h2>
+  </div>
+  <div class="col">
+    <p>下表是 HEAD 上 27 个文件的完整状态。「首次加入」与「改动次数」都取自完整历史（<code>--full-history --no-merges</code>），可以直接看出哪些文件是长期演化的、哪些是一次性落地的。</p>
+  </div>
+  <div class="tw wide">
+    <table>
+      <thead><tr><th>文件</th><th class="n">行</th><th class="m">首次加入</th><th class="m">末次改动</th><th class="n">改动</th><th>它做什么</th></tr></thead>
+      <tbody>
+        <tr><td class="m">workflows/ci.yml</td><td class="n">891</td><td class="m">06-11</td><td class="m">08-19</td><td class="n">176</td><td>主 CI，15 个 job，唯一必需检查</td></tr>
+        <tr><td class="m">issue-management/policy.mjs</td><td class="n">706</td><td class="m">08-03</td><td class="m">08-10</td><td class="n">9</td><td>Issue/PR 策略引擎（零依赖 Node）</td></tr>
+        <tr><td class="m">issue-management/policy.test.mjs</td><td class="n">413</td><td class="m">08-03</td><td class="m">08-10</td><td class="n">6</td><td>策略引擎的 23 个纯函数测试</td></tr>
+        <tr><td class="m">workflows/build-exe-for-python-sdk.yml</td><td class="n">326</td><td class="m">07-11</td><td class="m">08-19</td><td class="n">23</td><td>跨平台单文件可执行体 + runtime wheel</td></tr>
+        <tr><td class="m">workflows/python-release.yml</td><td class="n">249</td><td class="m">08-11</td><td class="m">08-18</td><td class="n">4</td><td>PyPI 发布（5 个 job，Trusted Publishing）</td></tr>
+        <tr><td class="m">workflows/landlock-run-release.yml</td><td class="n">180</td><td class="m">08-06</td><td class="m">08-13</td><td class="n">5</td><td>原生 Landlock addon 的 npm 发布</td></tr>
+        <tr><td class="m">workflows/release.yml</td><td class="n">149</td><td class="m">08-10</td><td class="m">08-19</td><td class="n">8</td><td>dsh 家族 226 个 npm 包发布</td></tr>
+        <tr><td class="m">workflows/landlock-run.yml</td><td class="n">144</td><td class="m">07-14</td><td class="m">08-06</td><td class="n">4</td><td>native/ 子树的独立 CI</td></tr>
+        <tr><td class="m">workflows/sandbox.yml</td><td class="n">132</td><td class="m">07-09</td><td class="m">08-19</td><td class="n">9</td><td>bwrap / Landlock / Seatbelt 真内核证明</td></tr>
+        <tr><td class="m">workflows/release-vendor.yml</td><td class="n">132</td><td class="m">08-10</td><td class="m">08-11</td><td class="n">3</td><td>9 个 vendored 框架包发布</td></tr>
+        <tr><td class="m">workflows/e2e.yml</td><td class="n">119</td><td class="m">06-19</td><td class="m">08-19</td><td class="n">22</td><td>真实 DeepSeek API e2e（唯一用主密钥）</td></tr>
+        <tr><td class="m">workflows/docs-pages.yml</td><td class="n">78</td><td class="m">07-20</td><td class="m">08-13</td><td class="n">8</td><td>VitePress 文档站部署到 Pages</td></tr>
+        <tr><td class="m">workflows/pi-ai-provider-e2e.yml</td><td class="n">72</td><td class="m">07-17</td><td class="m">07-31</td><td class="n">5</td><td>Azure OpenAI / Anthropic provider 验证</td></tr>
+        <tr><td class="m">workflows/issue-lifecycle.yml</td><td class="n">58</td><td class="m">08-03</td><td class="m">08-10</td><td class="n">4</td><td>写入侧：推进看板状态、维护审计评论</td></tr>
+        <tr><td class="m">workflows/e2b-e2e.yml</td><td class="n">58</td><td class="m">08-09</td><td class="m">08-19</td><td class="n">3</td><td>E2B 云沙箱活体验证（手动）</td></tr>
+        <tr><td class="m">dependabot.yml</td><td class="n">41</td><td class="m">07-27</td><td class="m">08-08</td><td class="n">5</td><td>npm / uv / github-actions 三线更新</td></tr>
+        <tr><td class="m">workflows/issue-policy.yml</td><td class="n">27</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>只读侧：PR 元数据必需检查</td></tr>
+        <tr><td class="m">workflows/expected-filenames.yml</td><td class="n">26</td><td class="m">07-19</td><td class="m">07-31</td><td class="n">2</td><td>禁止 golden 命名的小 gate</td></tr>
+        <tr><td class="m">ISSUE_TEMPLATE/bug.md</td><td class="n">22</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>现有预期行为的失效</td></tr>
+        <tr><td class="m">ISSUE_TEMPLATE/research.md</td><td class="n">21</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>产出结论、证据或决策</td></tr>
+        <tr><td class="m">ISSUE_TEMPLATE/feature.md</td><td class="n">20</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>新增或有意改变可观察行为</td></tr>
+        <tr><td class="m">ISSUE_TEMPLATE/idea.md</td><td class="n">20</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>尚未承诺实施的想法</td></tr>
+        <tr><td class="m">ISSUE_TEMPLATE/task.md</td><td class="n">20</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>分类法的兜底项</td></tr>
+        <tr><td class="m">issue-management/config.json</td><td class="n">18</td><td class="m">08-03</td><td class="m">08-10</td><td class="n">2</td><td>策略引擎唯一的可调配置</td></tr>
+        <tr><td class="m">pull_request_template.md</td><td class="n">13</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>三条 PR 硬规则 + 正文结构</td></tr>
+        <tr><td class="m">AGENTS.md</td><td class="n">3</td><td class="m">07-15</td><td class="m">08-13</td><td class="n">9</td><td>目录级 agent 约定（只讲 Windows CI）</td></tr>
+        <tr><td class="m">ISSUE_TEMPLATE/config.yml</td><td class="n">2</td><td class="m">08-03</td><td class="m">08-03</td><td class="n">1</td><td>关闭空白 Issue，不留外部入口</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p class="ev"><b>$</b> for f in $(find .github -type f | sort); do echo "$f $(git log --full-history --no-merges --oneline -- $f | wc -l)"; done</p>
+    <p>两个形状值得注意。<strong>治理层的 12 个文件全部是 08-03 一天落地的</strong>，而且此后基本没动过——它是一次成型的设计，不是长出来的。<strong>ci.yml 则相反</strong>：176 次改动，占全目录 70%，是一个被持续重写了 70 天的活体。</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <div class="col sec-head">
+    <span class="sec-num">03</span>
+    <h2 class="sec">ci.yml：15 个 job 与唯一的必需检查</h2>
+  </div>
+  <div class="col">
+    <p>整个 ci.yml 里<strong>没有一处 <code>secrets.</code> 引用</strong>，只有 12 处 <code>vars.</code>。这是刻意的：主 gate 必须无密钥、可 fork、永远能跑。所有要密钥的东西都被赶到别的文件里去了。</p>
+    <p class="ev"><b>$</b> grep -c 'secrets\.' .github/workflows/ci.yml<br>0</p>
+    <p>15 个 job 里，只有 7 个进入 <code>all-checks-passed</code> 的 <code>needs</code> 列表。这个列表就是「阻塞 / 不阻塞」的全部答案：</p>
+  </div>
+  <div class="tw wide">
+    <table>
+      <thead><tr><th>job</th><th>触发</th><th>跑在哪</th><th>阻塞合并</th><th>它证明什么</th></tr></thead>
+      <tbody>
+        <tr><td class="m">node-24</td><td class="m">PR</td><td class="m">16 核企业池</td><td><span class="chip pass">必需</span></td><td>静态 gate，不消费 lib/</td></tr>
+        <tr><td class="m">node-24-coverage</td><td class="m">PR</td><td class="m">16 核企业池</td><td><span class="chip pass">必需</span></td><td>逐文件 100% 覆盖率，job 内 4 分区</td></tr>
+        <tr><td class="m">node-24-consumers</td><td class="m">PR</td><td class="m">16 核企业池</td><td><span class="chip pass">必需</span></td><td>唯一一次 Linux build + 全部产物消费者</td></tr>
+        <tr><td class="m">node-compat</td><td class="m">PR</td><td class="m">ubuntu-latest ×2</td><td><span class="chip pass">必需</span></td><td>Node 22.19 与 26 的兼容底线</td></tr>
+        <tr><td class="m">python-sdk</td><td class="m">PR</td><td class="m">ubuntu-latest</td><td><span class="chip pass">必需</span></td><td>Python 3.10 无密钥 pytest</td></tr>
+        <tr><td class="m">python-runtime</td><td class="m">PR</td><td class="m">复用 workflow</td><td><span class="chip pass">必需</span></td><td>release 形态的 Linux x64 运行时</td></tr>
+        <tr><td class="m">windows</td><td class="m">PR</td><td class="m">ubuntu-latest + Wine</td><td><span class="chip pass">必需</span></td><td>win32 工具链信号（15 分钟上限）</td></tr>
+        <tr><td class="m">windows-native</td><td class="m">PR</td><td class="m">windows-2025 16 核</td><td><span class="chip idle">独立报告</span></td><td>NTFS/DACL/ConPTY 等真 Windows 行为</td></tr>
+        <tr><td class="m">wine-apt-cache</td><td class="m">master push</td><td class="m">ubuntu-latest</td><td><span class="chip idle">不参与</span></td><td>为所有 PR 预热 Wine 的 apt 缓存</td></tr>
+        <tr><td class="m">serial-linux-selfhosted</td><td class="m">master push</td><td class="m">自建 vm-backup</td><td><span class="chip idle">不参与</span></td><td>故障切换目标的持续演练</td></tr>
+        <tr><td class="m">serial-windows</td><td class="m">master push</td><td class="m">自建 dsh-win-ci</td><td><span class="chip idle">不参与</span></td><td>同上，Windows 侧</td></tr>
+        <tr><td class="m">serial-macos</td><td class="m">—</td><td class="m">macos-latest</td><td><span class="chip fail">if: false</span></td><td>已停用，发布前待重启（TODO 在案）</td></tr>
+        <tr><td class="m">larger-runner-benchmark</td><td class="m">手动</td><td class="m">4→96 核 ×12</td><td><span class="chip idle">不参与</span></td><td>runner 选型的实测台</td></tr>
+        <tr><td class="m">consolidated-runner-benchmark</td><td class="m">手动</td><td class="m">4→96 核</td><td><span class="chip idle">不参与</span></td><td>同上，聚合形态</td></tr>
+        <tr><td class="m">all-checks-passed</td><td class="m">PR</td><td class="m">ubuntu-latest</td><td><span class="chip pass">汇总</span></td><td>分支保护唯一盯的名字</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <h3>汇总 job 里那行承重的 <code>always()</code></h3>
+    <p>这个 22 行的 job 是整套设计的支点，而它的正确性系于一个容易写错的细节：</p>
+    <p class="ev">if: always() &amp;&amp; github.event_name == 'pull_request'<br>needs: [node-24, node-24-coverage, node-24-consumers, node-compat,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;python-sdk, python-runtime, windows]<br>steps:<br>&nbsp;&nbsp;- if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; || contains(needs.*.result, 'skipped')<br>&nbsp;&nbsp;&nbsp;&nbsp;run: exit 1</p>
+    <p>没有 <code>always()</code>，依赖失败会让这个 job 被<strong>跳过</strong>，而 GitHub 把「跳过的必需检查」算作<strong>通过</strong>。也就是说漏掉一个单词，整套分支保护会在最该拦的时候静默放行。这条注释从 2026-07-08 引入这个 job 时就写在文件里。</p>
+    <h3>三个 Linux job 的分工</h3>
+    <p>为什么是三个而不是一个？因为它们对「构建产物」的依赖不同：<code>coverage</code> 只吃源码，不需要等 build；<code>consumers</code> 拥有<strong>整条流水线唯一的一次 Linux 构建</strong>，然后在同一棵树上并发喂给 lint、运行时兼容、快照重放、文档 typecheck 和全部产物消费者；<code>static</code> 两者都不需要。三者拆开，是为了让它们能<strong>各自独立进入 runner 分配队列</strong>——这一点是在 07-30 用一次真实的排队数据换来的，见 §8。</p>
+    <h3>两个可以一分钟拨动的开关</h3>
+    <p>三个必需 Linux job 的 <code>runs-on</code> 不是常量，而是表达式：</p>
+    <p class="ev">runs-on: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &amp;&amp; github.event.pull_request.user.login != 'dependabot[bot]'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &amp;&amp; fromJSON('["self-hosted","linux","x64","vm-backup"]')<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; || 'dsh-ubuntu-24-04-16core' }}</p>
+    <p>它解的是一个真实的死锁：当企业 runner 池降级时，每个 open PR 的必需检查都起不来，而「合一个修复」这个常规补救<strong>本身就卡在跑不起来的必需检查后面</strong>。所以开关必须是<em>不需要合并</em>的仓库状态——任何有写权限的人改一个仓库变量再 re-run 即可。<code>DSH_CI_FAILOVER_LINUX</code> 和 <code>DSH_CI_FAILOVER_WINDOWS</code> 是两个独立变量，因为两个平台的池会各自出问题。</p>
+    <div class="note">
+      <span class="lbl">配套设施</span>
+      <p>光有开关不够——切换目标必须<strong>被证明是活的</strong>。所以每次 master push 都会在自建池上跑 <code>serial-linux-selfhosted</code> 和 <code>serial-windows</code> 两条完整的、不分片的、单 worker 串行演练。它们不阻塞任何 PR，唯一职责就是持续回答「真出事时那个池接得住吗」。这也是顶层 <code>concurrency</code> 唯独豁免 <code>push</code> 的原因：演练比 master 合并间隔还长，无条件取消会让它永远拿不到结论。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <div class="col sec-head">
+    <span class="sec-num">04</span>
+    <h2 class="sec">为什么是 15 条 workflow 而不是 1 条</h2>
+  </div>
+  <div class="col">
+    <p>拆分理由在这个仓库里是<strong>写下来的</strong>，不是事后归纳的。<code>sandbox.yml</code> 文件开头第一句就是：</p>
+    <p class="ev">A separate workflow from ci.yml because the axis is different —<br>these jobs fan out over OS×runner (kernel capabilities), not node versions.</p>
+    <p>归纳起来，一个信号会被赶出 ci.yml，只有四个原因：</p>
+    <ol>
+      <li><strong>要密钥。</strong>ci.yml 必须无密钥可 fork。<code>e2e.yml</code>（DeepSeek 主 API）、<code>e2b-e2e.yml</code>（E2B 云沙箱）、<code>pi-ai-provider-e2e.yml</code>（Azure OpenAI + Anthropic）三条各自持有不同的密钥集。四个 secret 全部遵守 <code>_EXTERNAL</code> 后缀命名约定。</li>
+      <li><strong>轴与 Node 版本正交。</strong><code>sandbox.yml</code> 按 OS×内核能力扇出，<code>landlock-run.yml</code> 按 CPU 架构扇出，<code>build-exe-for-python-sdk.yml</code> 按目标平台扇出。塞进 ci.yml 的 node 矩阵只会做无意义的笛卡尔积。</li>
+      <li><strong>成本或触发语义不同。</strong>花第三方 token 的、开云沙箱的、一次产出 300MB 产物的，一律只挂 <code>workflow_dispatch</code>，绝不 per-commit。</li>
+      <li><strong>需要额外权限。</strong><code>docs-pages.yml</code> 要 <code>pages: write</code> + <code>id-token: write</code>；<code>issue-lifecycle.yml</code> 要现场铸造的 GitHub App token。这些权限不该出现在主 gate 上。</li>
+    </ol>
+
+    <h3>一条反复出现的纪律：跳过必须是可见的跳过</h3>
+    <p>这个仓库的测试大量使用「没密钥就自跳过」的模式，这在本地是对的。但它制造了一个特定的失败形态：<strong>CI 上全跳过，然后报绿</strong>。所以每一条专门为这类测试而存在的 workflow，都带一个 preflight 步骤，缺密钥时<strong>硬失败</strong>而不是跳过：</p>
+    <p class="ev"><b>e2b-e2e.yml</b> 注释原文：<br>The tests self-skip locally when the credential is absent.<br>A manually dispatched run must fail instead of reporting an all-skipped green.</p>
+    <p>同一条纪律在四个文件里有四种写法：<code>e2e.yml</code> 用单变量判空；<code>pi-ai-provider-e2e.yml</code> 用间接展开累计 <code>missing</code> 后一次报全；<code>sandbox.yml</code> 断言输出里出现 <code>Test Files N passed</code>；<code>landlock-run.yml</code> 用 <code>NALR_REQUIRE_LANDLOCK=1</code> 让运行时自己拒绝降级。</p>
+
+    <h3>两个小 gate 值得单独看</h3>
+    <p><code>expected-filenames.yml</code> 只有 26 行，作用是禁止仓库里出现含 <code>golden</code> 的文件名（一律叫 <code>expected</code>）。有意思的是它的触发条件——大小写穷举的 path 过滤：</p>
+    <p class="ev">paths:<br>&nbsp;&nbsp;- '*[gG][oO][lL][dD][eE][nN]*'<br>&nbsp;&nbsp;- '**/*[gG][oO][lL][dD][eE][nN]*'<br>&nbsp;&nbsp;- '!vendor/**'</p>
+    <p>只有当 PR 真的碰到含 golden 的路径时才会起一个 job，其余时候<strong>零常驻成本</strong>。一条纯人肉命名约定，被做成了几乎不花钱的机器门禁。</p>
+    <p><code>e2e.yml</code> 则藏着全目录唯一一处对 GitHub 平台自身行为的兜底注释：</p>
+    <p class="ev">Note: scheduled triggers are auto-disabled after 60 days of repo inactivity;<br>push/pull_request/workflow_dispatch act as backstops.</p>
+    <p>它同时挂 <code>schedule</code>（00:17 UTC，注释说明是为了避开整点 cron 拥堵）、<code>push</code>、<code>pull_request</code> 和 <code>workflow_dispatch</code> 四种触发，不是冗余，而是对「GitHub 会在仓库 60 天无活动后自动停掉 cron」这条平台行为的显式补偿。</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <div class="col sec-head">
+    <span class="sec-num">05</span>
+    <h2 class="sec">发布面：四条互不耦合的序列</h2>
+  </div>
+  <div class="col">
+    <p>仓库里有四类可发布物，它们的版本基线、变更频率、构建要求都不同。走一条流水线意味着「每次产品发布都重新发布框架和原生二进制」，所以它们被<strong>显式设计成四条独立序列</strong>：</p>
+  </div>
+  <div class="tw wide">
+    <table>
+      <thead><tr><th>序列</th><th class="n">包数</th><th>版本线</th><th>tag</th><th>workflow</th><th>认证</th></tr></thead>
+      <tbody>
+        <tr><td>dsh 家族</td><td class="n">226</td><td>全部共享一个版本</td><td class="m">dsh-v*</td><td class="m">release.yml</td><td class="m">NPM_TOKEN</td></tr>
+        <tr><td>vendored 框架</td><td class="n">9</td><td>每包一条独立版本线</td><td class="m">vendor-&lt;pkg&gt;-v*</td><td class="m">release-vendor.yml</td><td class="m">NPM_TOKEN</td></tr>
+        <tr><td>原生 Landlock</td><td class="n">3</td><td>三个 manifest 共同持有</td><td class="m">landlock-run-v*</td><td class="m">landlock-run-release.yml</td><td class="m">NPM_TOKEN</td></tr>
+        <tr><td>Python 分发</td><td class="n">4 wheel</td><td>由根 package.json 转 PEP 440</td><td class="m">python-v*</td><td class="m">python-release.yml</td><td class="m">Trusted Publishing</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>四条线共享同一个形状，而这个形状本身就是设计：</p>
+    <p class="ev"><b>release.yml:123-124</b><br>There is no build step: publication uploads the bytes the pack job produced.</p>
+    <p>无凭据的 <code>pack</code> job <strong>在每个 PR 上都跑</strong>（所以打包本身永远是被验证过的），产物存成 artifact；<code>publish</code> job 只在人工 <code>workflow_dispatch</code> 且 <code>publish: true</code> 时运行，跑在受保护的 environment 里，<strong>只上传 pack 出来的那批字节</strong>，不重新构建、不重新打包。</p>
+    <p>幂等性不是靠「记录这次发了什么」实现的，而是靠逐个 tarball 比对 registry 的三态：本地 sha512 与 <code>npm view &lt;pkg&gt;@&lt;ver&gt; dist.integrity</code> 相同就跳过、缺失就发布、不同就失败。所以重跑同一个 artifact 永远安全。</p>
+    <p><strong>版本号只有一个真源：仓库里的 manifest。</strong><code>release:bump</code> 是本地命令，把版本写进 manifest 并连 lockfile 一起提交，tag 由人在合并后打。CI 全程只读，不需要 write 权限。</p>
+    <p>Python 那条线还多一层不可逆约束：PyPI 上传立即公开、文件名不可替换、不是原子操作。所以三个平台的 runtime wheel 必须<strong>先于</strong> SDK wheel 上传（SDK 精确 pin 同版本 runtime），而且两个 publish job 都不 checkout 源码、不重新构建，只消费同一次 run 里校验过的 SHA256SUMS。</p>
+    <div class="note">
+      <span class="lbl">当前状态</span>
+      <p>dist-tag 规则跨线一致：版本号里含 <code>-</code> 就发 <code>--tag next</code>，否则 <code>latest</code>。当前 dsh 家族是 <code>0.1.0-rc.8</code>，所以它<strong>进不了 <code>latest</code></strong>。仓库里目前只有两个 tag：<code>dsh-v0.1.0-rc.7</code>（08-17）和 <code>dsh-v0.1.0-rc.8</code>（08-19）。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <div class="col sec-head">
+    <span class="sec-num">06</span>
+    <h2 class="sec">治理面：一个 706 行的策略引擎</h2>
+  </div>
+  <div class="col">
+    <p><code>.github/issue-management/policy.mjs</code> 是这个目录里最不寻常的东西：一个零依赖的单文件 Node 程序，把「Issue 元数据规范 + PR 标签分类法 + Issue↔PR 关联 + 看板状态流转」全部实现成可执行、可单测的规则。它只接受两个子命令。</p>
+    <p>它的核心设计是<strong>一份规则、两种失败语义</strong>：</p>
+    <ul>
+      <li><code>policy.mjs pr</code> 由 <code>issue-policy.yml</code> 调用（只读权限），把错误写成 <code>::error::</code> 注解并抛出，让必需检查<strong>变红、挡住合并</strong>。</li>
+      <li><code>policy.mjs lifecycle</code> 由 <code>issue-lifecycle.yml</code> 调用（GitHub App token），把<strong>同一批错误</strong>折叠进一条带 <code>&lt;!-- dsh-issue-policy --&gt;</code> 标记的机器人评论；问题修正后自动删除该评论。</li>
+    </ul>
+    <p>规则只有一份，压力分级由调用点决定：PR 阻塞合并，Issue 只提示。</p>
+
+    <h3>两条安全设计</h3>
+    <p>两个 workflow 的第一步都叫 <code>Check out trusted policy</code>，都带 <code>ref: ${{ github.event.repository.default_branch }}</code> 和 <code>persist-credentials: false</code>。也就是说<strong>永远执行 master 上的策略</strong>——一个外部 PR 无法通过修改自己分支上的 <code>policy.mjs</code> 来豁免自己。</p>
+    <p>其次是凭据分离：只读判定用 <code>github.token</code> 且三项权限全 read；写入执行的权限来自现场铸造的、限定单仓库的 GitHub App token。这两条 workflow 也是全仓<strong>仅有的三处把 action 钉死在 40 位 SHA 上</strong>的地方。</p>
+
+    <h3>看板是事件驱动的投影</h3>
+    <p>状态流转规则就是一个数组的下标：<code>Inbox(0) → Backlog(1) → Ready(2) → In progress(3) → In review(4)</code> 单调前进，<code>Done</code> 和 <code>No action</code> 被剔出序列因而<strong>不可被自动化触碰</strong>。唯一允许的后退是「收到 changes-requested 评审」，而且带护栏——只有当目标 Project 的最新状态事件是由配置的 lifecycle actor 写入时才可回退，人手动挪过的卡片不会被机器人推回去。</p>
+    <p>这个「后退」是 08-10 才补上的。最初版本（08-04）是纯单调前进投影，缺陷很快暴露：作者改完代码重新求评审后，早先的 CHANGES_REQUESTED 仍然生效，Issue 会卡在 In review，而实际上作者正在实现修改。</p>
+
+    <h3>一条被真正实现的排版法则</h3>
+    <p>PR/Issue 正文规定「外露内容 ≤ 50 单位 + 必须有默认收起的 <code>&lt;details&gt;</code>」。这不是模板里的口号——<code>policy.mjs</code> 里有一个手写的 <code>&lt;details&gt;</code> 配对扫描器，和一个计数器：用 <code>\p{Script=Han}</code> 计汉字、用正则计西文与代码 token，并在计数前剥掉图片、两种链接、自动链接、HTML 标签与实体。</p>
+    <p>为什么要手写这一套？因为 Issue 模板用的是 legacy Markdown front-matter 而<strong>不是</strong> GitHub Issue Forms。Issue Forms 本可以用结构化字段直接保证排版，无需事后校验；选了自由文本的 <code>.md</code>，就只能在事后用扫描器审计。<strong>模板形式决定了强制手段。</strong></p>
+    <p class="ev"><b>$</b> grep -c "^test(" .github/issue-management/policy.test.mjs<br>23</p>
+    <p>这 23 个测试不触网、不 mock GitHub API，只锁定纯函数层的行为，并且<strong>由仓库的 gate 直接执行</strong>（<code>pnpm run test:issue-management</code> 进入 check-all / ci-primary / ci-static 三个模式）。<code>.github</code> 里的策略代码在这里不是「只在 runner 上跑的脚本」，而是被主 CI 当作源码来测的一等公民。</p>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <div class="col sec-head">
+    <span class="sec-num">07</span>
+    <h2 class="sec">时间线：四个时期</h2>
+  </div>
+  <div class="col">
+    <p>251 次非 merge 提交的月度分布极不均匀：<strong>6 月 23 次 / 7 月 162 次 / 8 月 66 次</strong>。7 月一个月占了全部的 65%。</p>
+  </div>
+
+  <div class="col">
+    <div class="tl">
+      <div class="tl-item">
+        <span class="tl-date">2026-06-11 · 23 次提交</span>
+        <h4>创世：一个 65 行、单 job 的 CI</h4>
+        <p>仓库根提交的<strong>第二天</strong>，<code>86955b96a4</code> 就把全量 gate 矩阵搬进了 Actions。首版只有 59 行、包管理器还是 yarn 4，一个名叫 <code>checks</code> 的 job 在 node 24/26 矩阵里串行跑完 install → constraints → lint → typecheck → test:coverage → hygiene → build → demo smoke。</p>
+        <p>commit message 写明它跑的是「the same commands the local scripts and git hooks run」。理由记在 Agent Note 里：这个仓库主要由 coding agent 开发，而 <strong>agent 遵守「能非零退出的命令」远比遵守散文约定可靠</strong>。第一天就带上了逐文件 100% 覆盖率闸和一个真跑 agent 的端到端冒烟。</p>
+        <p>整个 6 月只有一个文件在长（65 → 104 行），增长全部来自往同一个 job 里追加步骤。直到 06-19，因为「密钥不能进 keyless 工作流」这条安全线，才分裂出第二个文件 <code>e2e.yml</code>。</p>
+      </div>
+      <div class="tl-item">
+        <span class="tl-date">2026-07-01 → 07-16 · 36 次提交</span>
+        <h4>炸开：从 2 个文件到 6 个，并且立刻自我否定一次</h4>
+        <p>07-06 一天之内发生了三件事。先是 <code>80358aed9f</code> 把单体 <code>checks</code> 拆成 5 个并行 job，把「墙钟 = 所有 gate 之和」改成「= 最慢依赖链」。紧接着同一天，这 21 个摊平到 YAML 里的 leaf 命令<strong>又被全部撤回</strong>——因为 leaf 清单同时存在于 <code>package.json</code> 和 workflow YAML 会漂移。执行计划被下沉成仓库脚本 <code>scripts/run-gates.ts</code>，CI 与 pre-push 从此共用同一个有界调度器。</p>
+        <p>然后是拆分潮：<code>sandbox.yml</code>（07-09）、<code>build-exe-for-python-sdk.yml</code>（07-11）、<code>landlock-run.yml</code>（07-14）、<code>pi-ai-provider-e2e.yml</code>（07-17）。07-08 加入的 <code>all-checks-passed</code> 是这一切能继续放开手脚的前提：分支保护从此只需要一个稳定名字。</p>
+        <p>07-15 <code>.github/AGENTS.md</code> 首次出现，把一次 CI 取证的结论固化成规则——Git Bash 作为 gate 的<strong>父进程</strong>会把 MSYS 环境泄漏进被测套件，造出 8 个只在 bash 步骤下出现的真实失败。结论：用哪个 shell 启动测试本身就是被测环境的一部分。</p>
+      </div>
+      <div class="tl-item">
+        <span class="tl-date">2026-07-17 → 07-31 · 125 次提交</span>
+        <h4>重写：从「能跑」到「可测量、可失败、可切换」</h4>
+        <p>全期最密集的两周，也是方法论最集中的两周。07-21 引入三条<strong>跨平台串行参照</strong> job——完全不分片、单 worker、跑满 Linux/macOS/Windows，理由是「优化后的 lane 清单不能自己当自己的完备性 oracle」。同一份笔记明确拒绝把延迟目标编码成 <code>timeout-minutes</code>：「一个正确的 gate 可能在目标边界处被取消」。</p>
+        <p>07-22 是最戏剧性的一天，见 §8。07-23 定下沿用至今的三 Linux job 拓扑，同日又把必需检查从企业专属 runner <strong>拉回标准托管池</strong>——因为「计费健康、runner 处于 Ready、很大的自动伸缩上限，都不能证明一个具名池子真能接到 job」。</p>
+        <p>07-27 用 Wine 把必需的 Windows gate 从 windows-2025（7–9 分钟）搬到 ubuntu-latest（暖缓存 2m46s）。同期还落地了 <code>dependabot.yml</code>（30 天冷却）、<code>expected-filenames.yml</code>、<code>docs-pages.yml</code>，以及用 <code>pnpm/action-setup</code> 扫掉全部 <code>corepack enable</code>。</p>
+      </div>
+      <div class="tl-item">
+        <span class="tl-date">2026-08-01 → 08-19 · 66 次提交</span>
+        <h4>开源化：从内部研发仓的 CI 目录，到公开项目的控制面</h4>
+        <p>08-03 一次提交落地整套治理层（10 个文件、920 行纯新增）。08-06 到 08-11 依次建成四条发布流水线。08-08 把 CLAUDE.md 里「一个 PR 一个 <code>kind/*</code>」的口头约定变成 <code>policy.mjs</code> 里的白名单与黑名单——旧标签被<strong>显式淘汰</strong>而不是静默忽略。</p>
+        <p>08-13 是分水岭：公开仓 <code>deepseek-ai/deepseek-harness</code> 创建（11:56:32Z），同日把 vendor 与 native 两条序列的 npm access 翻成 public，并把文档站的源码链接钉死到公开仓的 master——「公开仓与内部仓从此是两份历史」。</p>
+        <p>此后 <code>.github</code> 沉寂了 5 天（全期最长空白），恰好覆盖公开发布周。08-18 把覆盖率从跨 job 分片改成 job 内进程级分区；08-19 删掉自 07-30 起就 <code>if: false</code> 的死 job <code>serial-linux</code>，文件从 941 行降到 878 行（HEAD 为 891）。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>谁写的</h3>
+    <p>251 次提交来自 14 位作者，高度集中：</p>
+    <p class="ev">143  Tianyi Cui   (57%)<br>&nbsp;34  imccyu<br>&nbsp;28  Chinesezjc<br>&nbsp;14  Yichen Jiang<br>&nbsp;&nbsp;7  Hypatia May<br>&nbsp;&nbsp;5  dependabot[bot]<br>&nbsp;&nbsp;… 另 8 人合计 20 次</p>
+    <p>并且分工可辨认：整条 Python / PyPI / GitLab 发布线几乎全部来自 Yichen Jiang，这解释了为什么那条线的风格（构建脚本用 Python、另有一套 GitLab CI）与主 CI 明显不同。</p>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <div class="col sec-head">
+    <span class="sec-num">08</span>
+    <h2 class="sec">ci.yml 的七个阶段</h2>
+  </div>
+  <div class="col">
+    <p>把 ci.yml 在若干时间点的版本取出来数行数，能看到一条不平滑的曲线——尤其是 07-22 那根柱子。</p>
+  </div>
+  <div class="growth wide">
+    <div class="grow-row"><span class="d">06-12</span><span class="bar" style="width:6.0%"></span><span class="v">65</span></div>
+    <div class="grow-row"><span class="d">06-22</span><span class="bar" style="width:9.3%"></span><span class="v">100</span></div>
+    <div class="grow-row"><span class="d">07-07</span><span class="bar" style="width:12.0%"></span><span class="v">130</span></div>
+    <div class="grow-row"><span class="d">07-14</span><span class="bar" style="width:16.9%"></span><span class="v">183</span></div>
+    <div class="grow-row"><span class="d">07-21</span><span class="bar" style="width:26.2%"></span><span class="v">283</span></div>
+    <div class="grow-row"><span class="d">07-22</span><span class="bar peak" style="width:100%"></span><span class="v">1081</span></div>
+    <div class="grow-row"><span class="d">07-28</span><span class="bar" style="width:80.5%"></span><span class="v">870</span></div>
+    <div class="grow-row"><span class="d">08-04</span><span class="bar" style="width:77.9%"></span><span class="v">842</span></div>
+    <div class="grow-row"><span class="d">08-11</span><span class="bar" style="width:81.8%"></span><span class="v">884</span></div>
+    <div class="grow-row"><span class="d">08-18</span><span class="bar" style="width:88.0%"></span><span class="v">951</span></div>
+    <div class="grow-row"><span class="d">HEAD</span><span class="bar" style="width:82.4%"></span><span class="v">891</span></div>
+  </div>
+  <div class="col">
+    <h3>07-22：一天之内走完膨胀与坍缩</h3>
+    <p>这一天 ci.yml 先加入四个分片 job（<code>node-24-sharded</code>、<code>windows-build-sharded</code>、<code>windows-site-sharded</code>、<code>windows-gates-sharded</code>），job 数冲到 15、文件达到历史峰值 <strong>1081 行</strong>，Linux 主 Node 工作被摊到 40 个 job、Windows 9 个。</p>
+    <p>同一天，<code>41609c4ce4</code> 用一次 <code>+12/-492</code> 把它们<strong>全部删掉</strong>，整个提交净减 1228 行——连 <code>scripts/coverage-shards.ts</code> 等四个分片选择器及其测试一并删除。</p>
+    <p>推翻它的是自己产出的基准数据。头一天刚加的两个 benchmark job 在 4/8/16/32/64/96 核各档 runner 上跑了完整聚合：</p>
+    <p class="ev">完整 Linux primary 聚合：<br>&nbsp;&nbsp;4 核 243s → 16 核 103s → 64 核 62s → 96 核 65s&nbsp;&nbsp;<b>（非单调）</b><br><br>一次 hosted run 里：<br>&nbsp;&nbsp;最慢的 Linux job&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;49s<br>&nbsp;&nbsp;某个 Windows lint 分片&nbsp;&nbsp;231s&nbsp;&nbsp;<b>其中 158s 是 checkout+cache+install</b></p>
+    <p>结论是：绝大多数 gate 比 runner setup 还短，分片制造的重复 setup 波次<strong>同时</strong>带来成本和延迟方差。改用 16 核大 runner，「setup 只付一次，并行放进仓库内部的调度器」。</p>
+    <p>笔记里还有一条更值得抄的要求：连 workflow 层的分片选择器也必须一并删掉，理由是<em>不让一条没人走的诊断路径把第二套 CI 架构养起来</em>。</p>
+
+    <h3>七个阶段一览</h3>
+  </div>
+  <div class="tw wide">
+    <table>
+      <thead><tr><th class="m">时间</th><th>阶段</th><th>发生了什么</th></tr></thead>
+      <tbody>
+        <tr><td class="m">06-11 → 07-05</td><td>单体大 job</td><td>唯一的 <code>checks</code> job，node 24/26 矩阵串行跑完。三周只从 65 长到 104 行</td></tr>
+        <tr><td class="m">07-06 → 07-20</td><td>拆分并行 + 汇总闸</td><td>拆成 5 个并行 job → 同日收敛为宽 lane；07-08 加入 <code>all-checks-passed</code></td></tr>
+        <tr><td class="m">07-15 → 07-21</td><td>跨平台入场</td><td>Windows 先上阻塞式 build lane、再挂非阻塞观察 lane；加三条串行跨平台参照</td></tr>
+        <tr><td class="m">07-22</td><td>分片爆炸与同日回退</td><td>1081 行峰值 → 净减 1228 行；用基准数据推翻分片架构</td></tr>
+        <tr><td class="m">07-23 → 07-31</td><td>大 runner + job 内调优</td><td>三 Linux job 拓扑定型；此后一周几乎全是并发旋钮的 A/B，而非结构改动</td></tr>
+        <tr><td class="m">07-27 → 08-13</td><td>Wine ⇄ 原生的三轮拉锯</td><td>Wine 必需 → 统一原生（08-10）→ 次日整体恢复双通道并加 failover 开关</td></tr>
+        <tr><td class="m">08-12 → 08-19</td><td>required 面扩张 + 死代码清理</td><td>加入 <code>python-runtime</code>；覆盖率改 job 内分区；删掉死了一个月的 <code>serial-linux</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <div class="note">
+      <span class="lbl">被删掉的 job</span>
+      <p>这条曲线上消失过的 job 不少：<code>checks</code>、<code>quality/docs/build/artifact-gate</code>（只活了一天）、<code>windows-build</code>、<code>windows-gates</code>、<code>windows-site</code>、五个 <code>*-sharded</code>（活了几小时）、<code>serial-linux</code>。<code>wine-apt-cache</code> 和 <code>windows-native</code> 则是<strong>被删了又恢复</strong>——08-10 一次激进合并把它们去掉，08-11 整体回滚。</p>
+    </div>
+    <p>删 <code>serial-linux</code> 那次（08-19）值得单独提，因为它的价值不在删代码：原注释声称 PR 端可以复用 master 上由这个 job 生产的 pnpm/Playwright 缓存，但那个 job 已经一个多月没跑过——<strong>注释在说谎</strong>。提交把「缓存其实是冷的」如实写出来，同时把悬空的 TODO 收窄到唯一剩下的 <code>serial-macos</code>。</p>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <div class="col sec-head">
+    <span class="sec-num">09</span>
+    <h2 class="sec">支配这套设计的原则</h2>
+  </div>
+  <div class="col">
+    <p>这些不是我归纳的，是 <code>.agents/notes/</code> 里 41 篇相关 Agent Note 明确写下来的。每一条都能追到出处。</p>
+
+    <h3>关于「什么该被机器守住」</h3>
+    <ul>
+      <li><strong>本地只跑最窄证据，CI 独占穷举。</strong>pre-commit 只做 staged lint，pre-push 只做 typecheck；「CI owns exhaustive coverage, built-artifact checks, and the platform matrix」。这条边界被正面挑战过一次（让 pre-push 跑完整 primary gate），<strong>当天回滚</strong>。</li>
+      <li><strong>闸门优先于散文约定。</strong>因为主要由 agent 写代码，而 agent 遵守能非零退出的命令远比遵守文档可靠。</li>
+      <li><strong>误配置要响亮失败。</strong>缺密钥就硬失败，不许静默跳过；旧标签显式拉黑，不许静默忽略。</li>
+    </ul>
+
+    <h3>关于「怎么证明 CI 自己是对的」</h3>
+    <ul>
+      <li><strong>优化后的 job 清单不能自己当自己的完备性 oracle。</strong>所以额外养一套完全不分片、串行、跨三平台的参照跑。</li>
+      <li><strong>性能目标是观测值，不是取消死线。</strong>从完成态时间戳事后测量并作为「测量结果」报告，绝不编码成 <code>timeout-minutes</code>；<code>timeout</code> 只用来兜住卡死。</li>
+      <li><strong>拓扑与并发的每一次改动都要有完成态测量支撑。</strong>「一个未完成的运行越过某个任意的耗时刻度，不构成提高并发的证据」。</li>
+    </ul>
+
+    <h3>关于「可用性」</h3>
+    <ul>
+      <li><strong>必需 gate 必须可移植。</strong>「计费健康、runner 处于 Ready、很大的自动伸缩上限，都不能证明一个具名池子真能接到 job」。</li>
+      <li><strong>恢复开关不能需要合并。</strong>否则会死锁在「修复本身跑不起来」上。</li>
+      <li><strong>要么进 needs，要么独立报告——绝不用 <code>continue-on-error</code> 把红变绿。</strong>那会让一个 gate 失败后的检查<em>看起来</em>成功；保留普通的独立 job 才能保住诊断结论。</li>
+    </ul>
+
+    <h3>关于「不要养第二套东西」</h3>
+    <ul>
+      <li><strong>并行度往 job 内部加，不往 workflow 里加。</strong>删分片时连选择器脚本一起删，因为「一条没人走的诊断路径不能把第二套 CI 架构养起来」。</li>
+      <li><strong>编排逻辑从 YAML 拉回仓库。</strong>YAML 里那 39 行手写的后台任务 + pid 收集，被换成一行 <code>pnpm run check:ci:consumers</code>；同一份 gate plan 在 GitHub 和开发机上是同一个调度器、同一份日志格式。</li>
+      <li><strong>源码平面与制品平面不混。</strong>CI 跑构建后的 <code>lib/</code>（plain Node + 真实 package exports），发布只消费 pack 出的字节。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <div class="col sec-head">
+    <span class="sec-num">10</span>
+    <h2 class="sec">诚实的另一面</h2>
+  </div>
+  <div class="col">
+    <p>上面九节全是这套设计做对的地方。下面是同样有据可查、但通常不会出现在介绍里的部分。</p>
+
+    <h3>这套 CI 在公开仓上几乎不运行</h3>
+    <p>公开仓 <code>deepseek-ai/deepseek-harness</code> 创建于 2026-08-13，MIT，约 17.5 万 star、1.9 万 fork。但它的 Actions 记录只有 08-13 那一天的 5 次 push 触发，此后只剩 Dependabot 每天定时跑。而其中最关键的那条：</p>
+    <p class="ev"><b>$</b> gh api repos/deepseek-ai/deepseek-harness/actions/runs/31701568000 --jq '.name,.conclusion'<br>".github/workflows/ci.yml"<br>"failure"<br><br><b>$</b> gh api .../runs/31701568000/jobs --jq '.total_count'<br>0</p>
+    <p>三个细节同时指向一个结论：run 的名字是<strong>文件路径</strong>而不是 workflow 的 <code>name: CI</code>（说明 workflow 根本没初始化成功）、job 数为 <strong>0</strong>、<code>created_at</code> 与 <code>updated_at</code> 完全相同（耗时 <strong>0 秒</strong>）。旗舰 CI 在公开仓上<strong>一个 job 都没跑起来过</strong>。真正的 CI 跑在内部仓 <code>deepseek-harness/deepseek-harness</code>（对外 404）。公开仓是镜像，不是主场。</p>
+
+    <h3>整个治理层在公开仓上是死的</h3>
+    <p><code>issue-management/config.json</code> 里硬编码 <code>organization: "deepseek-harness"</code>，而公开仓属于 <code>deepseek-ai</code>；<code>policy.mjs</code> 的所有 REST/GraphQL 路径都由这两个值拼出。更直接的是：</p>
+    <p class="ev"><b>$</b> gh api repos/deepseek-ai/deepseek-harness --jq '.has_issues, .open_issues_count'<br>false<br>0</p>
+    <p>公开仓<strong>把 Issues 功能关掉了</strong>。5 个 Issue 模板、706 行策略引擎、两条 lifecycle workflow 全部随代码发布出去，但在那边一行都不会执行。它们是内部仓专属的。</p>
+
+    <h3>社区健康文件全缺</h3>
+    <p><code>.github/</code> 的另一半经典职责——社区健康文件——在这里是空的：没有 <code>CODEOWNERS</code>、<code>SECURITY.md</code>、<code>CODE_OF_CONDUCT.md</code>、<code>SUPPORT.md</code>、<code>FUNDING.yml</code>。<code>CONTRIBUTING.md</code> 和 <code>LICENSE</code> 在仓库根而非 <code>.github/</code>。<code>ISSUE_TEMPLATE/config.yml</code> 更是明确写了 <code>contact_links: []</code>——不给任何外部求助入口。对一个 17.5 万 star 的项目来说，这个反差很大，但和上面两条是自洽的：<strong>它没打算在 GitHub 上接受外部协作。</strong></p>
+
+    <h3>还有一套 GitLab CI</h3>
+    <p>仓库根有一个 <code>.gitlab-ci.yml</code>（5618 字节），是一套与 <code>.github</code> 并行的第二发布系统：只在 <code>python-v*</code> tag 上运行，用自建 runner 产出与 <code>python-release.yml</code> 完全相同的 4 个 wheel，做同样的 GLIBC 断言，最后推到内部 PyPI registry。<strong>只研究 <code>.github</code> 会漏掉 Python 发布的另一半。</strong></p>
+    <p>它还留着一个已知会断的东西：全仓的 <code>corepack enable</code> 大扫除（07-26，理由是「新版 Node 移除 corepack 让每一处 <code>corepack enable</code> 都成为已知的未来断裂」）只覆盖了 <code>.github</code>。</p>
+    <p class="ev"><b>$</b> grep -rn 'corepack' .github .gitlab-ci.yml<br>.gitlab-ci.yml:37:    - corepack enable</p>
+
+    <h3>供应链姿态并不均匀</h3>
+    <p>全仓 100+ 处 <code>uses:</code> 里，只有 3 处钉死在 SHA 上（两条 issue workflow 的 checkout + 一个 app-token action）。其余全是可变 tag。而最松的一处恰好在最敏感的位置：</p>
+    <p class="ev">pypa/gh-action-pypi-publish@release/v1&nbsp;&nbsp;×2&nbsp;&nbsp;<b>← 分支 ref，随时可变</b><br>用在 python-release.yml 里两个持有 id-token: write 的 publish job 上</p>
+
+    <h3>兜底不全</h3>
+    <p>15 个 job 里只有 6 个设了 <code>timeout-minutes</code>；没设的 9 个包括三条必需 Linux 主 job 和跑在自建池上的演练 job。15 条 workflow 里有 4 条没有 <code>concurrency</code>，其中 <code>e2b-e2e.yml</code>（开云沙箱）和 <code>pi-ai-provider-e2e.yml</code>（烧第三方 token）都是只有手动触发却没有并发去重——重复 dispatch 会并行开销。</p>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <div class="col sec-head">
+    <span class="sec-num">11</span>
+    <h2 class="sec">方法与一个陷阱</h2>
+  </div>
+  <div class="col">
+    <p>这份报告的每个数字都可以在本地复跑。但有<strong>两个坑</strong>会让你算出完全错误的结论，都值得单独记住。</p>
+
+    <h3>坑一：<code>git log -- .github</code> 会骗你</h3>
+    <p>直接对路径跑 <code>git log</code>，git 会做「历史简化」，在有 merge 的仓库里可能只留下极少数提交：</p>
+    <p class="ev"><b>$</b> git log --oneline -- .github | wc -l<br>16&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>← 假的</b><br><br><b>$</b> git log --full-history --no-merges --oneline -- .github | wc -l<br>251&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>← 真的</b></p>
+    <p>差了 15 倍。而且被隐藏的恰恰是最有价值的部分——真正的结构性改动往往发生在被简化掉的分支上。<strong>任何对路径做的历史统计，都必须加 <code>--full-history</code>。</strong></p>
+
+    <h3>坑二：浅克隆会伪造一次「大爆炸提交」</h3>
+    <p>调研开始时，我看到一个诡异的现象：<code>99f6f02fec</code>（2026-08-17）是一个<strong>没有父提交</strong>的提交，而且一次性新增了全部 27 个 <code>.github</code> 文件、+3981 行。看起来像是「公开发布时把内部历史压成了一个快照根」——一个很有故事性的解释。</p>
+    <p>它是错的。真相是本地这份 clone 是浅克隆：</p>
+    <p class="ev"><b>$</b> git rev-parse --is-shallow-repository<br>true<br><b>$</b> cat .git/shallow<br>99f6f02fecdb7dff40c3fbc9470f5907c29f74ca</p>
+    <p><code>.git/shallow</code> 里躺着的正是它。浅克隆边界上的提交<strong>在本地表现为无父提交</strong>，于是它相对于「虚无」的 diff 就是整棵树。<code>git fetch --unshallow</code> 之后，它恢复成一个普通的 merge 提交（rc.7 的发布合并），<strong>而且根本没碰过 <code>.github</code></strong>：</p>
+    <p class="ev"><b>$</b> git fetch --unshallow upstream<br><b>$</b> git show --stat 99f6f02fec -- .github<br>（无输出）</p>
+    <p>教训：<strong>在做任何 git 考古之前，先确认仓库不是浅克隆。</strong>否则你会围绕一个不存在的事件编出一整套解释——而且它听起来会很合理。</p>
+
+    <h3>可复跑的核心命令</h3>
+    <p class="ev"><b>#</b> 更新到最新并确保完整历史<br>git fetch upstream --prune &amp;&amp; git fetch --unshallow upstream<br><br><b>#</b> 真实的 .github 提交数与月度分布<br>git log --full-history --no-merges --format='%ad' --date=format:'%Y-%m' \<br>&nbsp;&nbsp;-- .github | sort | uniq -c<br><br><b>#</b> 逐文件：首次加入 / 末次改动 / 改动次数<br>for f in $(find .github -type f | sort); do<br>&nbsp;&nbsp;echo "$f $(git log --full-history --no-merges --oneline -- $f | wc -l)"<br>done<br><br><b>#</b> ci.yml 某个历史时点的行数与 job 清单<br>git show $(git rev-list -1 --before=2026-07-22 HEAD):.github/workflows/ci.yml \<br>&nbsp;&nbsp;| grep -cE '^  [a-z][a-z0-9-]+:'</p>
+    <p>本报告的调研方式：12 个并行 agent 分别负责四个专题（ci.yml / 发布 / 专项验证 / 治理）、四个时期、Agent Note 挖掘、ci.yml 成长曲线，再由 2 个对抗性 agent 分别做事实证伪与完整性批评。事实核查改正了约 15 处（多为行号与 diff 数字），完整性批评贡献了 §10 的大部分内容——包括「公开仓上 CI 跑不起来」和「还有一套 GitLab CI」这两条，它们是单纯读 <code>.github</code> 永远发现不了的。</p>
+  </div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <div class="col sec-head">
+    <span class="sec-num">12</span>
+    <h2 class="sec">在你的规模上抄什么</h2>
+  </div>
+  <div class="col">
+    <p>这套 CI 的复杂度是<strong>被特定条件逼出来的</strong>：代码主要由 agent 写、有企业自建 runner 池、要发四条互不相关的产品线、跨三个操作系统。直接照抄大概率是负担。按规模拆开看：</p>
+
+    <h3>一个人 + agent</h3>
+    <ul>
+      <li><strong>值得抄：<code>all-checks-passed</code> 汇总 job（含那个 <code>always()</code>）。</strong>十几行，让分支保护摆脱矩阵名字，以后加减 job 不用改设置。这是全篇性价比最高的一段。</li>
+      <li><strong>值得抄：CI 与本地钩子共用同一组 <code>package.json</code> 脚本。</strong>不要在 YAML 里写第二份命令清单——那是漂移的源头，这个仓库在 07-06 花了一整天才把它撤回来。</li>
+      <li><strong>值得抄：无密钥主 gate + 密钥单独成文件。</strong>即使你只有一个 API key，这个切分也让主 CI 在 fork 上能跑。</li>
+      <li><strong>值得抄：「跳过必须是可见的跳过」。</strong>如果你的测试会自跳过，就给它一个 preflight，缺条件时硬失败。这是最容易骗过自己的一类 bug。</li>
+      <li><strong>不用抄：</strong>failover 开关、串行跨平台参照、benchmark job、自建 runner。这些解的是「组织自有池会降级」和「优化后的清单可能漏跑」，你没有这些问题。</li>
+    </ul>
+
+    <h3>2–5 人</h3>
+    <ul>
+      <li><strong>值得抄：拆分理由写进文件头。</strong><code>sandbox.yml</code> 第一句就解释了为什么它不在 ci.yml 里。半年后没人会记得，而 YAML 顶部的一句话比任何 wiki 都可靠。</li>
+      <li><strong>值得抄：把「阻塞 / 不阻塞」压缩成一次 <code>needs</code> 列表的取舍。</strong>并且<strong>不要用 <code>continue-on-error</code></strong>——它把红变绿，等于让人学会忽略。要么进 needs，要么让它以独立 job 的身份红着。</li>
+      <li><strong>值得抄：改并发/拓扑之前先量。</strong>不需要 benchmark job，看一眼 Actions 里各 job 的实际耗时就够。这个仓库最贵的一课是：分片了 40 个 job，结果多数 gate 比 runner setup 还短。</li>
+      <li><strong>谨慎：标签分类法机器强制。</strong>规则本身很好（一个封闭的 <code>kind/*</code> + 一个开放的 <code>area/*</code>），但 706 行的策略引擎在这个规模是过度投资。先用 GitHub 自带的 required labels 或一个 20 行的脚本。</li>
+    </ul>
+
+    <h3>5–10+ 人</h3>
+    <ul>
+      <li><strong>值得抄：策略从默认分支检出。</strong>一旦接受外部 PR，「PR 不能改自己分支上的检查逻辑来豁免自己」就是必须的，而不是可选的。</li>
+      <li><strong>值得抄：发布 = 无凭据打包（每个 PR 都跑）+ 人工触发上传那批字节。</strong>把「能不能打包」和「要不要发布」彻底分开，发布环节不重新构建。</li>
+      <li><strong>值得抄：把 action 钉死在 SHA 上——而且要一致。</strong>这个仓库只钉了 3 处，最敏感的 PyPI publish 反而用了分支 ref，这是可以直接吸取的反面教材。</li>
+      <li><strong>值得抄：死代码要连注释一起删。</strong>那个躺了一个月的 <code>if: false</code> job 真正的危害不是浪费行数，而是有一条注释在声称一个已经不存在的缓存。</li>
+    </ul>
+
+    <div class="note">
+      <span class="lbl">只因为 agent 写代码才存在的部分</span>
+      <p>逐文件 100% 覆盖率、<code>.github/AGENTS.md</code> 这类目录级 agent 约定、把每个取舍写成带「被否方案」的 Agent Note、以及「闸门优先于散文约定」这条根本方法论——它们的前提是「写代码的一方遵守能非零退出的命令远比遵守文档可靠」。人类团队里，代码评审可以承担一部分这个职责，所以这几条的收益会明显低于这个仓库里的表现。</p>
+    </div>
+  </div>
+</section>
+
+<footer class="col">
+  <p>全部数据取自本地 clone，证据基线 <code>141eb6fef8</code>（2026-08-19）；公开仓数据取自 GitHub API，读取于 2026-08-21。</p>
+  <p>行数、提交数、日期均可用 §11 的命令复跑核对。涉及内部仓 <code>deepseek-harness/deepseek-harness</code> 的 PR 编号无法从外部解析，本报告不引用其内容。</p>
+</footer>
+
+</div>
