@@ -1,0 +1,864 @@
+<meta charset="utf-8">
+<title>谁写了 DeepSeek Harness</title>
+<style>
+:root {
+  --bg: #F2F4EF; --surface: #FAFBF7; --surface-2: #E6EBE0; --line: #D2DACA;
+  --ink: #151A15; --ink-2: #4C5A4B; --ink-3: #7B8878;
+  --accent: #2C6A46; --accent-soft: #DCEBE1; --accent-ink: #1B4A2F;
+  --machine: #42607C; --machine-soft: #DCE5EE;
+  --agent: #93631A; --agent-soft: #F0E4CE;
+  --alert: #8E3B34;
+  --code-bg: #E6EBE0;
+  --shadow: 0 1px 0 rgba(21,26,21,.05), 0 8px 24px -16px rgba(21,26,21,.28);
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono", "Roboto Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101410; --surface: #171C17; --surface-2: #212821; --line: #333B32;
+    --ink: #E6EBE2; --ink-2: #B2BCAF; --ink-3: #848E81;
+    --accent: #6DBE8E; --accent-soft: #16301F; --accent-ink: #9AD9B4;
+    --machine: #8DB2D6; --machine-soft: #17222E;
+    --agent: #D6A65B; --agent-soft: #2E2513;
+    --alert: #DE9089;
+    --code-bg: #0C100C;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101410; --surface: #171C17; --surface-2: #212821; --line: #333B32;
+  --ink: #E6EBE2; --ink-2: #B2BCAF; --ink-3: #848E81;
+  --accent: #6DBE8E; --accent-soft: #16301F; --accent-ink: #9AD9B4;
+  --machine: #8DB2D6; --machine-soft: #17222E;
+  --agent: #D6A65B; --agent-soft: #2E2513;
+  --alert: #DE9089;
+  --code-bg: #0C100C;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+a:hover, a:focus-visible { border-bottom-color: currentColor; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: .8rem 1rem; overflow-x: auto; font-size: .8rem; line-height: 1.55; margin: 1rem 0; }
+pre code { background: none; padding: 0; font-size: inherit; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.25; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.5rem; letter-spacing: -.01em; }
+h2 { font-size: 1.7rem; margin-top: .25rem; }
+h3 { font-size: 1.18rem; margin: 2rem 0 .6rem; }
+h4 { font-size: 1rem; margin: 1.4rem 0 .4rem; font-family: var(--sans); font-weight: 700; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+li { margin: .25rem 0; }
+li::marker { color: var(--ink-3); }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+.shell { display: grid; grid-template-columns: 1fr; max-width: 1180px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+@media (min-width: 1100px) {
+  .shell { grid-template-columns: 240px minmax(0, 1fr); gap: 3rem; }
+  .toc { position: sticky; top: 1.5rem; align-self: start; max-height: calc(100vh - 3rem); overflow: auto; }
+}
+.toc { padding-top: 2.4rem; font-size: .86rem; }
+.toc .toc-title { text-transform: uppercase; letter-spacing: .12em; font-size: .7rem; color: var(--ink-3); margin-bottom: .6rem; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: .28rem .5rem; color: var(--ink-2); border-left: 2px solid var(--line); border-bottom: 0; }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.toc .n { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-right: .4rem; }
+main { min-width: 0; max-width: 800px; }
+.wide { max-width: 100%; }
+.hero { padding: 2.6rem 0 1.5rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+.hero .eyebrow { font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: .8rem; }
+.hero .lede { font-size: 1.1rem; color: var(--ink-2); max-width: 44em; margin-top: 1rem; }
+.hero .meta { font-family: var(--mono); font-size: .76rem; color: var(--ink-3); margin-top: 1rem; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .75rem; margin: 1.5rem 0 0; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .8rem .9rem; box-shadow: var(--shadow); }
+.stat .v { font-family: var(--serif); font-size: 1.65rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: .78rem; color: var(--ink-2); margin-top: .3rem; }
+section { margin-top: 3.2rem; scroll-margin-top: 1.5rem; }
+.sec-eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .4rem; }
+.sec-lede { color: var(--ink-2); font-size: 1.01rem; margin: .8rem 0 1.4rem; }
+.ev { display: block; font-family: var(--mono); font-size: .74rem; color: var(--ink-3); line-height: 1.55; margin: .15rem 0 .8rem; padding-left: 1rem; text-indent: -1rem; overflow-wrap: anywhere; }
+.ev::before { content: "证据 "; color: var(--accent); }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: .9rem 1.1rem; margin: 1.2rem 0; border-radius: 0 6px 6px 0; }
+.callout.machine { border-left-color: var(--machine); }
+.callout.agent { border-left-color: var(--agent); }
+.callout.alert { border-left-color: var(--alert); }
+.callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+.quote { font-family: var(--serif); font-size: 1.04rem; color: var(--ink); border-left: 3px solid var(--line); padding: .3rem 1rem; margin: 1rem 0; }
+.quote .src { display: block; font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-top: .35rem; }
+.lesson { background: var(--accent-soft); border-radius: 6px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
+.lesson h4 { margin-top: 0; color: var(--accent-ink); }
+.lesson ul { margin-bottom: 0; }
+.chip { display: inline-block; font-family: var(--mono); font-size: .68rem; padding: .05rem .4rem; border-radius: 3px; border: 1px solid var(--line); color: var(--ink-2); vertical-align: middle; white-space: nowrap; }
+.chip.h { border-color: var(--accent); color: var(--accent); }
+.chip.m { border-color: var(--machine); color: var(--machine); }
+.chip.a { border-color: var(--agent); color: var(--agent); }
+.tbl-wrap { overflow-x: auto; margin: 1rem 0 1.4rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; vertical-align: top; padding: .5rem .65rem; border-bottom: 1px solid var(--line); }
+th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+td.mono, th.mono { font-family: var(--mono); font-size: .78rem; }
+.tbl-wrap.compact th, .tbl-wrap.compact td { padding: .35rem .5rem; font-size: .82rem; }
+figure { margin: 1.4rem 0; }
+figure svg { max-width: 100%; height: auto; display: block; }
+figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
+.fig-box { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem; overflow-x: auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: .9rem; margin: 1.4rem 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: .95rem 1.05rem; box-shadow: var(--shadow); }
+.card .nm { font-family: var(--mono); font-size: .95rem; font-weight: 600; color: var(--ink); }
+.card .rl { font-size: .82rem; color: var(--accent); margin-top: .1rem; font-weight: 600; }
+.card .fig { font-family: var(--mono); font-size: .7rem; color: var(--ink-3); margin: .45rem 0 .1rem; font-variant-numeric: tabular-nums; }
+.card .bar { height: 5px; background: var(--surface-2); border-radius: 3px; margin: .5rem 0 .6rem; position: relative; overflow: hidden; }
+.card .bar i { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
+.card p { font-size: .87rem; margin: 0 0 .5rem; color: var(--ink-2); }
+.card p.own { color: var(--ink); }
+.card .tail { font-size: .78rem; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: .45rem; margin-top: .6rem; }
+.hand { display: grid; gap: .3rem; margin: 1rem 0 1.2rem; }
+.hand .row { display: grid; grid-template-columns: 5.6rem 1fr 3.4rem; align-items: center; gap: .6rem; font-family: var(--mono); font-size: .74rem; }
+.hand .wk { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.hand .track { height: 15px; background: var(--surface-2); border-radius: 3px; overflow: hidden; display: flex; }
+.hand .track i { display: block; height: 100%; }
+.hand .track i.cui { background: var(--accent); }
+.hand .track i.imc { background: var(--machine); }
+.hand .track i.oth { background: var(--agent); }
+.hand .pc { text-align: right; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.legend { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+.legend span::before { content: ""; display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+.legend .l1::before { background: var(--accent); }
+.legend .l2::before { background: var(--machine); }
+.legend .l3::before { background: var(--agent); }
+</style>
+<div class="shell">
+<nav class="toc">
+  <div class="toc-title">目录</div>
+  <ol>
+    <li><a href="#s1"><span class="n">01</span>名册：24 个人，71 天</a></li>
+    <li><a href="#s2"><span class="n">02</span>Tianyi Cui 到底负责什么</a></li>
+    <li><a href="#s3"><span class="n">03</span>合并权的交接</a></li>
+    <li><a href="#s4"><span class="n">04</span>十四张人物卡</a></li>
+    <li><a href="#s5"><span class="n">05</span>属地：包边界当调度基元</a></li>
+    <li><a href="#s6"><span class="n">06</span>工具签名：谁在用什么</a></li>
+    <li><a href="#s7"><span class="n">07</span>missions/：一人指挥九个 AI</a></li>
+    <li><a href="#s8"><span class="n">08</span>机器评审代替人评审</a></li>
+    <li><a href="#s9"><span class="n">09</span>文档是产出的一半</a></li>
+    <li><a href="#s10"><span class="n">10</span>节律：时间戳里的监督循环</a></li>
+    <li><a href="#s11"><span class="n">11</span>这个组织长什么形状</a></li>
+    <li><a href="#s12"><span class="n">12</span>按你的规模抄什么</a></li>
+    <li><a href="#s13"><span class="n">13</span>诚实的部分</a></li>
+    <li><a href="#s14"><span class="n">14</span>方法</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow">第七卷 · 组织</div>
+  <h1>谁写了 DeepSeek Harness</h1>
+  <p class="lede">把 git 历史当人事档案读：24 个人在 71 天里提交了 12,940 次。Tianyi Cui 具体负责什么、其余 DeepSeek 工程师各守哪块地、合并权在七月底如何易手，以及这些人加上他们各自指挥的 AI 舰队，最后长成了一个什么形状的组织。</p>
+  <p class="meta">证据基线 141eb6fef8（0.1.0-rc.8，2026-08-19）· 完整克隆非浅克隆 · 所有数字均在本机重新推导</p>
+  <div class="stats">
+    <div class="stat"><div class="v">12,940</div><div class="k">提交总数（7,090 非合并）</div></div>
+    <div class="stat"><div class="v">1,054</div><div class="k">合并的 Pull Request</div></div>
+    <div class="stat"><div class="v">24</div><div class="k">有提交的人类（+1 bot）</div></div>
+    <div class="stat"><div class="v">226</div><div class="k">workspace 包</div></div>
+    <div class="stat"><div class="v">77.0%</div><div class="k">PR 由作者自己点的合并</div></div>
+    <div class="stat"><div class="v">46.7%</div><div class="k">文件改动落在文档上</div></div>
+  </div>
+</header>
+<section id="s1">
+  <div class="sec-eyebrow">01 / 名册</div>
+  <h2>24 个人，71 天</h2>
+  <p class="sec-lede">仓库从 2026-06-10 开到 2026-08-19，整整 71 天。六月只有 5 个人在提交，七月 20 个，八月 23 个。下表按非合并提交量排，别名已按邮箱合并（Wenlu Wang=kingwl、Ziya=ZiyaZhang、Terra/Ni Shentu=NI0317、Ag=Jiaying Ding、CreatixChu=creatixchu）。</p>
+  <div class="tbl-wrap compact wide">
+  <table>
+    <thead><tr><th>人</th><th class="num">提交</th><th class="num">活跃天</th><th class="num">每天</th><th class="num">点合并</th><th class="num">Note</th><th class="mono">在场区间</th><th>邮箱域</th></tr></thead>
+    <tbody>
+      <tr><td>Tianyi Cui</td><td class="num">2269</td><td class="num">60</td><td class="num">37.8</td><td class="num">600</td><td class="num">282</td><td class="mono">06-10 → 08-19</td><td>github noreply</td></tr>
+      <tr><td>imccyu</td><td class="num">991</td><td class="num">46</td><td class="num">21.5</td><td class="num">150</td><td class="num">68</td><td class="mono">06-17 → 08-19</td><td>deepseek.com</td></tr>
+      <tr><td>Yichen Jiang</td><td class="num">734</td><td class="num">48</td><td class="num">15.3</td><td class="num">63</td><td class="num">92</td><td class="mono">06-19 → 08-19</td><td>sina.com</td></tr>
+      <tr><td>Turtle</td><td class="num">441</td><td class="num">25</td><td class="num">17.6</td><td class="num">57</td><td class="num">104</td><td class="mono">07-09 → 08-13</td><td>deepseek.com</td></tr>
+      <tr><td>Chinesezjc</td><td class="num">388</td><td class="num">25</td><td class="num">15.5</td><td class="num">29</td><td class="num">29</td><td class="mono">07-21 → 08-19</td><td>deepseek.com</td></tr>
+      <tr><td>_Kerman</td><td class="num">349</td><td class="num">23</td><td class="num">15.2</td><td class="num">16</td><td class="num">30</td><td class="mono">07-22 → 08-19</td><td>qq.com</td></tr>
+      <tr><td>Hypatia May</td><td class="num">294</td><td class="num">36</td><td class="num">8.2</td><td class="num">10</td><td class="num">33</td><td class="mono">06-12 → 08-13</td><td>outlook.com</td></tr>
+      <tr><td>creatixchu</td><td class="num">274</td><td class="num">17</td><td class="num">16.1</td><td class="num">28</td><td class="num">37</td><td class="mono">07-24 → 08-19</td><td>deepseek.com</td></tr>
+      <tr><td>ZiyaZhang</td><td class="num">216</td><td class="num">37</td><td class="num">5.8</td><td class="num">27</td><td class="num">17</td><td class="mono">06-25 → 08-13</td><td>gmail.com</td></tr>
+      <tr><td>pku-xht</td><td class="num">204</td><td class="num">20</td><td class="num">10.2</td><td class="num">14</td><td class="num">13</td><td class="mono">07-07 → 08-19</td><td>deepseek.com</td></tr>
+      <tr><td>Huanqi Cao</td><td class="num">201</td><td class="num">21</td><td class="num">9.6</td><td class="num">8</td><td class="num">15</td><td class="mono">06-19 → 08-15</td><td>deepseek.com</td></tr>
+      <tr><td>Dudu-0223</td><td class="num">179</td><td class="num">29</td><td class="num">6.2</td><td class="num">4</td><td class="num">26</td><td class="mono">06-22 → 08-18</td><td>gmail.com</td></tr>
+      <tr><td>kingwl</td><td class="num">174</td><td class="num">24</td><td class="num">7.2</td><td class="num">22</td><td class="num">21</td><td class="mono">06-30 → 08-11</td><td>gmail.com</td></tr>
+      <tr><td>NI0317</td><td class="num">111</td><td class="num">17</td><td class="num">6.5</td><td class="num">4</td><td class="num">15</td><td class="mono">06-26 → 08-12</td><td>gmail.com</td></tr>
+      <tr><td>07akioni</td><td class="num">60</td><td class="num">10</td><td class="num">6.0</td><td class="num">7</td><td class="num">12</td><td class="mono">06-16 → 08-18</td><td>gmail.com</td></tr>
+      <tr><td>fz</td><td class="num">53</td><td class="num">14</td><td class="num">3.8</td><td class="num">6</td><td class="num">4</td><td class="mono">07-23 → 08-19</td><td class="mono">dsh.dev</td></tr>
+      <tr><td>Yif</td><td class="num">38</td><td class="num">13</td><td class="num">2.9</td><td class="num">1</td><td class="num">9</td><td class="mono">07-23 → 08-13</td><td>qq.com</td></tr>
+      <tr><td>j-xiang</td><td class="num">27</td><td class="num">3</td><td class="num">9.0</td><td class="num">1</td><td class="num">0</td><td class="mono">07-29 → 08-14</td><td>deepseek.com</td></tr>
+      <tr><td>lintianle</td><td class="num">23</td><td class="num">7</td><td class="num">3.3</td><td class="num">1</td><td class="num">2</td><td class="mono">07-07 → 08-10</td><td>deepseek.com</td></tr>
+      <tr><td>xjt</td><td class="num">22</td><td class="num">4</td><td class="num">5.5</td><td class="num">0</td><td class="num">1</td><td class="mono">07-29 → 08-12</td><td class="mono">example.com</td></tr>
+      <tr><td>Jiaying Ding</td><td class="num">12</td><td class="num">3</td><td class="num">4.0</td><td class="num">0</td><td class="num">0</td><td class="mono">08-06 → 08-13</td><td>deepseek.com</td></tr>
+      <tr><td>GeeeekExplorer</td><td class="num">6</td><td class="num">3</td><td class="num">2.0</td><td class="num">0</td><td class="num">2</td><td class="mono">08-05 → 08-12</td><td>qq.com</td></tr>
+      <tr><td>lsdsjy</td><td class="num">5</td><td class="num">5</td><td class="num">1.0</td><td class="num">2</td><td class="num">3</td><td class="mono">08-13 → 08-19</td><td>github noreply</td></tr>
+      <tr><td>Magolor</td><td class="num">3</td><td class="num">2</td><td class="num">1.5</td><td class="num">2</td><td class="num">1</td><td class="mono">08-18 → 08-19</td><td>qq.com</td></tr>
+      <tr><td>Shigma</td><td class="num">2</td><td class="num">2</td><td class="num">1.0</td><td class="num">0</td><td class="num">0</td><td class="mono">07-31 → 08-13</td><td>gmail.com</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev"><code>git shortlog -sne --no-merges HEAD</code>；活跃天=有提交的自然日去重；Note=首次新增的英文 Agent Note 文件名去重（含后来被归档/删除的）。</span>
+  <h3>关于「DeepSeek 员工」这个说法</h3>
+  <p>只有 10 个人用 <code>@deepseek.com</code> 邮箱提交：imccyu、Turtle、Chinesezjc、creatixchu、pku-xht、Huanqi Cao、lintianle、j-xiang、Jiaying Ding，以及零星的 teslazhu / ihsiang。其余全是个人邮箱（gmail / qq / sina / outlook / github noreply）。<strong>雇佣关系不能从 git 里读出来</strong>——个人邮箱既可能是员工的私人账号，也可能是外部协作者。本文只说「谁提交了什么」，不替任何人认定身份。</p>
+  <p>两个域名值得单独点名：<code>fz@dsh.dev</code> 是全仓唯一的 dsh.dev 地址（91 次提交），<code>xjt@example.com</code> 用的是 RFC 2606 保留的示例域——两位排进前 20 的贡献者从头到尾没配过真实 git 身份。</p>
+  <p>Shigma 只有 2 次提交，两次都在给 <code>README</code> 加 Cordis 论文链接。他是这个仓库 vendor 进来的 Cordis 框架的上游作者——一个拿到了提交权、只在「解释这个架构的合法性来源」这一处出现的外部开源维护者。</p>
+  <span class="ev"><code>git log --all --author=shigma --format='%ad %h %s' --date=short</code> → <code>ea93cf85f1</code>（07-31，add cordis paper）、<code>0ae8f27b93</code>（08-13，add link to preview paper）。</span>
+  <div class="callout">
+    <p><strong>时区里的唯一异类。</strong>7,090 次非合并提交中，除 ZiyaZhang 的 216 次全部标记 <code>-0700</code> 外，其余每一位的每一次提交都是 <code>+0800</code>。这是一个几乎完全同时区的团队，只有一个人在北美——而且从提交小时分布看，那个人把自己的作息掰到了北京时间上，而不是形成接力班次。</p>
+  </div>
+  <span class="ev"><code>git log --no-merges --format='%an|%ad' --date=format:'%z' | sort -u</code></span>
+</section>
+<section id="s2">
+  <div class="sec-eyebrow">02 / 创始人</div>
+  <h2>Tianyi Cui 到底负责什么</h2>
+  <p class="sec-lede">他是第 1 号提交。<code>b67e81ac97</code>（2026-06-10 22:57）<em>Initialize repo with README, AGENTS.md, and CLAUDE.md symlink</em>——仓库的第一个动作，就是给还不存在的 AI 立规矩。2,269 次非合并提交占全仓 32%，60 个活跃日，平均每天 37.8 次，单日峰值 132 次。</p>
+  <h3>他不是写功能的那个人</h3>
+  <p>把他的提交按 conventional-commit 类型拆开，结论和「创始人写核心代码」的直觉正好相反：</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>类型</th><th class="num">次数</th><th class="num">占比</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">fix:</td><td class="num">681</td><td class="num">30%</td><td>修别人和自己的东西</td></tr>
+      <tr><td class="mono">docs:</td><td class="num">646</td><td class="num">28%</td><td>规则、Agent Note、目录、双语</td></tr>
+      <tr><td class="mono">test:</td><td class="num">~318</td><td class="num">14%</td><td>覆盖率与快照</td></tr>
+      <tr><td class="mono">refactor:</td><td class="num">~159</td><td class="num">7%</td><td>结构迁移</td></tr>
+      <tr><td class="mono">feat:</td><td class="num">120</td><td class="num">5%</td><td>新功能</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><code>docs:</code> 是 <code>feat:</code> 的 5.4 倍。而且这个比例随时间还在恶化：六月他写 34 个 <code>feat:</code>，七月 76 个，八月只剩 10 个——同期他的月提交量是 296 / 1,639 / 334。<strong>团队规模翻了四倍，他自己的产出塌了 80%。</strong></p>
+  <span class="ev"><code>git log --no-merges --author='53024+tianyicui' --format='%ad|%s' --date=format:'%Y-%m'</code> 按月×类型交叉统计。</span>
+  <h3>他负责的是「约束系统」</h3>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>资产</th><th class="num">他 / 总数</th><th>这东西约束谁</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">AGENTS.md</td><td class="num">146 / 233</td><td>每个 agent 每个 session 都要读的根指令</td></tr>
+      <tr><td class="mono">packages/AGENTS.md</td><td class="num">33 / 38</td><td>每个包必须满足的 invariant 规则</td></tr>
+      <tr><td class="mono">docs/architecture.md</td><td class="num">134 / 297</td><td>改 agent-loop 必须同步更新它</td></tr>
+      <tr><td class="mono">docs/testing.md</td><td class="num">40 / 55</td><td>测试分层、API key 政策、快照强制</td></tr>
+      <tr><td class="mono">scripts/verify-* + gen-*</td><td class="num">28 / 41</td><td>PR 上跑的机器评审员</td></tr>
+      <tr><td class="mono">.agents/skills/</td><td class="num">8 / 11</td><td>怎么评审、怎么写文档、怎么归档决策</td></tr>
+      <tr><td class="mono">.github/</td><td class="num">143 / 251</td><td>CI 矩阵、issue 生命周期、PR 模板</td></tr>
+      <tr><td class="mono">.agents/notes/rejected/</td><td class="num">10 / 11</td><td>团队决定<em>不</em>做的事</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Agent Note 一项他写了 282 篇（按首次新增的英文文件名去重），是第二名的三倍。而 <code>rejected/</code> 目录里 11 篇有 10 篇是他写的——其中好几篇是他自己提的简化提案，自己又否掉，理由写在文件里，为的是「这个调研不用再做第二遍」。</p>
+  <span class="ev"><code>git log -S'&lt;规则原文&gt;' --full-history -- AGENTS.md</code> 逐条回溯；18 条抽样规则里 13 条落在他身上。</span>
+  <h3>第 2 天就写下的那句话</h3>
+  <p>仓库开张第二天，他建了 <code>docs/adr/0007-quality-gates.md</code>（后来改名成 Agent Note）。开头一段是整个项目的纲领：</p>
+  <div class="quote">This codebase is developed primarily by coding agents. Agents follow enforced gates far more reliably than prose conventions, and “a lot of work” is not a cost argument when agents do the labor.
+  <span class="src">.agents/notes/implemented/process/2026-06-11-quality-gates.md · 原始提交 9b8fccc6f9（2026-06-11）</span></div>
+  <p>决定条款只有一句：<em>Every mechanically checkable AGENTS.md promise gets a command that exits non-zero.</em>——凡是能机器检查的承诺，都要配一条会返回非零退出码的命令。同一天 <code>bfb034830f</code> 打开了 <code>packages/*/src</code> 的 per-file 100% 覆盖率闸门。<strong>那时团队只有他一个人。</strong></p>
+  <span class="ev"><code>git log -S'perFile: true' -- vitest.config.ts</code> → <code>bfb034830f</code>（2026-06-11，Enforce 100% per-file test coverage）。</span>
+  <h3>他最大的几笔，全是搬家不是盖楼</h3>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th class="mono">提交</th><th>日期</th><th class="num">文件</th><th>做了什么</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">a2d0f7f411</td><td>08-13</td><td class="num">3281</td><td>全仓命名契约，一次改名 64 个包</td></tr>
+      <tr><td class="mono">25dcd7293c</td><td>08-09</td><td class="num">763</td><td>清洗全语料的「思维链泄漏」</td></tr>
+      <tr><td class="mono">e8eddc7ef8</td><td>07-19</td><td class="num">452</td><td>RFC 改名 Agent Note，整树搬到 .agents/notes/</td></tr>
+      <tr><td class="mono">3fc35c91ff</td><td>07-30</td><td class="num">351</td><td>解散 ui/ 分组</td></tr>
+      <tr><td class="mono">d02e9f1bd6</td><td>06-20</td><td class="num">191</td><td>18 个扁平包重排进角色分组</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout alert">
+    <p><strong>一个必须纠正的数字。</strong>用 <code>--diff-filter=A</code> 数「谁最早新增了 package.json」，会得到「Tianyi Cui 创建了 114 个包」。这个数字是假的：其中 80 个来自<em>他自己执行的改名扫荡</em>（光 <code>a2d0f7f411</code> 一笔就贡献 62 个）。只统计 200 文件以内的正常提交，真实的建包分布是 <strong>Tianyi Cui 34 / imccyu 31 / Dudu-0223 17 / Yichen Jiang 16</strong>——接近打平，不是 2:1 碾压。</p>
+  </div>
+  <h3>他没做的事</h3>
+  <ul>
+    <li><strong>他从没发过版。</strong>全仓 19 条严格意义的 <code>release(*)</code> 提交，19 条全是 imccyu 的。创始人一次版本号都没打过。</li>
+    <li><strong>他不是靠读别人代码把关的。</strong>他点了 600 次合并，其中 498 次合并的是自己的分支；真正合别人工作的是 170 次。git 只能看到「谁点了按钮」，看不到评审深度——但 63% 的自合并率说明他的守门主要体现在<em>规则</em>而不是<em>逐行读</em>。</li>
+    <li><strong>他不写 Windows、不写前端。</strong>这两块分别是 Huanqi Cao 和 imccyu 的地盘（例外是 8 月 8–9 日他亲手把全仓推过原生 Windows 100% 覆盖率，约 45 次提交的两天苦工）。</li>
+  </ul>
+  <h3>作息</h3>
+  <p>他 2,269 次提交里有 899 次（<strong>39.6%</strong>）落在 22:00–04:00，直方图峰值在 23:00（204 次）和 00:00（181 次），凌晨 2 点还有 111 次。全部 <code>+0800</code>，没有出差痕迹。单日峰值 2026-07-14 的 132 次提交横跨 33 个不同分支，相邻两次提交有 88% 换了分支——这不是一个人在敲键盘的形状。</p>
+  <div class="lesson">
+    <h4>一句话总结</h4>
+    <ul>
+      <li>他负责的是<strong>立法与执法机器</strong>：AGENTS.md、Agent Note 协议、11 个 skill 里的 8 个、41 个闸门脚本里的 28 个、全部四次结构大搬迁。</li>
+      <li>他负责的<strong>不是</strong>产品功能——120 个 <code>feat:</code> 分摊到 71 天，而同期他写了 646 个 <code>docs:</code>。</li>
+      <li>他的曲线是一条<strong>主动退位曲线</strong>：七月一个人干 1,639 次提交，八月降到 334；合并权从 100% 交到 18%。</li>
+    </ul>
+  </div>
+</section>
+<section id="s3">
+  <div class="sec-eyebrow">03 / 权力转移</div>
+  <h2>合并权的交接</h2>
+  <p class="sec-lede">这个团队真正的组织变化不在人数上，在<strong>谁能点 Merge</strong> 上。把 1,054 个 PR 的合并提交按周切开、按点合并的人分色，曲线非常干净：前六周一个人守门，然后在三周内把钥匙交了出去——正好是人数从 5 涨到 20 的那三周。</p>
+  <div class="hand wide">
+    <div class="row"><span class="wk">06-08 周</span><span class="track"><i class="cui" style="width:100%"></i></span><span class="pc">8 PR</span></div>
+    <div class="row"><span class="wk">06-15 周</span><span class="track"><i class="cui" style="width:100%"></i></span><span class="pc">50</span></div>
+    <div class="row"><span class="wk">06-22 周</span><span class="track"><i class="cui" style="width:83.3%"></i><i class="oth" style="width:16.7%"></i></span><span class="pc">12</span></div>
+    <div class="row"><span class="wk">06-29 周</span><span class="track"><i class="cui" style="width:97.9%"></i><i class="oth" style="width:2.1%"></i></span><span class="pc">48</span></div>
+    <div class="row"><span class="wk">07-06 周</span><span class="track"><i class="cui" style="width:90.9%"></i><i class="oth" style="width:9.1%"></i></span><span class="pc">44</span></div>
+    <div class="row"><span class="wk">07-13 周</span><span class="track"><i class="cui" style="width:99%"></i><i class="oth" style="width:1%"></i></span><span class="pc">98</span></div>
+    <div class="row"><span class="wk">07-20 周</span><span class="track"><i class="cui" style="width:89.1%"></i><i class="imc" style="width:3.8%"></i><i class="oth" style="width:7.1%"></i></span><span class="pc">156</span></div>
+    <div class="row"><span class="wk">07-27 周</span><span class="track"><i class="cui" style="width:50.6%"></i><i class="imc" style="width:23.9%"></i><i class="oth" style="width:25.5%"></i></span><span class="pc">259</span></div>
+    <div class="row"><span class="wk">08-03 周</span><span class="track"><i class="cui" style="width:24%"></i><i class="imc" style="width:25.3%"></i><i class="oth" style="width:50.7%"></i></span><span class="pc">150</span></div>
+    <div class="row"><span class="wk">08-10 周</span><span class="track"><i class="cui" style="width:18.5%"></i><i class="imc" style="width:20.8%"></i><i class="oth" style="width:60.7%"></i></span><span class="pc">168</span></div>
+    <div class="row"><span class="wk">08-17 周</span><span class="track"><i class="cui" style="width:18%"></i><i class="imc" style="width:14.8%"></i><i class="oth" style="width:67.2%"></i></span><span class="pc">61</span></div>
+    <div class="legend"><span class="l1">Tianyi Cui</span><span class="l2">imccyu</span><span class="l3">其余 21 人合计</span></div>
+  </div>
+  <span class="ev">遍历全部 1,054 个 <code>Merge pull request</code> 提交，取 <code>%an</code>（点合并的人）按 ISO 周聚合；显示名已按别名表归一。</span>
+  <p>七月二十日之前，Tianyi Cui 点掉了 <strong>92%</strong> 的 PR（253/275，六周合计）。八月三日之后，这个数字是 <strong>20%</strong>。中间那两周（07-20、07-27）是整个交接窗口——imccyu 先接走前端那一半，其余人开始给自己点合并。</p>
+  <h3>交出去之后变成了什么</h3>
+  <p>全仓 <strong>77.0%</strong> 的 PR（812/1054）由分支作者自己点合并。剩下 242 个由他人合并的 PR，分布高度集中：</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>合别人 PR 的人</th><th class="num">次数</th><th>合的是谁的活</th></tr></thead>
+    <tbody>
+      <tr><td>Tianyi Cui</td><td class="num">170</td><td>全员——Yichen Jiang、imccyu、Turtle、Hypatia May、NI0317…</td></tr>
+      <tr><td>imccyu</td><td class="num">56</td><td>主要是 client/ 一带：creatixchu、07akioni、Yif、_Kerman、kingwl</td></tr>
+      <tr><td>Turtle</td><td class="num">8</td><td>文档与 xjt 的校对批次</td></tr>
+      <tr><td>其余 5 人</td><td class="num">≤3 各</td><td>零星</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout">
+    <p><strong>两层守门，不是一层。</strong>Tianyi Cui 守全局与后端，imccyu 守前端。除这两人外，团队里没有第三个人经常读别人的代码。pku-xht、Hypatia May、Huanqi Cao、Dudu-0223、Chinesezjc、Yichen Jiang 的合并记录 100%（或 97%）是自己的分支——他们不是评审者，他们是<em>各自领域的发布按钮持有人</em>。</p>
+  </div>
+  <p>这里必须诚实：<strong>git 只记录点击，不记录评审</strong>。77% 自合并不等于 77% 无人评审——真正读代码的是 <code>ds-review-bot</code>、Codex，和 54 道机器闸门（见 §06、§08）。人类评审被挪到了「机器管不了的语义残余」上，这条分工写在 <code>dsh-code-review</code> 这个 skill 里：<em>omit issues already enforced by a green gate</em>。</p>
+</section>
+<section id="s4">
+  <div class="sec-eyebrow">04 / 人物</div>
+  <h2>十四张人物卡</h2>
+  <p class="sec-lede">按非合并提交量排。横条是在场区间（左端＝2026-06-10 开仓，右端＝2026-08-19 末次提交）。「属地」按剔除 40 文件以上扫荡提交后的包级主导权统计。</p>
+  <div class="cards wide">
+
+  <div class="card">
+    <div class="nm">Tianyi Cui</div><div class="rl">创始人 / 立法者 / 一号闸门</div>
+    <div class="fig">2269 提交 · 600 合并 · 282 Note</div>
+    <div class="bar"><i style="left:0;width:100%"></i></div>
+    <p class="own">属地：core/agent-loop、core/tools、core/agent、core/session、subagent、shell、subprocess、e2b、lsp、workflow、sdk（51 个包主导）。</p>
+    <p>真正的产出是约束系统：146/233 次 AGENTS.md 编辑、28/41 个闸门脚本、11 个 skill 里的 8 个、四次结构大搬迁。</p>
+    <div class="tail">签名动作：写完提案自己否掉（rejected/ 11 篇里 10 篇是他的）。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">imccyu</div><div class="rl">Web 客户端架构师 / 唯一的发布工程师</div>
+    <div class="fig">991 提交 · 150 合并 · 68 Note</div>
+    <div class="bar"><i style="left:10%;width:90%"></i></div>
+    <p class="own">属地：packages/client/* 全组（42 包）、host/apiproxy、api/gateway、typert、storage、workspace（50 个包主导）。</p>
+    <p>2026-07-19 一笔 <code>a6a3807a07</code>（379 文件、+33,248 行）把整个 Web GUI 栈连同 15 个空骨架包一次性建出来。19 条 release 提交全是他，每条重写 210–229 个 package.json。<code>ec601ca13d</code> 用自写 codemod 把 vendor 的 Cordis 改名，1,400 文件。</p>
+    <div class="tail">他是 missions/ 那本九人 AI 队友账本的作者（见 §07）。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">Yichen Jiang</div><div class="rl">模型/供应商 + 配置面架构师</div>
+    <div class="fig">734 提交 · 63 合并 · 92 Note</div>
+    <div class="bar"><i style="left:12.7%;width:87.3%"></i></div>
+    <p class="own">属地：llm/llm-pi-ai、llm-deepseek、preset/agent-presets（92%）、settings、credentials、client/ui-models、Python SDK、文档站。</p>
+    <p>把 LLM 适配器注册从「按模型名」改成「按 provider」（<code>e547980d77</code>，218 文件）；建了 <code>ctx.settings</code> 与 <code>ctx.credentials</code> 两条 seam；把每个 session 的 agent 做成可由 preset <code>cordis.yml</code> 组装。</p>
+    <div class="tail">他写的 <code>dsh-pre-push-checks</code> 是全员每次 push 前必须遵守的规矩。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">Turtle</div><div class="rl">前门主人 / 文风与术语权威</div>
+    <div class="fig">441 提交 · 57 合并 · 104 Note</div>
+    <div class="bar"><i style="left:41%;width:49%"></i></div>
+    <p class="own">属地：ui/tui（建了又亲手删）、apps/cli、bundle/*、boot/cmdline、docs/AGENTS.md、docs/cordis-tutorial。</p>
+    <p>Agent Note 数量全仓第二（104 篇），但他最大的两笔提交都是纯术语扫荡：<code>dda02250f5</code>（966 文件，把 seam 一词收归完整能力）和 <code>0c708cb10d</code>（626 文件）。AGENTS.md 里「不要用比喻」那条是他写的。</p>
+    <div class="tail">2026-08-04 <code>10bb9cbf4a</code> 删掉自己建的 TUI 包：431 文件、−28,905 行。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">Chinesezjc</div><div class="rl">工具卡渲染 + Python Code Mode / CI 容灾</div>
+    <div class="fig">388 提交 · 29 合并 · 29 Note</div>
+    <div class="bar"><i style="left:58%;width:42%"></i></div>
+    <p class="own">属地：client/ui-primitives、code-runtime/code-runtime-python、feedback；.github/workflows 第三多（28 次）。</p>
+    <p>30 天内建完 Web 端全部 tool render-intent 卡片（terminal/diff/read/search/web），以及 CPython Code Mode 后端的 fd-3 帧协议。CI failover runbook 18 条提交里他占 16 条——托管 CI 挂掉时切自建 runner 的那个开关是他的。</p>
+    <div class="tail">两条提交的作者是 <code>Ubuntu@localhost</code>——他在自建 runner 虚机里边验证边重触发 CI。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">_Kerman</div><div class="rl">agent-loop 消息机 / Trajectory UI</div>
+    <div class="fig">349 提交 · 16 合并 · 30 Note</div>
+    <div class="bar"><i style="left:59%;width:41%"></i></div>
+    <p class="own">属地：client/ui-trajectory、client/ui-workspace、acp、goal、session-persistence。</p>
+    <p>29 天内把 agent loop 的消息与收件箱生命周期重写成 identified-immutable <code>Message</code> + <code>Inbox.claim()</code> + 单一 <code>agent/pre-step</code>——<code>fbf87e660c</code> 一笔 345 文件。349 次提交里 147 次是 <code>fix:</code>，<code>feat:</code> 只有 29 次；净行数 +77,218/−67,465，删得几乎和写得一样多。</p>
+    <div class="tail">一个包都没建过，也一条 AGENTS.md 规则都没写过——他的权威全在 30 篇 Agent Note 里。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">Hypatia May</div><div class="rl">会话历史系统工程师</div>
+    <div class="fig">294 提交 · 10 合并 · 33 Note</div>
+    <div class="bar"><i style="left:3%;width:88%"></i></div>
+    <p class="own">属地：session-query 整条 seam（65%）、compaction、llm/token-meter、native/landlock-run。</p>
+    <p>全仓第二个提交者（06-12）。设计了 session surface——所有历史改写都骑在这个有序投影上。她是唯一一个从 Service Definition 到 Provider 到 tool 独占一整条 seam 的人。</p>
+    <div class="tail">全仓 43 条带 <code>(round N)</code> 的提交，43 条都是她的；最高打到 round 10。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">creatixchu</div><div class="rl">工作区选择器 / 附件与图片管线</div>
+    <div class="fig">274 提交 · 28 合并 · 37 Note</div>
+    <div class="bar"><i style="left:62%;width:38%"></i></div>
+    <p class="own">属地：host/directory-picker-browse（78 次里占 76）、directory-picker 全家、attachment-local、client/ui-attachment。</p>
+    <p>156 次 <code>fix:</code> 对 30 次 <code>feat:</code>。全仓「review round」提交最多的人（32 条），也是唯一打到两位数轮次的人——从 round 2 一直到 round 24。</p>
+    <div class="tail"><code>b46dcb16cb</code>：以「这些轮次是 bot 在人类批准之后自己加的」为由，回退了自己 18 轮的评审改动。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">ZiyaZhang</div><div class="rl">双语文档体系创建者 / GUI 产品</div>
+    <div class="fig">216 提交 · 27 合并 · 17 Note</div>
+    <div class="bar"><i style="left:21%;width:69%"></i></div>
+    <p class="own">属地：i18n 全套、hooks/hook-protocol、client/ui-deliverables、examples/desktop。</p>
+    <p>2026-07-02 一笔 <code>4d89bb3e74</code>（16 文件 +560 行）同时交付了配对契约、翻译规则、<code>dsh-translate-docs</code> skill 和 <code>verify-translation-pairing</code> 闸门——整个双语制度是一次性生出来的。中文术语表也是她建的。</p>
+    <div class="tail">全队唯一在 <code>-0700</code> 时区的人，PR 也是全仓最小（均 16.4 文件）。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">pku-xht</div><div class="rl">外部 agent 集成 / 调度与工作流</div>
+    <div class="fig">204 提交 · 14 合并 · 13 Note</div>
+    <div class="bar"><i style="left:38%;width:62%"></i></div>
+    <p class="own">属地：subagent-codex（58 里 51）、subagent-claude-code（47 里 43）、schedule（72%）、client/ui-workflow-run。</p>
+    <p>让 harness 去驱动<em>别家</em>编码 agent 的那两个包都是他建的，分别钉死 <code>@openai/codex@0.147.0</code> 和 <code>@anthropic-ai/claude-agent-sdk@0.3.220</code>。他自己 15/20 的 PR 走 <code>codex/</code> 分支——用 Codex 写了「把 Codex 变成 subagent」的包。</p>
+    <div class="tail">第一次提交是纯 RFC，比第一行实现代码早 28 天。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">Huanqi Cao</div><div class="rl">Windows 平台唯一负责人</div>
+    <div class="fig">201 提交 · 8 合并 · 15 Note</div>
+    <div class="bar"><i style="left:13%;width:81%"></i></div>
+    <p class="own">属地：sandbox-windows-acl、shell/pwsh-*、tool-pwsh、terminal-bash、directory-picker-native、bundle/base。</p>
+    <p>201 条提交里 104 条的标题带 Windows / pwsh / wine / ACL。用 koffi 走 Win32 <code>IFileOpenDialog</code>、用 <code>CreateRestrictedToken</code> 做写限制沙箱，还手写了一个 177 行 C++ ABI 探针来校验 FFI 定义。</p>
+    <div class="tail">全仓 12,940 条提交里<strong>唯一</strong>一条 <code>Co-authored-by</code> 尾注在他的 <code>f64ba40f43</code> 上——而且合作者是人。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">Dudu-0223</div><div class="rl">能力 seam 的开荒者 / 委派架构</div>
+    <div class="fig">179 提交 · 4 合并 · 26 Note</div>
+    <div class="bar"><i style="left:17%;width:81%"></i></div>
+    <p class="own">建了 fs、web、lsp、spill、timeout 五条 seam（17 个包），然后交给别人；自己留下 subagent 委派生命周期。</p>
+    <p>把一次性委派改造成可续、可后台、可冷恢复的 continuable child，八天后又把自己七月的设计整个推翻重写。Agent Teams 那篇 Agent Note 也是他写的。</p>
+    <div class="tail">全仓 1,054 个 PR 里他只点过 4 次合并，其中 3 次还是自己的分支。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">kingwl</div><div class="rl">沙箱与权限架构师 → Web 回归工程师</div>
+    <div class="fig">174 提交 · 22 合并 · 21 Note</div>
+    <div class="bar"><i style="left:28%;width:60%"></i></div>
+    <p class="own">建了 sandbox 组、subprocess、mode、telemetry；写了 <code>landlock-run</code>（纯 C11，musl 静态链接）。</p>
+    <p>confinement seam、审批 seam、升权阶梯、plan mode、subagent 策略继承——权限这一整块的 Agent Note 到今天还是他的。2026-07-29 之后风格突变，转去做 Web UI 小修。</p>
+    <div class="tail">他建的包最后多半被别人接管：sandbox 归了 Huanqi Cao，subprocess 归了 Tianyi Cui。</div>
+  </div>
+
+  <div class="card">
+    <div class="nm">NI0317 / Terra</div><div class="rl">首次运行体验 / 终端 seam 创建者</div>
+    <div class="fig">111 提交 · 4 合并 · 15 Note</div>
+    <div class="bar"><i style="left:23%;width:67%"></i></div>
+    <p class="own">属地：packages/pty（现 terminal，<code>terminal_*</code> 工具名至今在用）、TUI/Web 双端首启欢迎、session-export、根 README。</p>
+    <p>写了全仓四篇事故报告里最特别的一篇——<code>0003</code>，主角是一个 Web agent 而不是一段代码（见 §08）。</p>
+    <div class="tail">两个最大交付（Electron 桌面端、trace-workbench）都以「history-only」方式合并，代码从没进过主干树。</div>
+  </div>
+
+  </div>
+  <h3>长尾的十位</h3>
+  <p>07akioni（60 次，pnpm 迁移 + markdown 增量渲染器 + ui-primitives）、fz（53 次，plan mode 与 Python 运行时打包，域名 <code>dsh.dev</code> 是编的）、Yif（38 次，纯 client/ui-* 打磨与共享宽度轴）、j-xiang（27 次，186 个包 README 的中文校对，分 20 篇一批）、lintianle（23 次，VitePress 站 + mcp-client）、xjt（22 次提交却动了 4,271 个文档文件——三轮 976 / 884 / 848 文件的中文全语料校对，英文一个字不动）、Jiaying Ding（12 次，品牌资产与 README）、GeeeekExplorer（6 次）、lsdsjy（5 次，README 资产上 CDN）、Magolor（3 次，SQLite 物理分块压缩，75 次触碰集中在一个包）。</p>
+  <div class="callout">
+    <p><strong>长尾的形状说明了包粒度的价值。</strong>这十个人几乎没碰过 agent loop、插件骨架，也没碰过彼此的地盘。一个人两周的贡献之所以能独立落地，是因为 226 个包的中位数只有 12 个文件、4 个源文件——一个包差不多就是一个 agent session 的工作量。</p>
+  </div>
+</section>
+<section id="s5">
+  <div class="sec-eyebrow">05 / 康威定律</div>
+  <h2>属地：包边界当调度基元</h2>
+  <p class="sec-lede">226 个包不是过度设计，是<strong>分片数</strong>。这个团队先画边界、再往格子里填人，而包边界的真正作用不是所有权，是让并发的 agent 在统计上撞不到一起。</p>
+  <div class="tbl-wrap compact wide">
+  <table>
+    <thead><tr><th>包组</th><th class="num">包数</th><th class="num">提交</th><th>主导者（剔除 40 文件以上扫荡）</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">client/</td><td class="num">42</td><td class="num">1180</td><td>imccyu 28% · Yichen Jiang 15% · _Kerman 11%</td></tr>
+      <tr><td class="mono">core/</td><td class="num">8</td><td class="num">620</td><td>Tianyi Cui 40% · _Kerman 13% · Chinesezjc 13%</td></tr>
+      <tr><td class="mono">host/</td><td class="num">8</td><td class="num">444</td><td>creatixchu 24% · imccyu 20% · Yichen Jiang 16%</td></tr>
+      <tr><td class="mono">subagent/</td><td class="num">11</td><td class="num">347</td><td>Tianyi Cui 38% · pku-xht 26% · Dudu-0223 11%</td></tr>
+      <tr><td class="mono">llm/</td><td class="num">5</td><td class="num">214</td><td>Yichen Jiang 39% · Tianyi Cui 30%</td></tr>
+      <tr><td class="mono">session-query/</td><td class="num">4</td><td class="num">83</td><td>Hypatia May 65%</td></tr>
+      <tr><td class="mono">sandbox/</td><td class="num">4</td><td class="num">79</td><td>Huanqi Cao 29% · Tianyi Cui 27% · kingwl 15%</td></tr>
+      <tr><td class="mono">preset/</td><td class="num">2</td><td class="num">52</td><td>Yichen Jiang 94%</td></tr>
+      <tr><td class="mono">typert/</td><td class="num">4</td><td class="num">49</td><td>imccyu 63%</td></tr>
+      <tr><td class="mono">schedule/</td><td class="num">1</td><td class="num">39</td><td>pku-xht 72%</td></tr>
+      <tr><td class="mono">api/</td><td class="num">2</td><td class="num">31</td><td>imccyu 97%</td></tr>
+      <tr><td class="mono">shell/</td><td class="num">10</td><td class="num">13</td><td>Huanqi Cao 54%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">全量解析 <code>git log --full-history --no-merges --name-only</code>，按 <code>packages/&lt;组&gt;/</code> 归并、剔除文件数 &gt; 40 的提交后统计。</span>
+  <h3>真正起作用的不是领地，是时间</h3>
+  <p>如果只看「一个包有几个作者」，结论会是「没有私人领地」：全仓只有 4 个包终生只有一个作者，中位数是 4–5 个人碰过。但换个切法就完全不同——把「包 × 自然日」当成一个格子来数：</p>
+  <div class="callout machine">
+    <p>3,735 个（包，日）组合里，<strong>78.2% 当天只有一个作者</strong>，15.2% 有两个，只有 6.6% 有三个以上。人到处走，但几乎从不在同一天落到同一个包里。</p>
+  </div>
+  <p>这就是 226 个包买到的东西：<strong>包不是地契，是短租的互斥锁</strong>。分片够细，并发的 agent 在统计上就错开了；而 Service Definition / Service Provider / Consumer 这套 seam 让「错开」是安全的——两个人（两个 agent）之间的接口是 <code>resolve/run/start</code> 三个函数，谁都不用读对方的实现。</p>
+  <h3>边界先于人</h3>
+  <p>因果方向可以直接从时间戳读出来。2026-07-19，imccyu 一笔 <code>a6a3807a07</code> 建出 <code>packages/client/*</code> 与 <code>packages/host/*</code> 两个全新分组、15 个<strong>空骨架包</strong>。接下来五天里，这个分组未来最重的五位贡献者才做出人生第一次提交：Chinesezjc（07-21）、_Kerman（07-22）、Yif（07-23）、fz（07-23）、creatixchu（07-24）。</p>
+  <div class="callout">
+    <p>这是一次教科书式的 <strong>inverse Conway manoeuvre</strong>：不是组织形状决定了架构，是先把架构切成能并行的格子，再把人（和 agent）倒进格子。被删掉的 missions/ 账本里写着同一条方针的操作版——主会话一刀切出全部包骨架，<em>桩类型就是契约</em>，每个 agent 一个包当属地，其余包只读，改接口只能由主会话仲裁。</p>
+  </div>
+  <p>反面证据同样清楚：整个计划里唯一被安排了<strong>两个 agent 共用一个包</strong>的地方（<code>ui-conversation</code>，convo-a / convo-b），成了全仓最持久的冲突区，也是账本里三起「混刀」事故的现场。而这一条的最终结论写进了产品：<code>agent-team</code> 里的 <code>writeScopes</code> <em>只产生重叠诊断，从不阻止写入</em>——团队自己承认领地是概率工具，不是锁。</p>
+  <p>最后一个数字：<strong>226 个包 ÷ 20 人 ÷ 10 周 ≈ 每人月 10 个包</strong>，同期人均月提交 306 次。2026-07-14 那天，一个人的 132 次提交碰了 69 个不同的包。这个速率不是手打出来的。</p>
+</section>
+<section id="s6">
+  <div class="sec-eyebrow">06 / 工具</div>
+  <h2>工具签名：谁在用什么</h2>
+  <p class="sec-lede">这个仓库 12,940 条提交里，AI 协作者尾注（<code>Co-Authored-By</code>）出现 <strong>0</strong> 次——而且是白纸黑字禁的。于是工具归属全部迁移到了<strong>分支名前缀</strong>里，成了唯一的遥测通道。</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th class="mono">前缀</th><th class="num">PR</th><th>含义</th><th>主要使用者</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">worktree/</td><td class="num">228</td><td>本地 git worktree，一个 worktree 一个 agent</td><td>Tianyi Cui 136、Yichen Jiang 87、creatixchu 30</td></tr>
+      <tr><td class="mono">codex/</td><td class="num">221</td><td>OpenAI Codex 云端任务</td><td>Tianyi Cui 123、Turtle 35、kingwl 19、pku-xht 15</td></tr>
+      <tr><td class="mono">worktree-</td><td class="num">135</td><td>同上，连字符老写法</td><td>Tianyi Cui 68、imccyu 58</td></tr>
+      <tr><td class="mono">feat/ fix/</td><td class="num">217</td><td>常规 conventional 分支，无工具含义</td><td>Chinesezjc、Huanqi Cao、NI0317</td></tr>
+      <tr><td class="mono">xtr/</td><td class="num">23</td><td>_Kerman 的私人命名空间，非工具</td><td>_Kerman 18</td></tr>
+      <tr><td class="mono">agent/</td><td class="num">16</td><td>ZiyaZhang 的私人前缀</td><td>ZiyaZhang 11</td></tr>
+      <tr><td class="mono">claude/</td><td class="num">3</td><td>全仓仅此 3 个</td><td>Yichen Jiang 3</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev"><code>git log --merges --grep='Merge pull request' --format='%s' | sed -E 's#.* from [^/]+/##' | sed -E 's#/.*##' | sort | uniq -c</code></span>
+  <h3>两家云、两种活</h3>
+  <p><code>codex/</code> 从<strong>第 3 天</strong>就在了——全仓第二个合并的 PR 就是 <code>codex/update-gitignore</code>（2026-06-12）。它的使用形态是云端扇出：2026-07-19 单日，Tianyi Cui 名下同时开着 <strong>45 个</strong> <code>codex/</code> 分支，当天新开 25 个。同一个人的 <code>worktree/</code> 并发峰值只有 15——本地机器摆不下 45 个 checkout。</p>
+  <p>两条道被派了不同的活。内容统计显示：<code>worktree/</code> 的 PR 有 <strong>84%</strong> 带 Agent Note（需要写下决策的功能活），<code>codex/</code> 只有 49% 带，却有 71% 碰 <code>docs/</code>、49% 碰 <code>scripts/</code>——闸门、目录生成器、文档扫荡这类<em>机械的、全仓范围的</em>活，正好吃云端并行的红利。这条分工<strong>没有任何一份文档写过</strong>。</p>
+  <div class="callout agent">
+    <p><strong>一个 skill 被舰队化执行的实例。</strong><code>codex/simp-*</code> 家族有 26–28 个 PR，全部落在 2026-07-14 到 07-19 这六天里，其中 25 个是 Tianyi Cui 的。分支名读起来就是把 <code>dsh-find-simplifications</code> 这个 skill 沿包图机械扫了一遍：<code>simp-prune-bash-surface</code>、<code>simp-hide-fs-internals</code>、<code>simp-hide-subagent-internals</code>…… 写一次 skill，交给云端 agent，六天换回二十几个可评审的 PR。skill 在这里不是文档，是<strong>派工格式</strong>。</p>
+  </div>
+  <h3>Claude Code 的悖论</h3>
+  <p>只有 3 个 <code>claude/</code> 分支，但仓库从第一次提交起就是 Claude-Code 形状的：<code>b67e81ac97</code> 同时创建了 <code>AGENTS.md</code>、指向它的 <code>CLAUDE.md</code> 符号链接，和 <code>CLAUDE.local.md</code> 的 gitignore 条目。<code>.claude/commands/</code> 和 <code>.claude/settings.json</code> 在 2026-06-25 被 gitignore（Dudu-0223），从此 Claude Code 在版本库里几乎隐形——唯一留下的痕迹是 <code>.claude/skills → ../.agents/skills</code> 这条符号链接。</p>
+  <p>布局是刻意工具中立的：<strong>OpenAI 的路径是正本</strong>（<code>AGENTS.md</code>、<code>.agents/skills/</code>），Claude 的路径全是符号链接过去的视图。而且两家的一致性是<strong>闸门</strong>不是约定——<code>scripts/verify-skill-invocation-metadata.ts</code> 会在某个 skill 的 Claude frontmatter 和 Codex manifest 对「模型能否隐式调用」意见不一致时直接挂掉构建。</p>
+  <h3>第三个评审者：ds-review-bot</h3>
+  <p>一个内部 AI 评审 bot 从 2026-07-03 到 08-18 一直在门口。它在任何被跟踪的文件里都没有痕迹（纯 GitHub 侧运行），只能从提交消息反推：<strong>100 条</strong>提交的消息体提到它，16 条把它写进标题，横跨 <strong>15 个人</strong>。版本号在提交里被引用到 v8——六周里这个评审器自己也在迭代。</p>
+  <p>再加上 <code>Codex review</code>（标题 37 条、全文 66 条）、131 条 <code>review round</code>——这个循环的真实形状是：<strong>AI 写 → AI 评 → 人点合并</strong>。</p>
+  <span class="ev"><code>git log --all -E --grep='ds-review-bot' --format='%an' | sort | uniq -c</code> → Tianyi Cui 32、creatixchu 23、kingwl 12、Chinesezjc 10、imccyu 6…</span>
+</section>
+<section id="s7">
+  <div class="sec-eyebrow">07 / 被删掉的账本</div>
+  <h2>missions/：一个人指挥九个 AI 队友</h2>
+  <p class="sec-lede">2026-07-20，imccyu 把一个 165 文件的目录提交进仓库。六天后它被彻底删除，代码合进主干时一个字都没留下。这是整个仓库历史里价值最高的一份文档——一个人管理 AI 劳动力的<strong>第一人称操作系统</strong>。</p>
+  <pre><code># 完整读回（需要 --full-history 才能找到）
+git show 0681ac47de:missions/plan.md
+git show 0681ac47de:missions/conventions.md
+git show 0681ac47de:missions/progress.md
+git show 1f0d555f60:missions/readme.md
+git log --full-history --format='' --name-only -- 'missions/*' | sort -u   # 167 条路径</code></pre>
+  <h3>九人名册</h3>
+  <p><code>progress.md</code> 第五节标题是「teammate 名册与现状」。它不是任务列表，是一张<strong>人事表</strong>：每个 AI 队友有属地（具体到包）、当前状态，和一句毫不客气的绩效评价。</p>
+  <div class="tbl-wrap compact wide">
+  <table>
+    <thead><tr><th>代号</th><th>属地</th><th>评价（原文译）</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">rt-core</td><td>connection / runtime 两包 + host 三包 + 装载链</td><td>「超时惯犯但产出全队最大；信箱丢失率高——催报先看 git log」</td></tr>
+      <tr><td class="mono">fw-react</td><td>web-react 包 + tsconfig 双聚合体系</td><td>「早期三连超时后改极小步脱困；擅长机械大批量与文档」</td></tr>
+      <tr><td class="mono">fw-slots</td><td>ui-slots / ui-primitives / ui-theme / i18n + token 体系</td><td>「全队质量标杆」</td></tr>
+      <tr><td class="mono">ui-shell</td><td>ui-layout + client/web + apps/web + tsdown preset</td><td>「W5 probe / smoke-real / boot-chain e2e 全它写」</td></tr>
+      <tr><td class="mono">ui-side</td><td>ui-sidebar</td><td>「亲验 dump 三方对账典范（纠过底册转录误差）」</td></tr>
+      <tr><td class="mono">convo-a</td><td>ui-conversation 的 service + skeleton 半</td><td>「四次超时重灾户但全部完整交卷」</td></tr>
+      <tr><td class="mono">convo-b</td><td>ui-conversation 的消息流半 + README</td><td>「判死判留过堂最严谨；12 包 README 两节全它写」</td></tr>
+      <tr><td class="mono">ui-traj</td><td>ui-trajectory</td><td>「占位包已齐；P-III 真实现时回叫」</td></tr>
+      <tr><td class="mono">figma-flows</td><td>视觉顾问（无代码属地）</td><td>「W5 两轮逐屏判定 + style-spec 三批底册全它出；PIL 像素实测法」</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>而且这已经是<strong>第二代编制</strong>。第一代（07-19 → 07-21）是约 19 个<em>按任务命名</em>的 agent（arch-carrier、pr-gates、web-test、coverage-fixer、style-research…），七个并行车道。48 小时内被重新设计成<em>按包属地</em>的九人常驻编制——从任务队列改成了组织架构图。</p>
+  <h3>调度协议</h3>
+  <ul>
+    <li><strong>三层链条</strong>：主会话 → dispatcher → worker。「dispatcher 负责干完整命题，worker 负责干具体耗时任务，交由 dispatcher 汇总。主会话负责表格化同步所有任务进展。」</li>
+    <li><strong>契约仲裁独占</strong>：只有主会话能改接口。队友发现契约缺口「只报告不擅改」——档案里能看到 fw-react 的笔记有一整节叫「契约缺口（待 main 仲裁，不自行改接口）」。</li>
+    <li><strong>跨属地报备制</strong>：动别人的包要先报告或事后备案给属地 owner。</li>
+    <li><strong>同包双人由 owner 划界</strong>：<code>ui-conversation</code> 是唯一被安排两个 agent 的包，文件边界由 convo-a 划。</li>
+    <li><strong>五分钟巡检</strong>：「文件改动分批落盘（每批几分钟内）、思考外化、每批一句话回执；产出零落盘超过约 5 分钟即视为可疑」；超过 15 分钟无落盘触发催报。因为「信箱丢失率高」，<strong>磁盘和 git log 才是权威状态通道</strong>，消息只是提醒。</li>
+    <li><strong>评审角色有「只报不修」纪律</strong>：peer-review 档案里写明「评审面…零改码，问题只报不修」。</li>
+  </ul>
+  <h3>规则 7a：整份档案里最锋利的一条</h3>
+  <div class="quote">未答问题不得代答（用户 2026-07-21 定，起因：主会话在提问超时后擅自「代拍」并据此派工）：向用户发出的问题若未获回答，该问题保持未决——不许以「推荐项/合理默认」自动代答，不许基于代答派发任何工作……「用户睡觉/全自动模式」也不例外：自动化只覆盖已拍口径内的执行，不覆盖替用户做新决策。
+  <span class="src">missions/conventions.md §7a</span></div>
+  <p>这条不是设计出来的，是<strong>事故打出来的</strong>，而且档案直接点名了肇事者是主会话自己。它画的那条自治边界——<em>自动化可以在已决定的范围内执行，但永远不能制造新决定</em>——是让一个九 agent 的通宵无人值守跑批变得安全的承重墙。</p>
+  <div class="callout alert">
+    <p><strong>上下文防火墙。</strong><code>plan.md</code> 第三行，在一份中文文档里用英文大喊：<code>DO NOT read AGENTS.md / CLAUDE.md in this project !!</code> ——同一个人当时正在给全仓 AGENTS.md 写规则。这不是无知，是<strong>上下文预算</strong>：把一份词数上限的根指令喂给九个明确运行在免门禁期的 agent，只会烧掉上下文去读不适用甚至相冲突的规矩。</p>
+  </div>
+  <h3>它是怎么消失的，又留下了什么</h3>
+  <p>删除是<strong>计划内</strong>的。<code>conventions.md §18</code> 早在 07-20 就写好了终局工程：「RFC 中英文提交后回刷历史 commit：消掉 missions 工作记录……执行时冻结所有其他工作」。所以 §9 才会禁止代码注释引用 missions——团队从第一天就知道自己的操作记录不会随代码出门。</p>
+  <ol>
+    <li><strong>07-22 21:30</strong> imccyu 把整本账本压成一条提交 <code>0681ac47de</code>，消息体里保留了约 150 条原始流水标题（「ledger — 01:32 patrol snapshot」…）。</li>
+    <li><strong>07-22 22:37</strong> _Kerman 执行删除 <code>c2dcf178f1</code>：165 文件、16,996 行删除。</li>
+    <li><strong>07-25</strong> Turtle 从一个叫 <code>codex/remove-missions</code> 的分支再删一次——<em>清理动作本身也派给了 agent</em>。</li>
+    <li><strong>07-26 02:33</strong> Tianyi Cui 删掉最后残留。同一分钟他还提交了「要求非 README 文档双语」的闸门——一份中文工作日志刚刚变成了合规负担。</li>
+  </ol>
+  <p>文件没了，<strong>教义被提拔了</strong>。至少六条 missions 规则升级成了永久制度：架构红线 14–18 原样进了 <code>packages/client/AGENTS.md</code>；「web 是纯呈现层，呈现物不进 session log」成了全仓规则；「agent 自己跑 playwright 过验收清单，不留给用户手验」变成了 <code>record-browser-gif</code> skill（Tianyi Cui 在 W5 验收次日就建了它）；而 <code>readme.md</code> 的收尾结论反转了免门禁期，重新拥抱 <code>dsh-pre-push-checks</code>。</p>
+  <div class="callout">
+    <p><strong>最后它变成了产品。</strong>2026-08-14 到 08-19——公开发布<em>之后</em>——Dudu-0223 落地了 <code>packages/experimental/agent-team</code>：一个 Lead、一份不可变的 kebab-case 名册、点对点信箱、共享任务板。missions 里靠约定维持的两样东西，产品版<strong>刻意不强制</strong>：<code>writeScopes</code> 只产生重叠诊断、从不阻止写入。因为 missions 已经证明了纯约定的领地会失守（同一晚三起混刀事故），而他们的回应不是加锁，是承认「人（或 Lead）审 diff」才是真正的安全网。</p>
+  </div>
+  <p>还有一件事值得说：<strong>全队只有他一个人留下了这种记录</strong>。把所有曾经出现在 <code>docs/</code>、<code>.agents/</code>、<code>packages/</code> 之外的 <code>.md</code> 扫一遍，只有 missions/ 是这个形态。这套做法是一个人的私人实践，不是团队规范——所以账本一删，这个团队「AI 团队管理到底怎么做」的第一人称证据基本就全没了。</p>
+</section>
+<section id="s8">
+  <div class="sec-eyebrow">08 / 机器评审</div>
+  <h2>机器评审代替人评审</h2>
+  <p class="sec-lede">77% 的 PR 自合并却没把 build 搞垮，是因为「评审」这个岗位在这个团队里主要由机器承担。而这不是演化出来的——是第 2 天就写死的设计。</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>层</th><th>规模</th><th>谁建的</th></tr></thead>
+    <tbody>
+      <tr><td>一个 PR 上跑的闸门</td><td class="num">54 道</td><td><code>scripts/run-gates.ts</code>（Tianyi Cui）</td></tr>
+      <tr><td><code>verify-*</code> / <code>gen-*</code> 脚本</td><td class="num">41 个（28 是他建的）</td><td>另 13 个来自 6 个人</td></tr>
+      <tr><td>GitHub workflow</td><td class="num">15 个</td><td>Tianyi Cui 143 / 251 次 .github 提交</td></tr>
+      <tr><td>根 npm script</td><td class="num">128 条</td><td>—</td></tr>
+      <tr><td>lefthook 本地钩子</td><td class="num">pre-commit 6 项</td><td>刻意保持轻，CI 管全量</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>三条最贵的规矩</h3>
+  <p><strong>1. per-file 100% 覆盖率，第 2 天上线。</strong>2026-06-11 <code>bfb034830f</code>，团队还只有一个人。它把代码库的形状改写了：现在 <code>packages/*/*/src</code> 是 209,665 行，<code>tests/</code> 是 246,410 行——<strong>测试比源码还多</strong>（1.18 行测试 / 行源码）。186 个源文件里有约 548 处 <code>v8 ignore</code> 逃生口，每一处都必须写理由。它对 AI 写的代码做的事很具体：<em>逼作者为「不存在」辩护，而不只是产出「存在」</em>。</p>
+  <p><strong>2. 快照层——唯一检查「模型实际看到什么」的闸门。</strong>它的存在是因为单测曾经放行过一个坏产品（事故 0001：<code>export default</code> 让 Loader 丢掉了插件的 <code>inject</code>）。覆盖率证明行跑过了，快照证明<em>装配好的 agent 还说同样的话</em>。两者都要，是这个团队让 AI 写的行为变更可被 diff 审计的办法。</p>
+  <p><strong>3. 每个包必须交一份 runtime invariant。</strong>这条规则的来历很能说明问题：闸门要求每个包发布一个 invariant 检查后，<em>agent 用「满足闸门但什么都检测不到」的断言把它填满了</em>——断言插件名、断言 service 方法存在、断言固定的纯函数例子。于是规则被改写成「invariant 必须断言<strong>自己拥有的关系</strong>」，并且明确规定：<strong>一个解释清楚了的空实现，才是正确答案</strong>。</p>
+  <div class="callout machine">
+    <p><strong>「满足闸门」是 AI 的典型失效模式。</strong>一个机械要求会换回一个机械符合的答案。这个仓库的应对不是加更多要求，而是教会 agent「这里没有可查的东西」是一个合法结论——并且把这个结论也变成要写理由的。</p>
+  </div>
+  <h3>他们给 agent 开事故复盘会</h3>
+  <p>四篇事故报告里，<code>0003</code> 的主角不是一段代码，是<strong>一个 agent</strong>：</p>
+  <div class="quote">A Web agent changed the GUI source but did not know which URL and process hosted its session. It delegated acceptance to the user, then treated a bare Vite HTTP 200 as success despite a missing <code>window.__DSH_BOOT__</code> white screen, and finally validated a replacement <code>dsh web</code> server on another port while the original page had already picked up rebuilt artifacts.
+  <span class="src">docs/postmortem/0003-web-agent-gui-feedback-loop.md（NI0317，2026-07-29）</span></div>
+  <p>报告的取证材料是<strong>持久化的 session 事件日志</strong>——它按序号引用了 agent 的每一步（sequence 30939 把验收甩给用户、31865 启动裸 Vite、34309 起了个替身服务器）。根因写的是「Web 装配没有给模型可见的当前 GUI 身份」，加的护栏是产品功能：把规范 URL 和运行模式注入到 <code>app:web-surface</code> 这一段系统提示词和 <code>$DSH_WEB_URL</code> 环境变量里。</p>
+  <p><strong>这是把 agent 的认知当成一个待修的系统在做故障管理。</strong>其他三篇事故的护栏也都沿同一条阶梯落地：散文规则 → 事故 → 可执行闸门。</p>
+  <h3>人类评审被挪到哪儿去了</h3>
+  <p><code>dsh-code-review</code> 这个 skill 明确划了界：<em>omit issues already enforced by a green gate</em>（绿闸门已经覆盖的问题不要再提），然后把「机器测不出来的语义残余」列成一张清单——生命周期与并发、能力与消费者匹配、<strong>模型视角</strong>（逐字检查模型收到的提示词、工具 schema、诊断信息）、真实入口路径、测试强度。它甚至写明了闸门的极限：「a green pairing hash does not prove translation quality」「Coverage is necessary but not evidence that the scenario is correct」。</p>
+  <p>一个数字收尾：<code>scripts/</code> + <code>.github/</code> + 各 lint/test 配置一共吃掉了 <strong>1,400 次非合并提交（19.7%）</strong>，而 <strong>54.0%</strong> 的提交碰过测试文件。<em>五分之一的工程量在维护评审员，一半的提交在给它写证据。</em></p>
+</section>
+<section id="s9">
+  <div class="sec-eyebrow">09 / 文档</div>
+  <h2>文档是产出的一半</h2>
+  <p class="sec-lede">在 HEAD 上，<strong>Markdown 文件比 TypeScript 文件还多</strong>：2,469 个 <code>.md</code> 对 2,438 个 <code>.ts</code>（+262 <code>.tsx</code>）。全部历史里 <strong>46.7%</strong> 的文件改动落在 <code>.md</code> / <code>.zh.md</code> / <code>.i18n.yaml</code> 上。</p>
+  <div class="stats">
+    <div class="stat"><div class="v">1,416</div><div class="k"><code>docs:</code> 提交（<code>feat:</code> 只有 735）</div></div>
+    <div class="stat"><div class="v">724</div><div class="k">HEAD 上的 Agent Note（英文）</div></div>
+    <div class="stat"><div class="v">~184k</div><div class="k">行 Markdown + 配对文件</div></div>
+  </div>
+  <p>Agent Note 的分布是 545 implemented / 143 archived / 25 proposed / 11 rejected。每篇都是三文件一组（<code>.md</code> + <code>.zh.md</code> + <code>.i18n.yaml</code> 配对指纹），格式由 <code>verify-agent-note-format</code> 机器校验，<code>## Alternatives considered</code> 一节 706/723 篇都有——没有的那 18 篇带着一个机器可读的「格式之前的老文件」豁免标记。</p>
+  <div class="callout">
+    <p><strong>为什么根指令能瘦下来。</strong>AGENTS.md 的词数曲线是：开仓 52 词 → 23 天后冲到 <strong>8,619 词</strong> → <em>第二天砍到 1,495 词</em>（<code>7702a33531</code>，「rewrite the root standing orders to the 1,500-word budget」）→ 今天 1,936 词。理由写在同日的另一条提交里：「Standing docs accrete a paragraph per PR with nothing pushing back」——每个 PR 加一段，没有任何东西往回推。于是他们发明了 <code>verify-doc-budgets</code>：给九个易膨胀文件设硬词数上限，想多写就得改一份要被评审的 manifest。</p>
+    <p>被砍掉的内容没有消失，是<strong>被流放到了分层里</strong>：测试分层去了 <code>docs/testing.md</code>，bug 类型去了 <code>docs/defensive-patterns.md</code>，stacked-PR 评审流程去了 cookbook。根文件变成了一页一到三行的命令加链接——因为它的读者是一个「把文件放在上下文里、但点每个链接都要花一次工具调用」的 LLM。</p>
+  </div>
+  <span class="ev">词数曲线：对 <code>AGENTS.md</code> 全部 233 个非合并版本跑 <code>git show &lt;sha&gt;:AGENTS.md | wc -w</code>；峰值 <code>907c8d3871</code>。</span>
+  <h3>专职中文校对：xjt</h3>
+  <p>整个团队里最极端的分工。<code>xjt@example.com</code> 只有 <strong>22 次提交</strong>，却动了 <strong>4,271 个文档文件</strong>：2,143 个 <code>.i18n.yaml</code> + 2,128 个 <code>.zh.md</code>，对 <strong>16 个</strong> 英文 <code>.md</code>。三轮全语料扫荡（976 / 884 / 848 文件），英文侧一个字节不动，只重写中文并重录配对指纹。分支叫 <code>xjt/proofreading-*</code>。</p>
+  <p>他还留下了一条约束全部未来翻译的规则：<code>.agents/notes/implemented/process/2026-08-09-chinese-contract-terminology.md</code>——英文 <code>contract</code> 一律译作「约定」。</p>
+  <h3>为 AI 文风写的 skill</h3>
+  <p><code>dsh-trim-cot-leakage</code> 是这个语料库最有代表性的产物。它存在的原因是：AI 写的散文会引用只有当次会话能看到的东西——<code>(decision 3)</code>、<code>(audit C2)</code>、<code>design §4.7</code>、「a later PR in this stack」、「used to / no longer」这类变更叙事。2026-08-09 一次清洗扫了 <strong>763 个文件</strong>（含 168 个源文件），然后把这次清洗蒸馏成了 skill。</p>
+  <p>更值得注意的是这个 skill 的<strong>另一半</strong>：一张「什么<em>不是</em>泄漏」的清单——过度清洗会连同耐久事实一起删掉。这是团队在给 agent 的判断力标定量程，而不是给它一条正则。</p>
+  <p>最后一个反直觉的事实：<strong>翻译并不集中</strong>。<code>.zh.md</code> 的作者分布几乎和提交分布一模一样（Cui 737、Yichen Jiang 311、imccyu 292、Turtle 245、Chinesezjc 205…），因为 <code>docs/AGENTS.md</code> 要求改动文档的那个 agent 自己交中文对照件。而那个「扩展翻译流水线」skill 反而被设成 <code>disable-model-invocation: true</code>——模型够不着，因为它的编排成本比直接翻还贵。</p>
+</section>
+
+<section id="s10">
+  <div class="sec-eyebrow">10 / 节律</div>
+  <h2>节律：时间戳里的监督循环</h2>
+  <p class="sec-lede">这个仓库最安静的时段不是深夜，是<strong>早上</strong>。06:00–09:00 三个小时一共只有 149 次提交（2.1%），而 00:00–06:00 有 1,179 次（16.6%，按北京时间归一）。71 天里只有一天完全没有提交：2026-06-27，星期六。</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>指标</th><th>数值</th></tr></thead>
+    <tbody>
+      <tr><td>PR 中位数</td><td>4 次提交 · 24 个文件 · 602 行改动</td></tr>
+      <tr><td>PR 平均数</td><td>6.9 次提交 · 62 个文件 · 1,775 行</td></tr>
+      <tr><td>超过 100 文件的 PR</td><td>13.6%</td></tr>
+      <tr><td>分支存活时长（首提交 → 合并）</td><td>中位 12.2 小时；68% 在 24 小时内；42% 在 8 小时内</td></tr>
+      <tr><td>单日最高（全仓）</td><td>2026-07-30，472 次提交，14 个人</td></tr>
+      <tr><td>单日最高（个人）</td><td>Tianyi Cui，2026-07-14，132 次，横跨 33 个分支</td></tr>
+      <tr><td>单日最高（合并）</td><td>Tianyi Cui，2026-07-19，42 个 PR</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <span class="ev">遍历全部 1,054 个合并提交，取 <code>git diff --shortstat M^1 M</code> 与 <code>M^1..M^2</code> 的提交数；分支时长取分支上最早提交的 author date 到合并 date。</span>
+  <h3>并发监督的指纹</h3>
+  <p>三个只能由「一个人同时看着好几个 agent」解释的形状：</p>
+  <ul>
+    <li><strong>分支切换率。</strong>2026-07-14 那 132 次提交里，相邻两次有 88% 落在不同分支上。人不这么写代码，人这么<em>收活</em>。</li>
+    <li><strong>合并列车。</strong>Tianyi Cui 有 85 对相隔不到 5 分钟的连续合并。最清楚的一次是 2026-07-04 10:52，九个按字母编号的分支（<code>worktree-hooks-a-taxonomy</code> 到 <code>-i-snapshots</code>）在六分钟里被一次性收割——而其中六个是在 07-01/07-02 并行开发的。</li>
+    <li><strong>通宵跑批。</strong>仅凭时间戳就能识别出 42 段无人值守跑批：同一作者、≥8 次连续提交、全部落在 00:00–06:00、相邻间隔不超过 45 分钟，合计 740 次提交。最长的一段 262 分钟里落了 46 次提交。</li>
+  </ul>
+  <p>而 missions/ 账本里的原文正好对得上这个形状：「产出零落盘超过约 5 分钟即视为可疑」，以及一条 00:54 的派工——让 agent 修一个红掉的 CI 闸门、用 <code>--no-verify</code> 提交、<strong>不许 push</strong>，因为「用户睡觉，由本人推」。</p>
+  <h3>作息把团队分成两群</h3>
+  <p>这条分界线跟资历无关，跟<strong>谁在跑 agent 舰队</strong>有关：</p>
+  <div class="tbl-wrap compact">
+  <table>
+    <thead><tr><th>人</th><th class="num">00–06 时段占比</th><th>形态</th></tr></thead>
+    <tbody>
+      <tr><td>Tianyi Cui</td><td class="num">25.9%</td><td>运营者：60 天活跃，单日峰值 132</td></tr>
+      <tr><td>imccyu</td><td class="num">24.7%</td><td>运营者：10 段通宵跑批</td></tr>
+      <tr><td>pku-xht</td><td class="num">27.9%</td><td>峰值在凌晨 4 点，08–13 点几乎空白</td></tr>
+      <tr><td>Huanqi Cao</td><td class="num">23.4%</td><td>50.7% 的提交在周末</td></tr>
+      <tr><td>creatixchu</td><td class="num">16.4%</td><td>周末零提交，纯工作日夜班</td></tr>
+      <tr><td>Hypatia May</td><td class="num">2.0%</td><td>对照组：02–06 点 0 次，周末 3.7%</td></tr>
+      <tr><td>Dudu-0223</td><td class="num">1.7%</td><td>对照组：常规作息，却写出全仓最大的 PR</td></tr>
+      <tr><td>_Kerman</td><td class="num">3.4%</td><td>03–08 点零提交，但 PR 合并最快（中位 6.3 小时）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Hypatia May 和 Dudu-0223 是这张表的价值所在：<strong>常规作息也能产出</strong>。深夜比例不是生产力指标，是<em>监督模式</em>指标——高的那几位在同时看着多条 agent 车道，低的那几位在自己写。</p>
+</section>
+<section id="s11">
+  <div class="sec-eyebrow">11 / 综合</div>
+  <h2>这个组织长什么形状</h2>
+  <p class="sec-lede">把前十节合起来，DeepSeek Harness 的团队不是「20 个工程师 + AI 工具」，而是一个<strong>四层结构</strong>：一个人写法律，一堆机器执法，十几个人各守一块属地，每个人下面挂着自己的 AI 舰队。</p>
+  <figure class="wide">
+  <div class="fig-box">
+  <svg viewBox="0 0 900 470" role="img" aria-label="DeepSeek Harness 团队四层结构图">
+    <defs>
+      <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-3)"/>
+      </marker>
+    </defs>
+    <g font-family="var(--sans)" font-size="12">
+
+    <rect x="20" y="14" width="860" height="72" rx="7" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>
+    <text x="36" y="36" font-size="13" font-weight="700" fill="var(--accent-ink)">① 立法层 — 1 人</text>
+    <text x="36" y="56" fill="var(--ink-2)">AGENTS.md（1,936 词，硬词数上限） · 724 篇 Agent Note · 11 个 skill · 4 篇事故报告</text>
+    <text x="36" y="74" fill="var(--ink-3)" font-size="11">Tianyi Cui：146/233 次 AGENTS.md 编辑 · 282 篇 Note · 11 篇 rejected 里的 10 篇</text>
+
+    <rect x="20" y="104" width="860" height="72" rx="7" fill="var(--machine-soft)" stroke="var(--machine)" stroke-width="1"/>
+    <text x="36" y="126" font-size="13" font-weight="700" fill="var(--machine)">② 执法层 — 机器</text>
+    <text x="36" y="146" fill="var(--ink-2)">54 道闸门 / PR · 41 个 verify-*·gen-* 脚本 · per-file 100% 覆盖率 · 快照层 · ds-review-bot（v8）· Codex review</text>
+    <text x="36" y="164" fill="var(--ink-3)" font-size="11">「凡是能机器检查的承诺，都配一条会返回非零退出码的命令」— 开仓第 2 天</text>
+
+    <text x="20" y="206" font-size="13" font-weight="700" fill="var(--accent)">③ 属地层 — 13~14 人，一人一块，包边界即分片</text>
+
+    <g fill="var(--surface)" stroke="var(--line)">
+      <rect x="20" y="216" width="132" height="58" rx="5"/>
+      <rect x="164" y="216" width="132" height="58" rx="5"/>
+      <rect x="308" y="216" width="132" height="58" rx="5"/>
+      <rect x="452" y="216" width="132" height="58" rx="5"/>
+      <rect x="596" y="216" width="132" height="58" rx="5"/>
+      <rect x="740" y="216" width="140" height="58" rx="5"/>
+    </g>
+    <g font-size="11" fill="var(--ink)">
+      <text x="30" y="234" font-weight="700">imccyu</text><text x="30" y="250" fill="var(--ink-2)">client/ 42 包</text><text x="30" y="264" fill="var(--ink-3)">+ 全部发版</text>
+      <text x="174" y="234" font-weight="700">Yichen Jiang</text><text x="174" y="250" fill="var(--ink-2)">llm / 配置面</text><text x="174" y="264" fill="var(--ink-3)">preset 94%</text>
+      <text x="318" y="234" font-weight="700">Huanqi Cao</text><text x="318" y="250" fill="var(--ink-2)">Windows 全栈</text><text x="318" y="264" fill="var(--ink-3)">pwsh / ACL 沙箱</text>
+      <text x="462" y="234" font-weight="700">pku-xht</text><text x="462" y="250" fill="var(--ink-2)">外部 agent 集成</text><text x="462" y="264" fill="var(--ink-3)">codex / claude-code</text>
+      <text x="606" y="234" font-weight="700">Hypatia May</text><text x="606" y="250" fill="var(--ink-2)">会话历史</text><text x="606" y="264" fill="var(--ink-3)">session-query 65%</text>
+      <text x="750" y="234" font-weight="700">…另 8 人</text><text x="750" y="250" fill="var(--ink-2)">Turtle / _Kerman /</text><text x="750" y="264" fill="var(--ink-3)">creatixchu / Chinesezjc…</text>
+    </g>
+
+    <g stroke="var(--ink-3)" stroke-width="1" marker-end="url(#ar)" fill="none">
+      <path d="M86,274 L86,300"/><path d="M230,274 L230,300"/><path d="M374,274 L374,300"/>
+      <path d="M518,274 L518,300"/><path d="M662,274 L662,300"/><path d="M810,274 L810,300"/>
+    </g>
+
+    <text x="20" y="326" font-size="13" font-weight="700" fill="var(--agent)">④ 舰队层 — 每人自带，规模不可见</text>
+    <g fill="var(--agent-soft)" stroke="var(--agent)">
+      <rect x="20" y="336" width="132" height="52" rx="5"/>
+      <rect x="164" y="336" width="132" height="52" rx="5"/>
+      <rect x="308" y="336" width="132" height="52" rx="5"/>
+      <rect x="452" y="336" width="132" height="52" rx="5"/>
+      <rect x="596" y="336" width="132" height="52" rx="5"/>
+      <rect x="740" y="336" width="140" height="52" rx="5"/>
+    </g>
+    <g font-size="10.5" fill="var(--ink-2)">
+      <text x="30" y="354">worktree- ×58</text><text x="30" y="370">9 个常驻 AI 队友</text><text x="30" y="384" fill="var(--ink-3)">（missions/，已删）</text>
+      <text x="174" y="354">worktree/ ×87</text><text x="174" y="370">claude/ ×3</text><text x="174" y="384" fill="var(--ink-3)">自动命名分支</text>
+      <text x="318" y="354">feat/ fix/ ×14</text><text x="318" y="370">零 AI 前缀</text><text x="318" y="384" fill="var(--ink-3)">手工车道</text>
+      <text x="462" y="354">codex/ ×15/20</text><text x="462" y="370">用 Codex 写</text><text x="462" y="384" fill="var(--ink-3)">Codex 集成包</text>
+      <text x="606" y="354">codex/ ×9</text><text x="606" y="370">(round N) ×43</text><text x="606" y="384" fill="var(--ink-3)">评审轮次编号</text>
+      <text x="750" y="354">xtr/ agent/ 私有</text><text x="750" y="370">命名空间</text><text x="750" y="384" fill="var(--ink-3)">非工具标识</text>
+    </g>
+
+    <rect x="20" y="410" width="860" height="46" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="36" y="430" font-size="12.5" font-weight="700" fill="var(--ink)">合并闸 — 2 人</text>
+    <text x="36" y="448" font-size="11.5" fill="var(--ink-2)">Tianyi Cui 合别人 PR 170 次（全域） · imccyu 56 次（前端） · 其余每人 ≤8 次 · 全仓 77.0% 自合并</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>四层结构。层 ① 与 ② 由同一个人建立并在头六周独占；层 ③ 的边界在人到位<em>之前</em>就被切好；层 ④ 的规模在 git 里完全不可见——只能从分支前缀、并发数和通宵跑批的形状反推。</figcaption>
+  </figure>
+  <h3>五条组织原则</h3>
+  <ol>
+    <li><strong>先立法，再招人。</strong>覆盖率闸门、lefthook、CI 矩阵、第一条 skill 全部在头 4 天落地，那时团队只有 1–2 个人。后来加入的 22 个人不是被<em>教会</em>标准的，是被标准<em>拒绝</em>过的——验收条件从一开始就是机械的而不是社交的。</li>
+    <li><strong>评审从人身上挪走，只留语义残余。</strong>54 道闸门吃掉可机器检查的一层，ds-review-bot 和 Codex 吃掉第二层，人只处理「机器测不出来的」那一层——并且这条分工是写进 skill 的成文规定。这才是 77% 自合并能成立的前提。</li>
+    <li><strong>包边界是并发控制原语，不是所有权声明。</strong>226 个包、中位数 4 个源文件、78.2% 的（包，日）格子只有一个作者。边界画在人到之前，桩类型就是契约，改接口需要仲裁。</li>
+    <li><strong>创始人的工作是把自己删掉。</strong>合并权 100% → 18%，月提交 1,639 → 334，<code>feat:</code> 占比 11% → 3%。他把自己从实现者转成了立法者，然后连守门也交了出去。</li>
+    <li><strong>每个人是一个「人 + 舰队」的复合单元。</strong>组织的真实并发度不是 24，是 24 × 每人挂着的 agent 数。missions/ 记录的是 9；Tianyi Cui 的 codex/ 分支并发峰值是 45。这一层在任何组织图上都看不见，但它决定了 226 个包为什么是合理的分片数。</li>
+  </ol>
+  <div class="callout alert">
+    <p><strong>三个代价，也要说清楚。</strong>（1）<strong>单点</strong>：发版 19/19 是一个人，Windows 全靠一个人，前六周合并权全在一个人手上。（2）<strong>记录蒸发</strong>：唯一一份第一人称的 AI 管理记录被计划性删除，团队自己的操作经验只剩下被提炼过的规则。（3）<strong>文档税</strong>：46.7% 的文件改动是文档，五分之一的提交在维护评审机器——这些成本在一个 agent 干活的语境下被明确判定为「不算成本」（<em>“a lot of work” is not a cost argument when agents do the labor</em>），但在人写代码的团队里它就是成本。</p>
+  </div>
+</section>
+
+<section id="s12">
+  <div class="sec-eyebrow">12 / 迁移</div>
+  <h2>按你的规模抄什么</h2>
+  <p class="sec-lede">这套东西里有一部分只在「代码主要由 agent 写」时才成立。下面按规模拆开：什么现在就能用，什么要等团队变大，什么不要抄。</p>
+  <h3>一个人 + 你的 agent</h3>
+  <ul>
+    <li><strong>抄「规则要有非零退出码」。</strong>不用 54 道。先挑三条你反复口头提醒 agent 的事，各写一条会失败的脚本，塞进 pre-commit。口头约定对 agent 的约束力接近零，退出码是 100%。</li>
+    <li><strong>抄根指令的词数上限。</strong>给你的 <code>CLAUDE.md</code> / <code>AGENTS.md</code> 定一个数（1,500 词是他们试出来的），超了就把内容推进分层文档并留链接。这个仓库花了 23 天涨到 8,619 词才发现不可用。</li>
+    <li><strong>抄「决策记一篇，不改根文件」。</strong>Agent Note 的核心不是格式，是「问题 / 决定 / 考虑过的替代 / 后果」四段和一句 <code>Status:</code>。它让你三周后能回答「当初为什么不那么做」。</li>
+    <li><strong>抄规则 7a。</strong>「未答问题不得代答」——你离开键盘时，agent 可以在已决定的范围里执行，但不许替你做新决定。这条是他们用一次事故换来的。</li>
+    <li><strong>抄「验证世界，不验证 agent 的自述」。</strong>让检查去读外部状态（文件、进程、HTTP、日志），不要读 agent 自己的输出。他们第 4 天就写下了「关键词探针会让一个作弊的 agent 过关」。</li>
+    <li>暂时<strong>别抄</strong>：per-file 100% 覆盖率、双语配对、724 篇 Note、快照层。这些的维护成本要有产出体量才摊得平。</li>
+  </ul>
+  <h3>2~5 人</h3>
+  <ul>
+    <li><strong>先切边界，再分人。</strong>这是最可迁移的一条：把要做的东西切成足够细的模块，<em>先把空骨架和类型桩建出来</em>，再分配。类型桩就是契约，两个人（两个 agent）之间不用读对方实现。</li>
+    <li><strong>一个人一块属地，改别人的地方先报备。</strong>不用锁，用约定 + 精确到文件的 <code>git add</code>。他们的教训是：同一个包塞两个 agent 必然反复混刀，而修法是社交的（pathspec 精确、回执、不改写共享分支），不是技术的。</li>
+    <li><strong>接口仲裁只归一个人。</strong>并行写实现可以自由，但改接口必须收口到一个节点，否则并发就变成了互相拆台。</li>
+    <li><strong>让 CI 当第一评审者，人当第二。</strong>明确写下「绿闸门覆盖过的问题不要再提」，把人的注意力赶到生命周期、并发、模型视角这些机器测不出的地方。</li>
+    <li><strong>约定分支前缀。</strong>他们没约定，结果同一个工作流有三种写法（<code>worktree/</code>、<code>worktree-</code>、三种 worktree 根目录）并存两个月。花五分钟定一次，省很多考古。</li>
+  </ul>
+  <h3>5~10 人以上</h3>
+  <ul>
+    <li><strong>合并权要有明确的交接计划。</strong>他们的曲线（100% → 18%，三周）是健康的，但那三周是被人数逼出来的，不是排期出来的。提前想清楚第二个守门人是谁、守哪一半。</li>
+    <li><strong>为「产出的一半是文档」做预算。</strong>如果你要求每个非平凡改动都带决策记录 + 双语，那 46.7% 的文档改动占比就是你会得到的数字。要么接受，要么砍掉双语这一项（它是这里最贵的一条）。</li>
+    <li><strong>给 agent 开事故复盘。</strong>当 agent 的行为造成了事故（验错了服务器、把 UNKNOWN_TOOL 录成了通过的 golden），按事故报告写：根因、护栏、可执行的回归。他们四篇报告里有两篇是这个形态。</li>
+    <li><strong>不要抄「删掉自己的操作记录」。</strong>这是这个仓库最可惜的一处。第一人称的 AI 编队经验没有第二个来源，删了就只剩被抽象过的规则。</li>
+  </ul>
+  <div class="lesson">
+    <h4>一句话</h4>
+    <ul>
+      <li>规模小的时候，抄<strong>闸门</strong>和<strong>词数上限</strong>；</li>
+      <li>规模中等的时候，抄<strong>先切边界再分人</strong>和<strong>接口仲裁独占</strong>；</li>
+      <li>规模大的时候，抄<strong>合并权交接</strong>和<strong>给 agent 开复盘会</strong>；</li>
+      <li>任何规模都别抄的：把自己的操作记录删干净。</li>
+    </ul>
+  </div>
+</section>
+<section id="s13">
+  <div class="sec-eyebrow">13 / 局限</div>
+  <h2>诚实的部分</h2>
+  <ul>
+    <li><strong>雇佣关系是推断，不是事实。</strong>只有 10 个人用 <code>@deepseek.com</code>。其余全是个人邮箱，git 无法区分「员工用私人账号」和「外部协作者」。标题里的「DeepSeek 员工」是通俗说法，本文正文一律只说「提交者」。</li>
+    <li><strong>git 记录点击，不记录评审。</strong>「77% 自合并」不等于「77% 无人审」。ds-review-bot 和 Codex 的评审只在提交消息里留下回声（100 / 66 条），真正的评审线程在一个够不到的内部仓库里。所有关于「谁审了谁」的推断都到此为止。</li>
+    <li><strong>舰队规模不可观测。</strong>零 AI 协作者尾注是<em>成文政策</em>（missions/conventions.md 第 4 条）。分支前缀是唯一的替代遥测，而它一半是工具、一半是个人品牌（<code>xtr/</code>、<code>agent/</code> 就不是工具）。把前缀当工具普查会凭空发明出第五家 AI 供应商。</li>
+    <li><strong>「创建了 N 个包」这类数字极易被扫荡污染。</strong>本文所有包级归属都剔除了 &gt;40 文件的提交；未剔除时 Tianyi Cui 的建包数会从 34 虚高到 114。同理，<code>--full-history</code> 不加会让 <code>.github/</code> 的提交数从 251 掉到 16。</li>
+    <li><strong>八月是残月。</strong>观测窗口止于 2026-08-19，八月只有 19 天。所有「八月下降」的结论都已按天归一过，但「某人 08-13 之后停了」和「某人休了一周」在这个窗口里无法区分——kingwl 的「08-04 停更」就是 <code>git log</code> 按提交日期排序造成的假象，他真实的末次提交是 08-11。</li>
+    <li><strong>这里是镜像仓库。</strong>合并标题写的是 <code>from deepseek-harness/&lt;branch&gt;</code>，而 README 指向 <code>deepseek-ai/deepseek-harness</code>。开发发生在一个私有组织里，2026-08-13 的公开只是把结果镜像出来——PR 编号、评审线程、issue 全部无法解析。</li>
+    <li><strong>这份报告被对抗性校对过。</strong>两轮多 agent 调研（15 份人物档案 + 7 个横切主题）之后各跑了一轮专门找茬的复核，共推翻约 40 处数字/归属错误（最大的一处就是上面的「114 个包」）。所有修正已并入正文，但校对本身不是穷尽的。</li>
+  </ul>
+</section>
+
+<section id="s14">
+  <div class="sec-eyebrow">14 / 方法</div>
+  <h2>方法</h2>
+  <p>证据基线：<code>141eb6fef8</code>（0.1.0-rc.8，2026-08-19），完整克隆。开工前先跑了 <code>git rev-parse --is-shallow-repository</code>——浅克隆会让边界提交看起来像一次「凭空生出整棵树」的巨型提交，这是个非常诱人的假故事。</p>
+  <ol>
+    <li><strong>先手工建底盘</strong>：别名归并表、7,090 条非合并提交的全量 <code>--name-only</code> 解析、按人/按月/按包/按小时的交叉统计、1,054 个合并提交的作者对照矩阵。所有出现在正文里的数字都在本机重跑过。</li>
+    <li><strong>两轮多 agent 扇出</strong>：15 个人物档案 agent（结构化 schema：任期 / 体量 / 属地 / 签名工作 / 设计权威 / 工具签名 / 怪癖）+ 7 个横切主题 agent（治理、工具签名、发布与 CI、双语文档、missions 账本、康威定律、工作节律）。</li>
+    <li><strong>对抗性复核</strong>：每轮后接 2–3 个专门<em>反驳</em>的 agent，任务是把每个数字重新推导一遍、把每个「角色/意图」断言标为不可证。它们找出的问题里，最有价值的一类不是算错，而是<strong>口径漂移</strong>——用已经死掉的旧路径统计、把改名扫荡算成建包、把提交消息全文和标题混着数。</li>
+    <li><strong>关键结论亲手复算</strong>：合并权周曲线、77.0% 自合并、AGENTS.md 词数曲线、PR 尺寸分布、（包，日）单作者率——这几条是全文的承重墙，全部由我自己的脚本独立产出。</li>
+  </ol>
+  <pre><code># 复现合并权交接曲线（本文 §03 的那张图）
+git log --merges --grep='Merge pull request' --format='%H %an %aI' |
+while read h an ai; do
+  echo "$ai|$an|$(git log --no-merges --format=%an "$h^1..$h^2" | sort -u | tr '\n' ',')"
+done</code></pre>
+  <p class="meta" style="font-family:var(--mono);font-size:.76rem;color:var(--ink-3);margin-top:1.6rem;">第七卷 · 2026-08-21 · 前作：解剖（一）· 工作流（二）· 文档治理考古（三）· 十一个 Skill（四）· .github 控制面（五）· 前端验证留档（六）</p>
+</section>
+</main>
+</div>

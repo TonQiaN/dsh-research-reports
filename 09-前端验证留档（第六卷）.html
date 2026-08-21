@@ -1,0 +1,635 @@
+<meta charset="utf-8">
+<title>DeepSeek Harness 前端验证留档</title>
+<style>
+:root {
+  --bg: #F0F1F6; --surface: #FAFAFD; --surface-2: #E4E6F0; --line: #CFD3E2;
+  --ink: #14161E; --ink-2: #464B60; --ink-3: #767C93;
+  --accent: #3D48A6; --accent-soft: #E2E4F5; --accent-ink: #2A3280;
+  --pass: #2E6B45; --pass-soft: #DCEBE1;
+  --warn: #8A6210; --warn-soft: #F2E8D2;
+  --soft: #A33A52; --soft-soft: #F4DFE4;
+  --code-bg: #E7E9F2;
+  --shadow: 0 1px 0 rgba(20,22,30,.05), 0 10px 26px -18px rgba(20,22,30,.35);
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono", "Roboto Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101219; --surface: #171A23; --surface-2: #1F2331; --line: #2E3345;
+    --ink: #E4E6EF; --ink-2: #AEB4C8; --ink-3: #808799;
+    --accent: #99A2F0; --accent-soft: #222646; --accent-ink: #C3C8FB;
+    --pass: #7FBE97; --pass-soft: #17281E;
+    --warn: #D9B060; --warn-soft: #2A2313;
+    --soft: #E08B9C; --soft-soft: #2E1B21;
+    --code-bg: #0B0D13;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101219; --surface: #171A23; --surface-2: #1F2331; --line: #2E3345;
+  --ink: #E4E6EF; --ink-2: #AEB4C8; --ink-3: #808799;
+  --accent: #99A2F0; --accent-soft: #222646; --accent-ink: #C3C8FB;
+  --pass: #7FBE97; --pass-soft: #17281E;
+  --warn: #D9B060; --warn-soft: #2A2313;
+  --soft: #E08B9C; --soft-soft: #2E1B21;
+  --code-bg: #0B0D13;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.7);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.78; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+a:hover, a:focus-visible { border-bottom-color: currentColor; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: .85rem 1rem; overflow-x: auto; font-size: .8rem; line-height: 1.6; margin: 1rem 0; }
+pre code { background: none; padding: 0; font-size: inherit; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.25; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.7rem; letter-spacing: -.015em; }
+h2 { font-size: 1.78rem; margin-top: .25rem; }
+h3 { font-size: 1.2rem; margin: 2.1rem 0 .6rem; }
+h4 { font-size: 1rem; margin: 1.5rem 0 .4rem; font-family: var(--sans); font-weight: 700; line-height: 1.4; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+li { margin: .3rem 0; }
+li::marker { color: var(--ink-3); }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2.6rem 0; }
+
+.shell { display: grid; grid-template-columns: 1fr; max-width: 1180px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+@media (min-width: 1100px) {
+  .shell { grid-template-columns: 236px minmax(0, 1fr); gap: 3.2rem; }
+  .toc { position: sticky; top: 1.5rem; align-self: start; max-height: calc(100vh - 3rem); overflow: auto; }
+}
+.toc { padding-top: 2.6rem; font-size: .85rem; }
+.toc .toc-title { font-family: var(--mono); text-transform: uppercase; letter-spacing: .14em; font-size: .68rem; color: var(--ink-3); margin-bottom: .7rem; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: .3rem .55rem; color: var(--ink-2); border-left: 2px solid var(--line); border-bottom: 0; }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); background: var(--surface); }
+.toc .n { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-right: .45rem; }
+main { min-width: 0; max-width: 800px; }
+.wide { max-width: 100%; }
+
+.hero { padding: 2.8rem 0 1.6rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+.hero .eyebrow { font-family: var(--mono); font-size: .73rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: .9rem; }
+.hero .lede { font-size: 1.13rem; color: var(--ink-2); max-width: 44em; margin-top: 1.1rem; }
+.hero .meta { font-family: var(--mono); font-size: .75rem; color: var(--ink-3); margin-top: 1.1rem; line-height: 1.7; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .7rem; margin-top: 1.6rem; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .8rem .9rem; box-shadow: var(--shadow); }
+.stat .v { font-family: var(--serif); font-size: 1.75rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .v.zero { color: var(--soft); }
+.stat .k { font-size: .77rem; color: var(--ink-2); margin-top: .3rem; line-height: 1.5; }
+
+section { margin-top: 3.4rem; scroll-margin-top: 1.5rem; }
+.sec-eyebrow { font-family: var(--mono); font-size: .71rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .45rem; }
+.sec-lede { color: var(--ink-2); font-size: 1.02rem; margin: .85rem 0 1.5rem; }
+
+.ev { display: block; font-family: var(--mono); font-size: .735rem; color: var(--ink-3); line-height: 1.6; margin: .2rem 0 .9rem; padding-left: 1.05rem; text-indent: -1.05rem; overflow-wrap: anywhere; }
+.ev::before { content: "证据 "; color: var(--accent); }
+
+.enf { display: inline-block; font-family: var(--mono); font-size: .68rem; letter-spacing: .04em; padding: .06rem .4rem; border-radius: 3px; border: 1px solid; vertical-align: .08em; white-space: nowrap; }
+.enf.gate { color: var(--pass); border-color: var(--pass); background: var(--pass-soft); }
+.enf.test { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+.enf.prose { color: var(--soft); border-color: var(--soft); background: var(--soft-soft); }
+
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: .95rem 1.15rem; margin: 1.3rem 0; border-radius: 0 6px 6px 0; }
+.callout.gate { border-left-color: var(--pass); }
+.callout.soft { border-left-color: var(--soft); }
+.callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+.callout .hd { font-weight: 700; display: block; margin-bottom: .35rem; }
+
+.quote { font-family: var(--serif); font-size: 1.06rem; color: var(--ink); border-left: 3px solid var(--line); padding: .35rem 1.05rem; margin: 1.1rem 0; }
+.quote .src { display: block; font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-top: .4rem; }
+.quote.en { font-style: normal; }
+
+.lesson { background: var(--accent-soft); border-radius: 6px; padding: 1.05rem 1.25rem; margin: 1.7rem 0; }
+.lesson h4 { margin-top: 0; color: var(--accent-ink); }
+.lesson ul, .lesson ol { margin-bottom: 0; }
+
+.tbl-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .89rem; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .7rem; border-bottom: 1px solid var(--line); }
+th { font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); background: var(--surface-2); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+td.mono, th.mono { font-family: var(--mono); font-size: .79rem; }
+.tbl-wrap.compact th, .tbl-wrap.compact td { padding: .42rem .58rem; font-size: .84rem; }
+
+figure { margin: 1.5rem 0; }
+figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .55rem; }
+.fig-box { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.1rem; overflow-x: auto; }
+.fig-box svg { max-width: 100%; height: auto; display: block; }
+
+.tree { font-family: var(--mono); font-size: .78rem; line-height: 1.75; margin: 0; white-space: pre; }
+.tree .c { color: var(--ink-3); }
+.tree .f { color: var(--accent); }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1rem; margin: 1.1rem 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .95rem 1.05rem; }
+.card h4 { margin-top: 0; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+.mech { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 1.05rem 1.2rem; margin: 1.5rem 0; }
+.mech > h3 { margin-top: 0; }
+.mech .mech-n { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; color: var(--accent); display: block; margin-bottom: .2rem; }
+.mech p:last-child, .mech ul:last-child { margin-bottom: 0; }
+
+.timeline { list-style: none; padding: 0; margin: 1.1rem 0; border-left: 2px solid var(--line); }
+.timeline li { position: relative; padding: 0 0 1rem 1.35rem; margin: 0; }
+.timeline li::before { content: ""; position: absolute; left: -6px; top: .6rem; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.timeline li.bad::before { background: var(--soft); border-color: var(--soft); }
+.timeline .d { font-family: var(--mono); font-size: .75rem; color: var(--ink-3); }
+
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1.1rem; font-size: .93rem; margin: .9rem 0 1.3rem; }
+.kv dt { font-family: var(--mono); font-size: .79rem; color: var(--ink-3); }
+.kv dd { margin: 0; }
+.footnote, .small { font-size: .87rem; color: var(--ink-2); }
+</style>
+
+<div class="shell">
+<nav class="toc">
+  <div class="toc-title">目录</div>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>不在主干上的规则书</a></li>
+    <li><a href="#s2"><span class="n">2</span>文档管理的五个装置</a></li>
+    <li><a href="#s3"><span class="n">3</span>三层结构与唯一闸门</a></li>
+    <li><a href="#s4"><span class="n">4</span>留档解剖</a></li>
+    <li><a href="#s5"><span class="n">5</span>教 AI 留档的六个机制</a></li>
+    <li><a href="#s6"><span class="n">6</span>一份 PR 的留档模板</a></li>
+    <li><a href="#s7"><span class="n">7</span>台账：闸门与口头</a></li>
+    <li><a href="#s8"><span class="n">8</span>可迁移的五条</a></li>
+    <li><a href="#s9"><span class="n">9</span>方法与边界</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <div class="eyebrow">DeepSeek Harness 研究 · 第六卷</div>
+  <h1>前端验证留档</h1>
+  <p class="lede">这个仓库有一个 40 个包的 React Web GUI，也有一整套逼着 AI 交出验证证据的机制。它最狠的一条不是"必须测"，而是<strong>把"重新生成"和"比对"做成两个不可混用的模式，CI 只允许比对</strong>——不让重新生成成为掩盖回归的路径。而它最响亮的一条规矩（每个 GUI PR 必须附一段真实录制的 GIF），全仓库找不到任何闸门在管。</p>
+  <div class="meta">
+    证据基线 <code>141eb6fef8</code>（2026-08-19，rc.8）· 全文结论均在该提交上复核<br>
+    本卷范围：<code>packages/client/*</code> · <code>packages/host/*</code> · <code>apps/web</code> · <code>.agents/skills/record-browser-gif</code> · <code>docs/postmortem/0003</code>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="v">64</div><div class="k">受控浏览器场景目录</div></div>
+    <div class="stat"><div class="v">110</div><div class="k"><code>*.expected.md</code> 证据文件</div></div>
+    <div class="stat"><div class="v">1</div><div class="k">PR 上真跑浏览器的闸门（仅 Linux）</div></div>
+    <div class="stat"><div class="v zero">0</div><div class="k">检查那条 GIF 规矩的闸门</div></div>
+  </div>
+</header>
+
+<p class="small">阅读约定：全文每条规矩都带一个标记——<span class="enf gate">闸门</span> 表示有可执行的脚本 / CI lane 在拦；<span class="enf test">测试</span> 表示靠某个具体测试文件钉住；<span class="enf prose">口头</span> 表示只是写给 AI 看的一句话，没有任何机器在验。这个三分法本身就是本卷的论点。</p>
+
+<hr>
+
+<section id="s1">
+  <div class="sec-eyebrow">01 · 现场</div>
+  <h2>一本不在主干上的规则书</h2>
+  <p class="sec-lede">先把"前端"这个词在这个仓库里指什么钉死，顺便交代一个从一开始就该说破的反常事实。</p>
+
+  <p>dsh 的前端是三块：<code>packages/client/*</code>（40 个工作区包，其中 34 个是 <code>ui-*</code> 插件，另外 6 个是基础设施：<code>runtime</code> / <code>connection</code> / <code>web</code> / <code>modules</code> / <code>hmr</code> / <code>locale</code>）、<code>packages/host/*</code>（8 个包，浏览器的服务端半边：<code>webserver</code>、<code>apiproxy</code>、<code>frontend-static</code>…）、以及构建入口 <code>apps/web</code>。</p>
+
+  <p>规则书是 <code>packages/client/AGENTS.md</code>，150 行 / 3087 词，槽位系统、四份 props、响应式读取纪律、导出纪律、分层红线、依赖声明、模块图、目录规制、样式、测试阶梯、两个 checklist——全在这一份里。</p>
+
+  <div class="callout soft">
+    <span class="hd">但它几乎不在文档主干上</span>
+    <p>根 <code>AGENTS.md</code>（唯一被软链成根 <code>CLAUDE.md</code> 的文件）里 <code>GUI</code> / <code>browser</code> / <code>frontend</code> 出现 <strong>0 次</strong>，它的"Repository layout"块列了 35 个包组，没有 <code>client/</code>、没有 <code>host/</code>、没有 <code>apps/</code>。根 <code>AGENTS.md</code>、<code>packages/AGENTS.md</code>、<code>packages/README.md</code>、<code>docs/</code> 顶层——也就是整条文档主干——里<strong>没有任何一条链接</strong>指向 <code>packages/client/AGENTS.md</code>；全仓唯一一条 Markdown 链接来自 <code>docs/cookbook/adding-a-package.md</code> 的一句附注，另有 8 处在 client 源码 JSDoc 里以纯文本形式引用它。它也不在 <code>scripts/doc-budgets.manifest.json</code> 的 9 个条目里，所以 3087 词无人过问——而 <code>docs/AGENTS.md</code> 写的 prose 目标是"子树 <code>AGENTS.md</code> ≤ 600 词"。</p>
+  </div>
+  <span class="ev"><code>grep -ci "gui\|browser\|frontend" AGENTS.md</code> → 0；<code>grep -rn "client/AGENTS" AGENTS.md packages/AGENTS.md packages/README.md docs/*.md</code> → 无匹配（<code>docs/*.md</code> 不递归子目录，唯一的 Markdown 链接在 <code>docs/cookbook/adding-a-package.md:37</code>）；<code>wc -w packages/client/AGENTS.md</code> → 3087；<code>scripts/doc-budgets.manifest.json</code> 共 9 键，无一前端。</span>
+
+  <p>它靠什么被 agent 读到？主要靠"就近 AGENTS.md"这个约定——agent 在 <code>packages/client/</code> 下工作时会读最近的那份。也就是说，<strong>这本规则书几乎不靠链接分发，靠的是位置</strong>。这在本卷后面会反复出现：dsh 的前端治理有大量东西是"放在那儿等你走到"，而不是"被索引到"。</p>
+</section>
+
+<section id="s2">
+  <div class="sec-eyebrow">02 · 文档管理</div>
+  <h2>五个装置</h2>
+  <p class="sec-lede">"文档管理"在这里不是一份写作规范，而是五个各管一段的装置，其中四个有闸门、一个没有。</p>
+
+  <h3>装置一：唯一归属（one home per fact）<span class="enf prose">口头</span></h3>
+  <p><code>docs/web-styling.md</code> 只有 25 行，是浏览器端样式的唯一权威——<code>--dsw-*</code> 令牌的归属、禁止组件库和 Tailwind、禁止在功能组件里写字面色值、禁止在功能组件 CSS 里写主题选择器。<code>packages/client/AGENTS.md</code> 的 Styling 段先点明"<code>docs/web-styling.md</code> is authoritative"并链过去，然后用<strong>一句</strong>压缩复述核心禁令（令牌归属、CSS Modules + clsx、无字面色值 / 组件库 / Tailwind、中文文案英文注释）——它示范的是"压到一句并指向权威"，而不是零复述。</p>
+  <p>这条规则本身没有任何 gate。<code>docs/AGENTS.md</code> 给的唯一手段是人工 grep：<em>"The same rule stated in more than one home. Grep a distinctive phrase; keep one home and link the rest."</em></p>
+  <span class="ev"><code>docs/web-styling.md</code>（25 行）；<code>packages/client/AGENTS.md</code> §Styling；<code>docs/AGENTS.md</code> "Each fact has one home: the tier whose job it is; elsewhere, link there."</span>
+
+  <h3>装置二：决策留档 = Agent Notes <span class="enf gate">闸门</span></h3>
+  <p>路径即元数据：<code>{proposed|implemented|rejected}/{class}/yyyy-mm-dd-topic-title.md</code>，class 是六选一的闭集（<code>feature</code> / <code>bug-fix</code> / <code>simplification</code> / <code>architecture</code> / <code>process</code> / <code>testing</code>）。当前英文侧 723 篇：implemented 544、archived 143、proposed 25、rejected 11。<strong>格式闸门只走三个活跃生命周期</strong>——实跑 <code>verify-agent-note-format</code> 报的是 580 篇（544+25+11）；<code>archived/</code> 由另一条 <code>verify-archived-agent-notes</code> 管，它查的是三件套完整性、归档元数据、sidecar 哈希和只增不改的冻结清单。</p>
+  <p><code>verify-agent-note-format</code> 硬校验：前三行必须逐字是 <code># Agent Note: &lt;title&gt;</code> / 空行 / <code>Status: …</code>，且 <code>Status:</code> 必须与所在生命周期目录一致；body 必须以 <code>## Problem</code> 开头；<code>implemented/</code> 必须有 <code>## Decision</code> + <code>## Alternatives considered</code> + <code>## Consequences</code>，并<strong>禁止</strong>出现 <code>## Proposal</code> / <code>## Plan</code> / <code>## Migration plan</code> / <code>## Acceptance criteria</code>。</p>
+  <p><code>## Alternatives considered</code> 是强制的，理由写在 <code>.agents/notes/README.md</code> 里：</p>
+  <blockquote class="quote en">A decision recorded without what it beat invites re-litigation — the failure Agent Notes exist to prevent.<span class="src">.agents/notes/README.md · Alternatives considered — mandatory</span></blockquote>
+  <p>它带一个<strong>写明日期的祖父条款</strong>：<code>FORMAT_ADOPTED = '2026-07-05'</code> 之前的旧笔记，若其备选方案已无法从记录中重建，可以用一行指定注释（<code>&lt;!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) --&gt;</code>）代替该段，闸门只对这类文件放行。今天活跃树里有 16 篇在用它。这是个值得注意的处理方式——<strong>不追溯改写历史，但把豁免做成显式、可枚举、且不会扩散到新笔记的形式。</strong></p>
+  <p>对本卷最关键的是生命周期迁移那条规则：<code>proposed/ → implemented/</code> 时，<code>## Acceptance criteria</code> 必须被折叠进 <code>## Consequences</code>，<strong>或者变成一个现在时的 <code>## Testing</code> / <code>## Verification</code> 段，写清"现在是什么在钉住这个行为"</strong>。留档的落点就在这里（§6 有实例）。</p>
+  <span class="ev"><code>.agents/notes/README.md</code> §The file format / §Moving between lifecycles；<code>scripts/verify-agent-note-format.ts</code>、<code>verify-agent-note-classification.ts</code>、<code>verify-archived-agent-notes.ts</code> 均为 <code>doc-sync</code> 的 leaf gate。</span>
+
+  <h3>装置三：包级 README 的强制章节与顺序 <span class="enf gate">闸门</span></h3>
+  <p><code>verify-package-readme-model-experience</code> 扫 <code>packages/*/*/package.json</code>，要求 <code>## Model Experience</code> 与 <code>## Known Limitations and Deferred Work</code> 是包 README 的<strong>最后两个 H2，且顺序固定</strong>（当 Limitations 段不存在时，Model Experience 必须是最后一个 H2）；README 整个缺失直接 fail。豁免是显式枚举的：4 个 model-agnostic 包不写 Model Experience，1 个包不写 Limitations，全部写死在脚本的审计表里。</p>
+  <p>纯 UI 包也躲不掉，而且短式写法要过正则 <code>^None, as .+\.$</code>：</p>
+  <pre><code>## Model Experience
+
+None, as the reload driver is browser-side machinery; nothing here reaches a model request.
+
+#### KV Cache effect
+
+None; this package neither assembles nor sends a provider request.</code></pre>
+  <p class="footnote">—— <code>packages/client/hmr/README.md</code>。40 个 client 包里有 37 个用这种一句话短式，只有 <code>ui-deliverables</code>、<code>ui-skill</code>、<code>ui-subagent</code> 写了完整结构化条目。</p>
+  <p>这个设计的意思很清楚：<strong>"这个包对模型不可见"是一个必须被显式声明、而不是默认省略的事实。</strong>一个前端插件也得回答"你有没有喂给模型什么"。</p>
+  <span class="ev"><code>scripts/verify-package-readme-model-experience.ts</code>（<code>globSync('packages/*/*/package.json')</code>；"must be the final two H2 sections, in that order"）；<code>scripts/verify-package-readme-limitations.ts</code>（全仓唯一豁免包是 <code>packages/util/brand</code>）。</span>
+
+  <h3>装置四：双语配对 <span class="enf gate">闸门</span></h3>
+  <p>40 个 client 包 + 8 个 host 包，<strong>全部</strong>是 <code>README.md</code> / <code>README.zh.md</code> / <code>README.i18n.yaml</code> 三件套，无一残缺。<code>.i18n.yaml</code> 记录两侧的 git blob hash；配对 gate 不只查存在性，还比对<strong>结构签名</strong>：标题层级、代码块逐字内容、表格行列数、列表种类、链接的出现顺序。</p>
+  <p>校验跑两次：<code>lefthook</code> 的 pre-commit 只校验 staged 的 <code>.i18n.yaml</code>（快），全量在 <code>doc-sync</code> / CI。<code>docs/i18n/README.md</code> 写得很直白：<em>"The no-argument corpus-wide form is what <code>doc-sync</code> and CI run; a scoped green never substitutes for it at PR level."</em></p>
+  <p>连用户文档里的 UI 截图都是成对的——<code>docs/user/guide/providers-models-page.png</code> 与 <code>providers-models-page.zh.png</code>，中英两套界面各截一张。</p>
+  <p class="footnote">注意范围边界：<code>packages/client/AGENTS.md</code> <strong>不在</strong>配对范围内（scope 谓词是 README 类文件名 + <code>docs/**</code> + <code>.agents/notes/**</code> + <code>python/**</code> + 根级几个文件），所以它至今是英文孤本。</p>
+  <span class="ev"><code>scripts/translation-pairing.ts</code>（<code>README_ARTIFACT</code> 正则、<code>TranslationStructureSignature</code> 五字段）；<code>lefthook.yml</code> pre-commit job "translation pairing (staged records)"；<code>find . -name AGENTS.zh.md</code> → 无。</span>
+
+  <h3>装置五：一部分前端文档是生成给<em>模型</em>看的 <span class="enf gate">闸门</span></h3>
+  <p><code>scripts/gen-client-catalog.ts</code> 词法扫描 <code>packages/*/*/src/**/*.{ts,tsx}</code> 里的槽位声明与 <code>slots.register</code> 调用（不走类型检查器），生成 <code>packages/extensions/cordis-client-runner/src/client/slot-catalog.ts</code>——供模型通过 <code>cordis_inspect what:"client"</code> 工具读取。它的模块 JSDoc 把目的说得很清楚：</p>
+  <blockquote class="quote en">…every fact it needs to do that safely — which keys exist, what each register call must pass, what the component receives, who already occupies the seat, and when the seat exists at all — is decided at compile time by the shipped web bundle.<span class="src">scripts/gen-client-catalog.ts</span></blockquote>
+  <p><strong>生成器本身就是一道文档 gate</strong>：某个 UI 槽位声明没写 JSDoc 直接 fail，报错文案是一句写作指令——</p>
+  <pre><code>has no JSDoc prose. Write it from the REGISTRANT's side: what to pass,
+what the component receives, whom a registration replaces, and what
+absence looks like (packages/client/ui-settings/src/client/contract/slots.ts
+is the template).</code></pre>
+  <p class="footnote">（源码里是一整行字符串，此处按版面折行。）它甚至把模板文件的路径交给你——报错本身就是一份写作说明。</p>
+  <p>它还带 <code>MAX_ENTRY_LINES = 120</code> 的单槽行数预算，理由写在常量注释里：narrowing 到单个槽位就是为了少花 context，"a report a model cannot finish reading is a defect rather than a detail"。<strong>这是整个前端文档体系里唯一一条会让 gate 变红的长度限制</strong>（同文件的 <code>MAX_DECL_CHARS = 1200</code> 只截断不报错）——它管的不是人的阅读负担，是模型的。</p>
+  <span class="ev"><code>scripts/gen-client-catalog.ts</code>（<code>OUT = 'packages/extensions/cordis-client-runner/src/client/slot-catalog.ts'</code>、<code>MAX_ENTRY_LINES = 120</code>、<code>MAX_DECL_CHARS = 1200</code>）；<code>verify-client-catalog</code> = <code>gen-client-catalog.ts --check</code>，是 <code>docSyncLeafGates</code> 的一条。</span>
+
+  <div class="callout">
+    <span class="hd">这五个装置合起来是什么</span>
+    <p>一份权威文档（唯一归属）+ 一份决策档案（Agent Notes）+ 一份契约声明（README 强制章节）+ 一份翻译一致性（双语配对）+ 一份机读目录（slot catalog）。人读的那三份里，只有格式和章节被机器管；<strong>内容对不对，全靠 review。</strong></p>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="sec-eyebrow">03 · 验证</div>
+  <h2>三层结构与唯一的浏览器闸门</h2>
+  <p class="sec-lede">GUI 测试被切成三层，命令被排成一条阶梯，而 CI 上真跑浏览器的闸门只有一条。</p>
+
+  <p>三层的划分settled 在 <code>.agents/notes/implemented/process/2026-07-20-gui-testing-system.md</code>，切法是"沿架构自带的测试钩子自底向上"：</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>层</th><th>测什么</th><th>关键手法</th><th>家</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong> 协议同构</td><td><code>AbstractApiClient</code> + <code>toFetchHandler</code>：双向数据 / rpcId / zod 类型 / SSE 流 / 批处理 / 超时</td><td><code>InProcessApiClient(toFetchHandler(scripted impl))</code>——跳过网络但真跑线序列化，零浏览器、纯 node env</td><td class="mono">packages/host/apiproxy/tests/<br>client-handler.spec.ts</td></tr>
+        <tr><td><strong>2</strong> 对象层编排</td><td><code>Session</code> / <code>SessionManager</code> / <code>ConnectionController</code> 的状态机与时序：拼接、去重、分页、乐观草稿清除、pendingBuffers、重连、退避</td><td>"事件序列进 → 快照出"的黄金路径：可编程 fake + deferred 控时序 + fake timer 控退避</td><td class="mono">packages/client/{runtime,connection}/tests/</td></tr>
+        <tr><td><strong>3</strong> 组装呈现</td><td>真实构建产物 × 真 loader × 真插件组合</td><td>jsdom 语义快照（启动整份已构建 client 插件名册，基线上 37 个）+ 裸 Playwright smoke + 无 key 回放 e2e</td><td class="mono">apps/web/tests/</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote">表里两处数字值得单独说：note 原文写的是 "boot all eight built client plugins under jsdom"，但 <code>apps/web/tests/assembled-boot.ts</code> 的插件表是从 <code>bundle/base</code> 与 <code>bundle/web-app</code> 的 <code>cordis.patch.yml</code> 动态合成的，基线上是 37 个——<strong>note 里的这个数字已经过时</strong>。类似地，规则书和 note 都还在说"两级 smoke"，而 <code>smoke-fixture.e2e.ts</code> 已被删除（<code>80cd8f54b5</code>），现在只剩 <code>smoke-real.e2e.ts</code>。这两处正好是下一节要讲的那个问题的注脚：<strong>没有闸门盯着的事实，会随代码漂走。</strong></p>
+
+  <p>铁律是 <strong>"each tier tests its own layer, upper tiers never re-test lower ones"</strong>。这条纪律该 note 自己承认没人机器管：</p>
+  <blockquote class="quote en">Inter-tier discipline remains review-owned, while Linux CI mechanically enforces browser-golden freshness.<span class="src">2026-07-20-gui-testing-system.md · Consequences</span></blockquote>
+
+  <h3>本地阶梯 <span class="enf prose">口头</span></h3>
+  <p><code>packages/client/AGENTS.md</code> 的 "Before you push" 给了三级，要求"跑覆盖你改动的最窄那一级"：</p>
+  <div class="kv">
+    <dt>每次改 GUI 代码</dt><dd><code>pnpm run test:gui</code>——秒级，无浏览器无服务器。原话是"This is the inner loop; run it as freely as a typecheck."</dd>
+    <dt>可能改变组装输出</dt><dd>再加 <code>DSH_SNAPSHOT=replay pnpm run test:web</code>——先重建前端 dist，再跑浏览器 smoke（真 host 那条无 key 自跳过）加上无 key 回放 e2e。</dd>
+    <dt>提 PR 前</dt><dd>走 <code>dsh-pre-push-checks</code> skill 挑最窄的一组；<strong>仓库刻意没有 repo-wide 的 pre-push 聚合</strong>。</dd>
+  </div>
+  <p class="footnote">值得记一笔：<code>test:gui</code> 这条被称作"内环"的命令，在 <code>scripts/run-gates.ts</code>、<code>lefthook.yml</code>、所有 workflow 里<strong>零出现</strong>——它就是 <code>package.json</code> 里的一行路径过滤（<code>vitest run packages/client packages/host</code>），完全靠自觉。client 源码仍被逐文件 100% 覆盖率闸门间接盖住，但那是另一条路，而且如 §7 所示，那条路对 client 有 51 条排除。</p>
+
+  <h3>PR 上唯一真跑浏览器的 job <span class="enf gate">闸门</span></h3>
+  <p><code>node 24 / snapshots and artifacts</code>（<code>node-24-consumers</code>），仅 Linux。<code>scripts/run-gates.ts</code> 的 <code>webSnapshotGate</code> 在 <code>DSH_WEB_SNAPSHOT_WORKERS</code> 有值时注册 <code>test:web:ci</code> 并<strong>显式注入 <code>DSH_SNAPSHOT=replay</code></strong>；CI 真实设置的是 <code>6</code>（<code>ci.yml</code> 里全仓唯一一处）。</p>
+  <p class="footnote">严格说是"PR 上唯一"：<code>serial / linux (self-hosted standby)</code> 那个 job 也装 Chromium 并跑同一条闸门，但它只在推 master 时触发、且不拦合并。</p>
+  <p>这个 job 拥有 Linux 的单次构建，所以 <code>apps/web/dist</code> 和各包 <code>lib/</code> 就在它的 workspace 里；托管 runner 上按 lockfile 里的 Playwright 版本装 Chromium。<code>scripts/run-web-snapshots.ts</code> 先<strong>串行</strong>跑 <code>hmr-live.e2e.ts</code> 和 <code>cordis-tool-round.e2e.ts</code>（前者会改动已构建的 workspace 状态，后者有一段对时序敏感的审批与转向序列），过了之后剩下的文件进一个六 worker 池。</p>
+  <span class="ev"><code>scripts/run-gates.ts</code> <code>webSnapshotGate</code>（<code>env: { DSH_SNAPSHOT: 'replay' }</code>）；<code>.github/workflows/ci.yml</code> <code>DSH_WEB_SNAPSHOT_WORKERS: '6'</code>；<code>.agents/notes/implemented/testing/2026-07-30-web-browser-snapshot-ci-gate.md</code>。</span>
+</section>
+
+<section id="s4">
+  <div class="sec-eyebrow">04 · 留档</div>
+  <h2>证据长什么样</h2>
+  <p class="sec-lede">这是本卷最该被抄走的一节：dsh 的 GUI 验证证据不是截图，是可以逐行 diff 的文本。</p>
+
+  <p><code>apps/web/tests/snapshots/</code> 是主证据库：<strong>64 个场景目录 / 138 个受控文件 / 约 496 KB</strong>。构成如下——</p>
+
+  <div class="tbl-wrap compact">
+    <table>
+      <thead><tr><th class="num">数量</th><th>文件形态</th><th>是什么</th></tr></thead>
+      <tbody>
+        <tr><td class="num">110</td><td class="mono">*.expected.md</td><td>归一化后的可访问性树（约 100 份）、几何测量断言（5 份），以及少量系统提示词 / 句柄文本快照</td></tr>
+        <tr><td class="num">20</td><td class="mono">*.jsonl</td><td>回放用的会话轨迹（<code>session.jsonl</code> / <code>seed.jsonl</code>）</td></tr>
+        <tr><td class="num">4</td><td class="mono">*.expected.txt</td><td>纯文本输出</td></tr>
+        <tr><td class="num">2</td><td class="mono">*.override.json</td><td>回放覆盖项</td></tr>
+        <tr><td class="num">1</td><td class="mono">*.expected.json</td><td>协议层期望（message-feedback）</td></tr>
+        <tr><td class="num">1</td><td class="mono">.gitkeep</td><td>建目录时留下的占位（该场景后来已有期望文件，它成了残留）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>驱动它们的是 83 个测试文件（74 个 <code>*.e2e.ts</code> + 9 个 <code>*.snapshot.ts</code>）。一个典型场景目录长这样：</p>
+
+  <figure>
+    <div class="fig-box">
+<pre class="tree">apps/web/tests/
+├── approval-composer.e2e.ts        <span class="c">← 场景脚本（真 Chromium 驱动）</span>
+└── snapshots/
+    └── approval-composer/
+        ├── <span class="f">session.jsonl</span>            <span class="c">← 回放的模型轨迹（无需 API key）</span>
+        └── <span class="f">ui.expected.md</span>          <span class="c">← 归一化 ARIA 树，逐行可 diff</span></pre>
+    </div>
+    <figcaption>一个场景 = 一个脚本 + 一份输入轨迹 + 一份期望输出。在调用了清单守卫的场景里（83 个测试文件中有 50 个），目录里多一个文件、少一个文件都会 fail（见机制 02）。</figcaption>
+  </figure>
+
+  <h3>体裁一：归一化的可访问性树</h3>
+  <p>不是像素，不是 DOM，而是浏览器 ARIA 快照经归一化后的文本。<code>snapshots/cordis-tool-round/ui.expected.md</code> 第 31–42 行，原样：</p>
+  <pre><code>- button "Register Cordis Plugin snapshot noop does nothing, for the snapshot Ready" [expanded]:
+  - img
+  - text: Register Cordis Plugin snapshot noop does nothing, for the snapshot Ready
+- tablist "Plugin source":
+  - tab "Client"
+  - tab "Host" [selected]
+- tabpanel "Host":
+  - text: javascript
+  - button "Copy"
+  - code: "return { name: \"snapshot-noop\", apply(ctx) {} }"
+- text: Result Defined snap-1/pkg-1 (snapshot noop); it is not running yet. Use cordis_run to activate this Package. Run controls live in the Cordis panel above Settings
+- button "Inspect"</code></pre>
+  <p>它同时钉住了四件事：控件的语义角色、可访问名、展开/选中这类状态，以及<strong>缩进所表达的层级</strong>。一次 UI 改动如果动了任何一项，diff 会精确落在那一行。</p>
+
+  <h3>体裁二：把像素测量写成人话</h3>
+  <p>布局类断言不进 ARIA 树，而是单独一份 <code>geometry.expected.md</code>。<code>composer-tab-geometry</code> 的样子：</p>
+  <pre><code># Input card position across the Chat and Trajectory tabs
+
+## Wide viewport (1680px, card at its cap)
+
+- Chat: scrollbar-gutter stable, overflow hidden/auto
+- Chat scroller scrolls: true
+- Chat reserved band: 8px
+- Trajectory: scrollbar-gutter auto, overflow hidden/auto
+- Trajectory scroller scrolls: false
+- Trajectory reserved band: 0px
+- input card left edge moves between tabs: 0px
+- input card right edge moves between tabs: 0px
+- input card width changes between tabs: 0px</code></pre>
+  <p class="footnote">全文 37 行，三节：宽视口、窄视口、以及一节"把补偿去掉"的对照组——对照组里那两个 <code>0px</code> 变成 <code>4px</code>，正好证明这个断言真的能失败。</p>
+  <p>这是个很聪明的折中。三层 note 明令 app 级快照"<em>own stable visible state … not CSS pixels</em>"，而这里把像素<strong>先归约成一个稳定的布尔或差值，再落成人类可读的断言</strong>——"两个 tab 之间输入卡左边缘移动 0px"是稳定事实，"左边缘在 x=412px"不是。</p>
+
+  <h3>连命名都被闸门管 <span class="enf gate">闸门</span></h3>
+  <p><code>scripts/check-expected-filenames.sh</code> 用三条 pathspec（顶层 glob、递归 glob、排除 <code>vendor/**</code>）<code>git ls-files</code> 扫全树，命中就 <code>exit 1</code>，报错两行：<code>check-expected-filenames: tracked non-vendor filenames must not contain "golden":</code>，然后是 <code>Rename each file with an accurate term such as "expected".</code></p>
+  <p class="footnote">这条闸门是<strong>路径触发</strong>的：<code>.github/workflows/expected-filenames.yml</code> 的 <code>on.pull_request.paths</code> 只匹配含 <code>golden</code> 的路径，而且它是独立 workflow 文件，不在 <code>all-checks-passed</code> 的 needs 里（ci.yml 自己注明跨 workflow 文件够不着）。所以：一个不新增 golden 命名文件的普通 PR，这条 job 根本不会跑。设计上它是"你想犯这个错的时候才拦你"。</p>
+  <span class="ev"><code>scripts/check-expected-filenames.sh</code>；<code>.github/workflows/expected-filenames.yml</code>；<code>git ls-files apps/web/tests/snapshots | wc -l</code> → 138。</span>
+
+  <div class="callout gate">
+    <span class="hd">为什么是文本不是图</span>
+    <p>三个理由，全都指向同一件事——<strong>让证据进入代码评审流程</strong>：可以逐行 diff；可以在 PR 里被 reviewer 直接读懂；跨平台可复现（根 <code>AGENTS.md</code> 的原则是"Fixtures must replay on macOS/Linux; fix fixtures, not normalizers."）。截图做不到任何一条。全仓库 9 张 png——4 张用户文档界面截图、3 张 <code>read_image</code> 工具的测试夹具、1 张 provider 图像输入的 e2e 夹具、1 张 badge——<strong>没有一张是 UI 回归证据</strong>。</p>
+  </div>
+</section>
+
+<section id="s5">
+  <div class="sec-eyebrow">05 · 核心</div>
+  <h2>教 AI 留档的六个机制</h2>
+  <p class="sec-lede">按约束力从强到弱排。前三条是被那条 CI job 执行的测试断言，第四条是技能文本，第五条是产品自己的 system prompt，第六条是一份事故报告。</p>
+
+  <div class="mech">
+    <span class="mech-n">机制 01 <span class="enf test">测试</span></span>
+    <h3>三态模式，且 refresh 是期望输出的唯一 writer</h3>
+    <p>浏览器证据有三种模式：<code>record</code>（真跑模型录制轨迹，要 key）、<code>replay</code>（回放已录轨迹并<strong>比对</strong>期望输出，默认，无 key）、<code>refresh</code>（回放并<strong>重写</strong>期望输出）。</p>
+    <p><code>apps/web/tests/scaffold.ts</code> 里 <code>compareOrRefreshGolden</code> 的 JSDoc 把语义写死了：</p>
+    <blockquote class="quote en">Refresh is the ONLY writer: a missing golden in replay mode fails with the healing command instead of silently self-bootstrapping.<span class="src">apps/web/tests/scaffold.ts</span></blockquote>
+    <p>实现也就这么几行——<code>refresh</code> 直接写文件；否则文件不存在就抛错并把自愈命令印出来（<code>run DSH_SNAPSHOT=refresh pnpm run test:web to generate it</code>），存在就 <code>expect(payload).toBe(...)</code>。<strong>replay 模式下永远不会有"文件不存在所以我先生成一个"这条路径。</strong>（<code>record</code> 模式也写盘，但它写的是输入侧的 <code>session.jsonl</code> 轨迹，不是期望输出。）</p>
+    <p>而 CI 永远只跑 replay。为什么不是"CI 跑 refresh 然后检查工作树有没有脏"？CI gate 那份 note 明确拒绝了这个方案：</p>
+    <blockquote class="quote en">checking after writing turns the assertion mechanism into a generator; if the working-tree check is wired incorrectly, it can turn a regression into a passing expected-output update.<span class="src">2026-07-30-web-browser-snapshot-ci-gate.md · Alternatives considered</span></blockquote>
+    <p><strong>这是整套设计里最防 AI 的一条。</strong>一个被要求"把测试跑绿"的 agent，最自然的动作就是重新生成期望值；这套设计把那条路径从 CI 上物理拿掉了，只留在本地、且需要人明确输入 <code>DSH_SNAPSHOT=refresh</code>。note 里对开发者的要求是：只有在<strong>确认用户可见输出确实是有意改变之后</strong>才明确选择 refresh 入口（<code>pnpm run test:web:refresh</code>），逐条 review 期望输出的 diff，然后再用 replay 跑一遍确认没有文件被写。</p>
+    <span class="ev"><code>apps/web/tests/scaffold.ts</code> <code>compareOrRefreshGolden</code>；<code>scripts/run-gates.ts</code> <code>webSnapshotGate</code> 注入 <code>DSH_SNAPSHOT: 'replay'</code>；<code>docs/testing.md</code>："CI forces read-only <code>DSH_SNAPSHOT=replay</code>, never writing expected outputs"。</span>
+  </div>
+
+  <div class="mech">
+    <span class="mech-n">机制 02 <span class="enf test">测试</span></span>
+    <h3>证据目录的完整清单也被断言</h3>
+    <p><code>assertFixtureInventory(dir, expected)</code> 要求场景目录<strong>正好</strong>持有预期的文件清单——<code>expect(entries).toEqual([...expected].sort())</code>。多一个孤儿文件 fail，少一个证据文件 fail。它是逐场景自愿调用的：83 个测试文件里有 50 个调了它。</p>
+    <p>它还往下走一层：每个受控 <code>.jsonl</code> 必须是 <strong>request-header scrub 的不动点</strong>（再 scrub 一次内容不变），且不得含 run-local 的浏览器 rpcId。也就是说，录制时那些"这一次运行才有"的量必须已经被清理干净才能落盘。</p>
+    <p>这条针对的是 AI 留档的两种典型病：留一半（改了行为只更新了同场景里的一份证据文件），和留垃圾（调试时手动生成的中间文件跟着提交了）。</p>
+    <span class="ev"><code>apps/web/tests/scaffold.ts</code> <code>assertFixtureInventory</code>（"the scenario directory holds exactly the expected files and every committed JSONL is a scrub fixed-point without a run-local browser RPC id"）。</span>
+  </div>
+
+  <div class="mech">
+    <span class="mech-n">机制 03 <span class="enf test">测试</span></span>
+    <h3>不许用固定延时当证据，不许用 substring 当判定</h3>
+    <p><code>captureStableAria</code> 不是"等 2 秒然后截"，而是用 <code>expect.poll</code> 轮询直到<strong>连续两次归一化 ARIA 快照完全相同</strong>才返回，5 秒超时，失败信息是 <code>aria snapshot did not stabilize</code>。</p>
+    <p>同一条纪律在 <code>record-browser-gif</code> skill 里被写成显式禁令：</p>
+    <blockquote class="quote en">Do not use a fixed delay as proof that the application reached the state.<span class="src">.agents/skills/record-browser-gif/SKILL.md</span></blockquote>
+    <p>还有一条更细的，专门针对聊天界面：完成判定必须匹配<strong>精确文本相等</strong>的元素，禁止 <code>body.textContent.includes(...)</code> 这类 substring 检查——因为<strong>用户 prompt 的回显本身就会让 substring 检查假通过</strong>。Playwright 的可访问名定位在需要相等语义时必须用 <code>exact: true</code>，理由同样是后代文本或 prompt 回显会造成假匹配。</p>
+    <p>skill 里甚至给了怎么<em>制造</em>瞬态状态来拍它：驱动一个慢的前台操作（比如 <code>sleep 15</code> 的 bash 命令），在<strong>同一次</strong>浏览器脚本调用里轮询一个 <code>data-*</code> DOM 标记并截图——因为跨工具调用的状态会在轮次结算时丢失。以及怎么让模型配合：指示它在本会背景化慢命令时留在前台，并给一个结算哨兵（"reply with the single word done"）来锚定完成判定。</p>
+    <span class="ev"><code>apps/web/tests/scaffold.ts</code> <code>captureStableAria</code>；<code>.agents/skills/record-browser-gif/SKILL.md</code> §Record the flow 第 7、8、10、11 条。</span>
+  </div>
+
+  <div class="mech">
+    <span class="mech-n">机制 04 <span class="enf prose">口头</span></span>
+    <h3>GIF 技能：一个 storyboard = 一次因果执行</h3>
+    <p>这是 dsh 前端治理里写得最详细、也最没有闸门的一条。skill 的 frontmatter 里就带着那句 MUST：<em>"for every pull request that changes product-user-visible GUI behavior, which MUST include a GIF recorded from the pull request's real server and model flow"</em>。</p>
+    <p>它要求的不是"录个演示"，而是<strong>一条可追溯的证据链</strong>：</p>
+    <ul>
+      <li><strong>钉住那棵树。</strong>要求干净工作树，<code>git rev-parse HEAD</code> 记录确切 commit，然后构建<strong>这棵</strong>树。"A GIF recorded against another commit's build misattributes the evidence."</li>
+      <li><strong>每次 run 用全新状态。</strong>新的 <code>DSH_HOME</code> / <code>DSH_AGENTS_HOME</code> / workspace / session，浏览器给全新隔离上下文；做不到就在导航前清掉该 origin 的 cookie 和站点存储。</li>
+      <li><strong>一个 storyboard = 一次 run。</strong>捕获失败就<strong>整轮丢弃、从新的状态根重录</strong>，绝不拼接不同 run 的帧。</li>
+      <li><strong>验证对象是编码后的 GIF 本身。</strong>不是源截图。viewer 只渲染第一帧时，要用 <code>ffmpeg</code> 从<strong>编码后的 GIF</strong> 解出代表帧来看——"the pre-encode screenshots do not prove the encoded order, palette, or final hold"。</li>
+      <li><strong>涉及工具调用时必须有细节帧。</strong>如果结论关于某次 tool call、拒绝或恢复，storyboard 必须包含一帧显示工具身份、状态或稳定错误码、以及下游结果。"A chat-only outcome does not prove why the tool path behaved that way."</li>
+      <li><strong>禁止替身。</strong>fixture 查询、mock transport、合成事件注入、test-only hook——一律不能冒充 real。凭据或服务器不可用时"report that limitation instead of substituting a fixture"。</li>
+    </ul>
+
+    <h4>写进 PR 的 provenance</h4>
+    <p>GIF 旁边必须写清四件事：<strong>确切的被演示 commit SHA、服务它的 tree 和 origin、任何 mode flag 或浏览器状态例外、以及是否真的跑了模型轮次</strong>——"so reviewers know exactly what the recording proves"。用了用户已有的 Chrome 状态要声明，用了 Playwright 兜底要声明，把某个原生系统界面换成可被浏览器驱动的官方生产后端也要声明。</p>
+
+    <h4>发布是独立的一步，且两端都要验</h4>
+    <p>GIF 绝不提交到 PR 自己的分支或任何会并入长期分支的分支（二进制会污染每一次 clone），而是走一个<strong>孤儿 assets 分支</strong>（<code>&lt;series&gt;-assets</code>，无父提交、只装媒体，一个分支服务一整个 PR 系列）。推送前校验分支只含媒体、暂存 GIF 的校验和与本地已验证工件一致；推送后用<strong>已认证</strong>的 API 或 raw 请求确认远端路径、字节数、校验和、<code>200</code> 和 <code>image/gif</code>——匿名 404 不能证伪一个私仓资源。</p>
+    <p>最后这一段是本条最讲究的地方：<strong>改 PR body 之前重读一次 live head，必须仍等于记录的那个 commit；改完再读一次，还必须停在那个值上</strong>；另外把 body 交给 GitHub Markdown API 渲染，确认期望的 <code>&lt;img&gt;</code> 真的在。也就是说，"我录的东西"和"PR 现在是什么"之间的漂移被显式检查了两次。</p>
+
+    <div class="callout soft">
+      <span class="hd">但这条 MUST 没有任何闸门</span>
+      <p>这条 MUST 只写在那一个 skill 文件里（外加一份已归档、不再作为权威的 Agent Note）；同目录的 evidence-chain note 是它的理由书，个别特性 note 会在 Testing 段顺手提一句。但根 <code>AGENTS.md</code>、<code>docs/testing.md</code>、<code>CONTRIBUTING.md</code>、<code>packages/client/AGENTS.md</code>、PR 模板里 <code>gif</code> 与 <code>screenshot</code> 出现 <strong>0 次</strong>，全部 workflow 里也是 0（<code>ci.yml</code> 里 <code>grep -ci gif</code> 的两处命中都来自 <code>JSON.stringify</code>）。<strong>没有任何 workflow 读 <code>pull_request.body</code> 去找 GIF。</strong></p>
+      <p>顺带纠正一个容易得出的错误结论：仓库里 <code>.gif</code> 数量为 0 <em>并不是</em>没人守规矩的证据——skill 明令 GIF 不得提交进主历史（"binary media committed there bloats the repository history for every future clone"），0 恰恰是规矩要求的状态。真正无人验证的是"PR 里到底有没有那段 GIF"。（离线 clone 看不到远端，assets 分支是否存在无法核实。）</p>
+      <p>它<strong>确实在被执行</strong>：Agent Note 里能找到引用，例如 <code>2026-08-18-web-home-path-tilde.md</code> 的 Testing 段结尾写着"Product-GUI PRs still record a real-browser GIF of the hover card."——但这属于"作者自己记了一笔"，不是"机器验过"。</p>
+    </div>
+    <span class="ev"><code>.agents/skills/record-browser-gif/SKILL.md</code>；<code>.agents/notes/implemented/process/2026-08-08-browser-gif-evidence-chain.md</code>；<code>grep -ci gif</code> 于上述五个文件均为 0；<code>git ls-files | grep -ci '\.gif$'</code> → 0。</span>
+  </div>
+
+  <div class="mech">
+    <span class="mech-n">机制 05 <span class="enf test">测试</span></span>
+    <h3>产品自己的 system prompt 兜底</h3>
+    <p>这条最有意思：dsh 的 Web 应用在装配时（当 <code>surfaceContext</code> 为 true——headless 与 complete-prompt 档位会关掉它）会往 system prompt 里注册一个 <code>app:web-surface</code> 段落，直接告诉<strong>正在这个 GUI 里跑的 agent</strong> 它自己的运行时坐标。</p>
+    <pre><code>You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}.
+When the user refers to "this page", "this GUI", or "this app" without naming
+another target, they mean this GUI.
+The browser provides no implicit DOM, route, or screenshot context.
+…
+Starting another server does not update this GUI.
+The apps/web Vite entry builds the shell but is not a standalone application
+because only dsh web injects window.__DSH_BOOT__.
+Do not start a replacement server unless the user asks; if one is needed, use a
+managed background job and verify its exact URL.</code></pre>
+    <p class="footnote">—— <code>packages/bundle/web-app/src/index.ts</code> · <code>webSurfacePrompt()</code></p>
+    <p>同一段还讲清了更新契约：HMR 接收器是活的，但客户端插件改动要免刷新生效，<strong>还得同一个 checkout 里同时跑着 <code>pnpm run dev:web</code> 在重建 bundle</strong>——"verify that watcher before promising automatic updates"；其他任何改动（shell、普通包）都得重建产物并刷新<strong>这个已有 URL</strong> 再验。同时通过 <code>shellEnv</code> 把 <code>$DSH_WEB_URL</code> 暴露给 bash。</p>
+    <p>为什么这算"教 AI 留档"？因为<strong>验证的第一个前提是知道验收目标是哪个 origin</strong>。这一段把它从"模型自己推断"变成了"模型可见的运行时事实"。它是下一条那份事故报告的直接产物。</p>
+    <span class="ev"><code>packages/bundle/web-app/src/index.ts</code>（<code>webSurfacePrompt</code>、<code>section({ name: 'app:web-surface', order: -98 })</code>、<code>shellEnv.register</code> 的 <code>DSH_WEB_URL</code>）。</span>
+  </div>
+
+  <div class="mech">
+    <span class="mech-n">机制 06 <span class="enf prose">口头</span></span>
+    <h3>把一次"AI 交了假证据"写成事故报告</h3>
+    <p><code>docs/postmortem/0003-web-agent-gui-feedback-loop.md</code>，标题就是结论：<strong>"Web agent validated a replacement server instead of its current GUI"</strong>。这是整个仓库里最直接回答"怎么指导 AI 做好验证留档"的一份文件。</p>
+
+    <h4>发生了什么</h4>
+    <p>一个 agent 在 dsh 自己的 Web GUI 里跑（端口 3081），选中的 Workspace 是一个空的 <code>test/</code> 目录。它改了 GUI 主题源码，然后：</p>
+    <ul class="timeline">
+      <li class="bad"><span class="d">turn 2 · seq 30939</span> 改完主题，直接让用户"跑 <code>pnpm run demo:tui</code> 或者打开某个 Web 应用"——<strong>把验收甩回给用户，自己没跑任何组装级验收</strong>。</li>
+      <li class="bad"><span class="d">turn 3 · seq 31865</span> 读了 <code>apps/web/package.json</code>，起了裸 Vite 在 5173，看到 <strong>HTTP 200 就宣布成功</strong>。浏览器实际抛的是 <code>client-modules: window.__DSH_BOOT__ is missing or not an object</code>，白屏。</li>
+      <li class="bad"><span class="d">turn 4 · seq 34309 / 34441</span> 找到了正确的 <code>dsh web</code> 路径，重建 shell，用 <code>&amp;</code> 在 3334 起了个<strong>无人管理的替身进程</strong>，只检查了这个替身返回 200 且有 boot manifest。<strong>从头到尾没探过 3081。</strong></li>
+      <li><span class="d">turn 5 · seq 34556 / 34681</span> 用户告诉它 3081 早就显示新主题了。到这时它才去看已有进程，把多余的服务器收掉。</li>
+    </ul>
+    <p class="footnote">取证方式本身值得学：整条时间线是从持久化的会话事件日志里按序号还原的（<code>session-3eb796c2-…</code>，序号 6 / 30939 / 31865 / 34309 / 34441 / 34681），而不是从 agent 事后的自述里重建意图。原文写得很克制：<em>"The timeline below follows those events rather than reconstructing intent from the later report."</em></p>
+
+    <h4>根因</h4>
+    <p>"The Web assembly had no model-visible identity for the current GUI, canonical URL, or runtime mode." 会话 cwd 正确地标识了用户选中的 Workspace，但模型把那个项目目录当成了应用目录。<strong>没有任何持久记录把 GUI 源码 checkout、构建产物、服务进程、目标 origin、浏览器验收这五件事关联起来。</strong></p>
+    <p>而错误路径之所以看着合法，是因为裸 Vite 返回 200——<code>window.__DSH_BOOT__</code> 只有完整 host 会注入，所以<strong>传输就绪不等于应用就绪</strong>。</p>
+    <p>最狠的一句在后面：<strong>第一版回归测试犯了同一个错的另一种形式</strong>——超时杀掉 Vite 满足了"非零退出"的断言，是个假阳性；靠真实复现才把它暴露出来。</p>
+
+    <h4>加固措施</h4>
+    <p>这份 postmortem 列了五条，注意它们的形态——<strong>没有一条是"加一个检查 PR body 的 gate"</strong>：</p>
+    <ol>
+      <li>Web 启动器把 canonical loopback URL 和真实的 production/development 模式发布进 <code>app:web-surface</code> prompt 段和 <code>$DSH_WEB_URL</code> / <code>$DSH_WEB_MODE</code>。</li>
+      <li>生产路径的指引要求重建产物并<strong>刷新已有 URL 后再验</strong>；开发路径讲清 <code>dsh web --dev</code> 只挂 HMR 接收器。</li>
+      <li><code>apps/web</code> 的独立 Vite serve 模式<strong>在配置阶段就拒绝</strong>；它的子进程测试证明自然退出，并给 <code>Server.listen()</code> 打桩，让一次瞬时 bind 不能悄悄通过。</li>
+      <li>分层的真实路径测试覆盖 CLI 请求、精确的生产/开发 prompt、shell 运行时事实、同端口静态替换、源码 watcher 重建、host stat 轮询、以及页面身份不变前提下的浏览器 HMR。</li>
+      <li>"PR evidence preserves screenshots from the original 3081 session and a real-model before/after GUI run; external browser, HTTP, process, and session-log observations carry acceptance."</li>
+    </ol>
+    <p class="footnote">前两条要读作"2026-07 当时的加固清单"，不是当前 CLI 表面：<code>--dev</code> 开关、Web 运行时的 <code>mode</code> 配置、分模式的 prompt 契约和 <code>DSH_WEB_MODE</code> 变量都已在后来的一次 cmdline 精简里删除（HMR 行现在无条件挂载），基线上只剩 <code>DSH_WEB_URL</code>。<strong>也就是说，这份 postmortem 的 Guardrails 段自己已经对不上代码了</strong>——恰好又是一次"没有闸门盯着的事实会漂走"。</p>
+
+    <div class="lesson">
+      <h4>它留给 AI 的四条验证守则（原文）</h4>
+      <ul>
+        <li>The agent must know hidden runtime prerequisites before it can guide the user; startup mode is application context, not tribal knowledge.</li>
+        <li><strong>HTTP readiness, build success, and a boot manifest are different facts.</strong> Acceptance names the exact origin and externally observes the requested change there.</li>
+        <li><strong>A replacement service cannot prove that an existing page changed.</strong> Long-running processes use managed task lifecycles when they are actually requested.</li>
+        <li><strong>A regression test must be able to fail for the reported mechanism.</strong> Process timeout is not equivalent to fail-fast, and post-exit port availability does not prove the port was never bound.</li>
+      </ul>
+    </div>
+    <span class="ev"><code>docs/postmortem/0003-web-agent-gui-feedback-loop.md</code>（双语三件套，Status: resolved）。</span>
+  </div>
+</section>
+
+<section id="s6">
+  <div class="sec-eyebrow">06 · 模板</div>
+  <h2>一份 PR 的留档长什么样</h2>
+  <p class="sec-lede">机制讲完了，落到纸面上是两个地方：Agent Note 的 <code>## Testing</code> 段，和 PR body 里那个折叠块。</p>
+
+  <p>先看 Agent Note 侧。<code>2026-08-18-web-home-path-tilde.md</code> 是一个典型的小 GUI 特性（把 Workspace 悬浮路径里的 home 前缀显示成 <code>~</code>），它的 <code>## Testing</code> 段是<strong>逐层点名</strong>的：</p>
+
+  <blockquote class="quote en">Package tests cover <code>abbreviateHomePath</code>, <code>toolRowModel</code> / <code>readCardModel</code> home abbreviation, Workspace hover display versus copy, and <code>host.describe</code> schema plus live <code>homedir()</code>. Assembled replay <code>apps/web/tests/home-path-tilde.snapshot.ts</code> hovers the fixture home-descendant Workspace. Product-GUI PRs still record a real-browser GIF of the hover card.<span class="src">.agents/notes/implemented/feature/2026-08-18-web-home-path-tilde.md · ## Testing</span></blockquote>
+
+  <p>三句话对应三层：包级单测（纯函数 + 卡片模型 + host schema）→ 组装回放快照（点名到具体文件和具体交互）→ 真实浏览器 GIF。这就是这套体系期望的留档密度——<strong>不是"已测试"，而是"哪一层、哪个文件、验的是哪个行为"</strong>。</p>
+
+  <p>PR body 侧要朴素得多。<code>.github/pull_request_template.md</code> 全文 13 行，三个字段——<code>关联 Issue：</code>，加上折叠块里的两个：</p>
+  <pre><code>&lt;details&gt;
+&lt;summary&gt;变更与验证&lt;/summary&gt;
+
+- 变更：
+- 验证：
+
+&lt;/details&gt;</code></pre>
+  <p>验证那两个字段没有 checklist、没有必填项、没有任何机器校验。<strong>整套体系把"证据该长什么样"的重量全压在 Agent Note 和受控快照上，PR body 的验证栏只是个转述位。</strong></p>
+  <p class="footnote">同一份 body 的另一半倒是被机器验的：<code>.github/workflows/issue-policy.yml</code> 在每次 PR 事件上跑 <code>issue-management/policy.mjs pr</code>，正文没引用同仓库 Issue 就以 <code>PR 正文必须引用至少一个同仓库 Issue</code> 失败，另外还检查 <code>kind/*</code> 恰好一个。所以这个仓库<strong>有能力</strong>校验 PR 正文——它只是没把这个能力用在验证证据上。</p>
+
+  <h3>怎么选该跑哪些检查</h3>
+  <p><code>dsh-pre-push-checks</code> skill 管这件事，它的核心立场是"除 git hooks 之外没有普适的本地基线"（hooks 本身很窄：pre-commit 修 staged lint、查空白、管翻译配对与归档笔记、重生成第三方声明；pre-push 只跑增量 typecheck）：</p>
+  <blockquote class="quote en">Every behavior change needs the narrowest available test or purpose-built check that would fail for its regression; add broader checks only for surfaces the diff actually reaches.<span class="src">.agents/skills/dsh-pre-push-checks/SKILL.md</span></blockquote>
+  <p>它给了一张"改什么 → 跑什么"的映射（包/脚本行为 → 那个 Vitest 文件；文档/Agent Note/catalog → <code>doc-sync</code>；模型 / 编辑器 / CLI / 终端可见输出 → 拥有该输出的那个无 key 快照或真实可运行示例场景；清单/导出/构建配置/worker 与 bin 入口/已构建运行时路径 → <code>build</code> + hygiene + 已构建产物冒烟；真实 provider 行为 → <code>test:e2e</code>），并且明确禁止两件事：<strong>不要因为接下来要 commit/push 就把一个已经通过的检查再跑一遍</strong>；不要用 <code>--passWithNoTests</code>、调低覆盖率阈值、或收窄 <code>--coverage.include</code> 来藏掉一个未被覆盖的受影响文件。</p>
+  <p>失败处理那一段直接针对 agent 的常见托辞：如果看起来是环境相关的失败，<strong>要拿出证据</strong>——记录确切命令、失败的测试、平台相关的不一致点，确认相关的非平台证据，优先修跨平台不确定性。根 <code>AGENTS.md</code> 里对应的一句是"<strong>report only commands run</strong>"。</p>
+  <span class="ev"><code>.agents/skills/dsh-pre-push-checks/SKILL.md</code>；<code>AGENTS.md</code> §Run relevant checks locally；<code>.github/pull_request_template.md</code>（全文 12 行）。</span>
+</section>
+
+<section id="s7">
+  <div class="sec-eyebrow">07 · 台账</div>
+  <h2>哪些真硬，哪些只是写给 AI 看的</h2>
+  <p class="sec-lede">这是本卷唯一一张需要横向滚动的表，也是最该被诚实对待的一张。</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>规矩</th><th>状态</th><th>执行路径 / 备注</th></tr></thead>
+      <tbody>
+        <tr><td>浏览器期望输出比对（唯一真跑浏览器的 CI job）</td><td><span class="enf gate">闸门</span></td><td class="mono">run-gates.ts webSnapshotGate → test:web:ci，强制 DSH_SNAPSHOT=replay，仅 Linux；PR 上唯一，master push 另有一个非阻塞的 self-hosted 备用 job 也跑</td></tr>
+        <tr><td><code>packages/client/*/src</code> 逐文件 100% 覆盖</td><td><span class="enf gate">闸门</span></td><td class="mono">test:coverage（node 24 / coverage lane，是最终裁决 job 的必需依赖）；但 vitest.config.ts 的 exclude 里有 51 条 packages/client 条目，含整目录 glob</td></tr>
+        <tr><td>client 包清单 / 模块图请求合法性</td><td><span class="enf gate">闸门</span></td><td class="mono">verify-client-packages，在 ciSharedStaticGates</td></tr>
+        <tr><td>文档一致性 28 条 leaf（md-wrap / md-links / 双语配对 / Model Experience / Limitations / client-catalog / Agent Note 三件 …）</td><td><span class="enf gate">闸门</span></td><td class="mono">docSyncLeafGates → node 24 / static（该 lane 跑 27 条；28 条是 pnpm run doc-sync 与 check-all，多一条 doc-typecheck）</td></tr>
+        <tr><td>受控证据文件不得命名 <code>golden</code></td><td><span class="enf gate">闸门</span></td><td class="mono">expected-filenames.yml（仅当 PR 触到含 golden 的路径才触发，且不在 all-checks-passed 的 needs 里）</td></tr>
+        <tr><td>三态模式 / refresh 唯一 writer / 证据清单完整性 / ARIA 稳定性轮询</td><td><span class="enf test">测试</span></td><td class="mono">apps/web/tests/scaffold.ts 的四个 helper，由上面那条 CI job 执行</td></tr>
+        <tr><td><strong>每个 GUI PR 必须附 GIF</strong></td><td><span class="enf prose">口头</span></td><td>规则本身只写在 <code>record-browser-gif/SKILL.md</code>（另有一份已归档笔记与一份 evidence-chain 理由书）；根 AGENTS.md / testing.md / CONTRIBUTING / PR 模板 / 全部 workflow 中 <code>gif</code> 出现 0 次，无 workflow 读 PR 正文</td></tr>
+        <tr><td><code>test:gui</code>（被称作"内环，像 typecheck 一样随便跑"）</td><td><span class="enf prose">口头</span></td><td>无任何 CI job、无 git hook；全仓仅 <code>package.json</code> 一行定义，外加 5 个文件共 9 处散文提及</td></tr>
+        <tr><td>三层互不重测的纪律</td><td><span class="enf prose">口头</span></td><td>note 自己写 "remains review-owned"</td></tr>
+        <tr><td><code>apps/web/tests</code> 不得 import <code>@deepseek-ai/dsh-client-*</code></td><td><span class="enf prose">口头</span></td><td>该 README 末尾原话："Nothing mechanically enforces this rule; keep it in review."</td></tr>
+        <tr><td>client 域图分层（AGENTS.md 称 "enforces the levels"）</td><td><span class="enf prose">口头</span></td><td><code>verify-client-domain-graph</code> 只在本地 <code>check-all</code>，不在任何 <code>ci-*</code> lane</td></tr>
+        <tr><td>样式令牌 / 禁字面色值 / 中文产品文案</td><td><span class="enf prose">口头</span></td><td><code>docs/web-styling.md</code> 与 AGENTS.md 散文；无 stylelint、无对应脚本</td></tr>
+        <tr><td>Tool 的 UI render intent 必须提前决定</td><td><span class="enf prose">口头</span></td><td>根 AGENTS.md + <code>docs/cookbook/adding-a-tool.md</code>；无脚本检查新 tool 是否声明</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout soft">
+    <span class="hd">我实跑的一条</span>
+    <p>为了不把"口头"当成修辞，我在证据基线上跑了 <code>pnpm run verify-client-domain-graph</code>：<strong>它是红的</strong>，26 处违规——<code>ui-conversation</code> 15 处（域间横向 import，如 <code>skeleton/InputBar.tsx → ../input/decorations.ts</code>）、<code>runtime</code> 10 处、<code>ui-workspace</code> 1 处（顶层非装配文件 import 了域）。而 <code>packages/client/AGENTS.md</code> 恰好把 <code>ui-conversation</code> 当作这个模式的<strong>范例</strong>来介绍。</p>
+    <p>这不是黑历史，是这套体系的运作方式暴露出来的一个结构性事实：<strong>一条规则的强度不取决于它写得多认真，只取决于它挂在哪条 lane 上。</strong></p>
+  </div>
+  <span class="ev"><code>pnpm run verify-client-domain-graph</code> → exit 1，26 violations（2026-08-21 在 <code>141eb6fef8</code> 上执行）；<code>scripts/run-gates.ts</code> 中该 gate 仅出现在 <code>check-all</code> 分支。</span>
+</section>
+
+<section id="s8">
+  <div class="sec-eyebrow">08 · 拿走</div>
+  <h2>可迁移的五条</h2>
+  <p class="sec-lede">如果你也在让 AI 改前端，这五条与 dsh 的具体技术栈无关。</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>1 · 让证据文本化</h4>
+      <p>ARIA 树和"把像素归约成稳定断言再写成人话"这两种体裁都可以直接抄。判据是：<strong>reviewer 能不能在 PR diff 里读懂这次改动改了什么</strong>。截图做不到，文本可以。</p>
+    </div>
+    <div class="card">
+      <h4>2 · 把"写期望值"和"比对期望值"分成不同模式</h4>
+      <p>并且 CI 只允许比对模式（<code>replay</code> 只读，<code>refresh</code> 与 <code>record</code> 才写，且只在本地）。这比任何写在 prompt 里的"不要偷懒"都管用——一个被要求把测试跑绿的 agent，最自然的动作就是重新生成期望值，那条路径必须在 CI 上物理消失。</p>
+    </div>
+    <div class="card">
+      <h4>3 · 断言证据目录的完整清单</h4>
+      <p>不只断言内容对不对，还要断言<strong>该有的文件一个不少、不该有的一个不多</strong>。这一条治的是"留一半档"和"留垃圾"，成本极低。</p>
+    </div>
+    <div class="card">
+      <h4>4 · 给 agent 它自己的运行时坐标</h4>
+      <p>把"你现在服务在哪个 URL"、"什么改动会自动生效、什么必须重建"、"起另一个服务器不会更新这个页面"写进 system prompt 和环境变量，别指望模型推断。验证的第一个前提是知道验收目标。</p>
+    </div>
+    <div class="card">
+      <h4>5 · 事故要变成 guardrail，不只是文档</h4>
+      <p>0003 那份把"AI 记录了虚假验证证据"当一等事故解剖，取证到会话事件序号；产出的是一个 prompt 段落、一个配置期拒绝、一组分层真实路径测试——<strong>而不是又一条写在 AGENTS.md 里的告诫</strong>。</p>
+    </div>
+    <div class="card">
+      <h4>加一条：诚实地标注强度</h4>
+      <p>dsh 值得学的还有一点：它在文档里<strong>主动写明哪条规则没人管</strong>（"Nothing mechanically enforces this rule; keep it in review."）。这比假装所有规则都一样硬要有用得多。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s9">
+  <div class="sec-eyebrow">09 · 方法</div>
+  <h2>方法与边界</h2>
+
+  <h3>怎么做的</h3>
+  <p><strong>第一轮（调研）</strong>：10 个并行 agent 分片覆盖 GUI 测试分层、web 快照机制、GIF 技能、client 静态闸门与 invariant companion、前端文档管理与预算与双语、Agent Notes 留档规则、AI 工作流技能指令、CI lane 与产物、设计与文案标准、Tool UI render intent。随后 3 个验证 agent：一个专门<strong>反驳</strong>所有"这条是机器强制的"声明（要求把脚本追溯到实际执行入口——run-gates 的 lane、lefthook、或某个 workflow job；找不到执行路径就判"未强制"），一个做证据工件普查，一个做完整性批评。</p>
+  <p><strong>第二轮（发布前事实核查）</strong>：9 个 agent 按章节分片，被明确要求"对抗式而非确认式"——每个数字自己重算并报出所用命令，每句英文引文逐字符比对，每一条"没人管"的负面断言都要重新搜 <code>scripts/</code>、<code>.github/workflows/</code>、<code>lefthook.yml</code>、<code>package.json</code>，找不到执行路径才算成立。复核 300+ 条断言，判 15 处错误、41 处不精确（含跨分片重复）、8 处无法核验，<strong>全部已改</strong>。</p>
+  <p>被改掉的错误里，有五处会实质影响读者的判断，值得单独列出：初稿把"仓库里 0 个 <code>.gif</code>"当成没人守规矩的证据，而 skill 本来就禁止把 GIF 提交进主历史；初稿说 <code>packages/client/AGENTS.md</code> 无人链接，实际有一条 cookbook 链接和 8 处源码引用；初稿说 <code>## Alternatives considered</code> 无条件强制，实际有一条写明日期的祖父条款；初稿说 PR 正文"没有任何机器校验"，实际 <code>issue-policy</code> 会因正文未引用 Issue 而失败；初稿沿用 note 里的"8 个 client 插件"，基线上已是 37。文中所有关键数字（35 / 40 / 64 / 138 / 110 / 83 / 723 / 580 / 50 / 26 / 0）以及那次 <code>verify-client-domain-graph</code> 红灯，均由我本人在证据基线上重跑核对。</p>
+
+  <h3>边界</h3>
+  <ul>
+    <li><strong>没有远端可看。</strong>本次调研在离线 clone 上进行，看不到 GitHub 上的 PR body、assets 分支、CI 运行记录。所以"GIF 实践到底执行到什么程度"只能从仓库内的引用推断（Agent Note 里确有引用），不能量化。</li>
+    <li><strong>"是否有闸门"是结构判断，不是历史判断。</strong>某条规则今天没挂 lane，不排除它曾经挂过或即将挂上。</li>
+    <li><strong>本卷不覆盖终端 UI。</strong><code>apps/cli</code> 走的是另一套（含一个 PTY 用例），与 Web 侧共享 <code>docs/testing.md</code> 的总策略但机制不同。顺带一提：<code>docs/testing.md</code> 里写的 <code>apps/cli/tests/snapshots/</code> 在基线上并不存在，<code>apps/cli</code> 下也没有任何 <code>.jsonl</code>——这是本次核查顺手撞见的第三处"文档比代码新"。</li>
+    <li><strong>不覆盖 Python SDK 与 ACP 侧的快照体系。</strong>ACP 侧与 Web 侧确实共用 <code>vitest.snapshot.config.ts</code> 这条 lane（对比规模：<code>examples/acp-agent/tests/snapshots</code> 有 367 个文件 / 84 个场景；Web 的那批只在 <code>DSH_EXAMPLE_MODE=lib</code> 时才被这条 lane 收进来）；Python SDK 走的是完全另一条——期望输出在 <code>scripts/snapshots/python-sdk-single-exe/</code>，由 <code>python-runtime</code> 那个必需 CI job 用一个 Python 脚本驱动。</li>
+  </ul>
+
+  <p class="footnote">证据基线 <code>141eb6fef8</code>（2026-08-19，dsh 0.1.0-rc.8）。文中所有文件路径与引文均相对该提交；引文为原文摘录，未作改写。</p>
+</section>
+
+</main>
+</div>
