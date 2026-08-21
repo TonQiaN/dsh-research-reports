@@ -139,7 +139,7 @@ figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
 <nav class="toc">
   <div class="toc-title">目录</div>
   <ol>
-    <li><a href="#s1"><span class="n">01</span>名册：24 个人，71 天</a></li>
+    <li><a href="#s1"><span class="n">01</span>名册：29 个身份，71 天</a></li>
     <li><a href="#s2"><span class="n">02</span>Tianyi Cui 到底负责什么</a></li>
     <li><a href="#s3"><span class="n">03</span>合并权的交接</a></li>
     <li><a href="#s4"><span class="n">04</span>十四张人物卡</a></li>
@@ -159,12 +159,12 @@ figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
 <header class="hero">
   <div class="eyebrow">第七卷 · 组织</div>
   <h1>谁写了 DeepSeek Harness</h1>
-  <p class="lede">把 git 历史当人事档案读：24 个人在 71 天里提交了 12,940 次。Tianyi Cui 具体负责什么、其余 DeepSeek 工程师各守哪块地、合并权在七月底如何易手，以及这些人加上他们各自指挥的 AI 舰队，最后长成了一个什么形状的组织。</p>
+  <p class="lede">把 git 历史当人事档案读：29 个提交身份在 71 天里落下 12,940 次提交。Tianyi Cui 具体负责什么、其余 DeepSeek 工程师各守哪块地、合并权在七月底如何易手，以及这些人加上他们各自指挥的 AI 舰队，最后长成了一个什么形状的组织。</p>
   <p class="meta">证据基线 141eb6fef8（0.1.0-rc.8，2026-08-19）· 完整克隆非浅克隆 · 所有数字均在本机重新推导</p>
   <div class="stats">
     <div class="stat"><div class="v">12,940</div><div class="k">提交总数（7,090 非合并）</div></div>
     <div class="stat"><div class="v">1,054</div><div class="k">合并的 Pull Request</div></div>
-    <div class="stat"><div class="v">24</div><div class="k">有提交的人类（+1 bot）</div></div>
+    <div class="stat"><div class="v">28</div><div class="k">留下提交的人（+1 bot、1 台虚机）</div></div>
     <div class="stat"><div class="v">226</div><div class="k">workspace 包</div></div>
     <div class="stat"><div class="v">77.0%</div><div class="k">PR 由作者自己点的合并</div></div>
     <div class="stat"><div class="v">46.7%</div><div class="k">文件改动落在文档上</div></div>
@@ -172,8 +172,8 @@ figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
 </header>
 <section id="s1">
   <div class="sec-eyebrow">01 / 名册</div>
-  <h2>24 个人，71 天</h2>
-  <p class="sec-lede">仓库从 2026-06-10 开到 2026-08-19，整整 71 天。六月只有 5 个人在提交，七月 20 个，八月 23 个。下表按非合并提交量排，别名已按邮箱合并（Wenlu Wang=kingwl、Ziya=ZiyaZhang、Terra/Ni Shentu=NI0317、Ag=Jiaying Ding、CreatixChu=creatixchu）。</p>
+  <h2>29 个身份，71 天</h2>
+  <p class="sec-lede">仓库从 2026-06-10 开到 2026-08-19，整整 71 天。别名按邮箱合并后共 <strong>29 个提交身份</strong>——其中一个是 <code>Ubuntu@localhost</code>（自建 CI 虚机，实为 Chinesezjc 在里面触发构建），所以是 <strong>28 个人</strong>。每月在场人数：六月 10 人、七月 24 人、八月 26 人（按当月至少 1 次提交计；若按至少 3 次算则是 5 / 19 / 23）。下表列出提交量 ≥3 的 24 位，外加 Shigma；余下 4 个身份各只有 1–2 次提交（yx.zhang、Jinhua Zhu、tn.shen，以及那台 Ubuntu 虚机）。别名合并表：Wenlu Wang=kingwl、Ziya=ZiyaZhang、Terra/Ni Shentu=NI0317、Ag=Jiaying Ding、CreatixChu=creatixchu。</p>
   <div class="tbl-wrap compact wide">
   <table>
     <thead><tr><th>人</th><th class="num">提交</th><th class="num">活跃天</th><th class="num">每天</th><th class="num">点合并</th><th class="num">Note</th><th class="mono">在场区间</th><th>邮箱域</th></tr></thead>
@@ -227,15 +227,16 @@ figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
   <table>
     <thead><tr><th>类型</th><th class="num">次数</th><th class="num">占比</th><th>说明</th></tr></thead>
     <tbody>
-      <tr><td class="mono">fix:</td><td class="num">681</td><td class="num">30%</td><td>修别人和自己的东西</td></tr>
-      <tr><td class="mono">docs:</td><td class="num">646</td><td class="num">28%</td><td>规则、Agent Note、目录、双语</td></tr>
-      <tr><td class="mono">test:</td><td class="num">~318</td><td class="num">14%</td><td>覆盖率与快照</td></tr>
-      <tr><td class="mono">refactor:</td><td class="num">~159</td><td class="num">7%</td><td>结构迁移</td></tr>
+      <tr><td class="mono">fix:</td><td class="num">714</td><td class="num">31%</td><td>修别人和自己的东西</td></tr>
+      <tr><td class="mono">docs:</td><td class="num">647</td><td class="num">29%</td><td>规则、Agent Note、目录、双语</td></tr>
+      <tr><td class="mono">test:</td><td class="num">308</td><td class="num">14%</td><td>覆盖率与快照</td></tr>
+      <tr><td class="mono">refactor:</td><td class="num">148</td><td class="num">7%</td><td>结构迁移</td></tr>
+      <tr><td class="mono">ci:</td><td class="num">107</td><td class="num">5%</td><td>CI 矩阵与闸门编排</td></tr>
       <tr><td class="mono">feat:</td><td class="num">120</td><td class="num">5%</td><td>新功能</td></tr>
     </tbody>
   </table>
   </div>
-  <p><code>docs:</code> 是 <code>feat:</code> 的 5.4 倍。而且这个比例随时间还在恶化：六月他写 34 个 <code>feat:</code>，七月 76 个，八月只剩 10 个——同期他的月提交量是 296 / 1,639 / 334。<strong>团队规模翻了四倍，他自己的产出塌了 80%。</strong></p>
+  <p><code>docs:</code> 是 <code>feat:</code> 的 5.4 倍（647 : 120）。而且这个比例随时间还在恶化：六月他写 34 个 <code>feat:</code>，七月 76 个，八月只剩 10 个——同期他的月提交量是 296 / 1,639 / 334（八月只统计到 19 号）。<strong>月在场人数从 10 涨到 26，他自己的日均产出从七月的 52.9 次掉到八月的 17.6 次。</strong></p>
   <span class="ev"><code>git log --no-merges --author='53024+tianyicui' --format='%ad|%s' --date=format:'%Y-%m'</code> 按月×类型交叉统计。</span>
   <h3>他负责的是「约束系统」</h3>
   <div class="tbl-wrap compact">
@@ -289,7 +290,7 @@ figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
     <h4>一句话总结</h4>
     <ul>
       <li>他负责的是<strong>立法与执法机器</strong>：AGENTS.md、Agent Note 协议、11 个 skill 里的 8 个、41 个闸门脚本里的 28 个、全部四次结构大搬迁。</li>
-      <li>他负责的<strong>不是</strong>产品功能——120 个 <code>feat:</code> 分摊到 71 天，而同期他写了 646 个 <code>docs:</code>。</li>
+      <li>他负责的<strong>不是</strong>产品功能——120 个 <code>feat:</code> 分摊到 71 天，而同期他写了 647 个 <code>docs:</code> 和 714 个 <code>fix:</code>。</li>
       <li>他的曲线是一条<strong>主动退位曲线</strong>：七月一个人干 1,639 次提交，八月降到 334；合并权从 100% 交到 18%。</li>
     </ul>
   </div>
@@ -507,7 +508,7 @@ figcaption { font-size: .83rem; color: var(--ink-2); margin-top: .5rem; }
     <p>这是一次教科书式的 <strong>inverse Conway manoeuvre</strong>：不是组织形状决定了架构，是先把架构切成能并行的格子，再把人（和 agent）倒进格子。被删掉的 missions/ 账本里写着同一条方针的操作版——主会话一刀切出全部包骨架，<em>桩类型就是契约</em>，每个 agent 一个包当属地，其余包只读，改接口只能由主会话仲裁。</p>
   </div>
   <p>反面证据同样清楚：整个计划里唯一被安排了<strong>两个 agent 共用一个包</strong>的地方（<code>ui-conversation</code>，convo-a / convo-b），成了全仓最持久的冲突区，也是账本里三起「混刀」事故的现场。而这一条的最终结论写进了产品：<code>agent-team</code> 里的 <code>writeScopes</code> <em>只产生重叠诊断，从不阻止写入</em>——团队自己承认领地是概率工具，不是锁。</p>
-  <p>最后一个数字：<strong>226 个包 ÷ 20 人 ÷ 10 周 ≈ 每人月 10 个包</strong>，同期人均月提交 306 次。2026-07-14 那天，一个人的 132 次提交碰了 69 个不同的包。这个速率不是手打出来的。</p>
+  <p>最后一个数字：71 天里建成 226 个包、落下 7,090 次非合并提交——<strong>平均每天 3.2 个新包、100 次提交</strong>，而这段时间里每月在场的人是 10 → 24 → 26。更能说明问题的是个人峰值：2026-07-14 那天，一个人的 132 次提交碰了 <strong>69 个不同的包</strong>。这个速率不是手打出来的。</p>
 </section>
 <section id="s6">
   <div class="sec-eyebrow">06 / 工具</div>
