@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="把 DeepSeek Harness 的 11 个开发 Skill 放回 Idea、Issue、Worktree、实现、测试、Push、PR、Review 与 Merge 主线，分析覆盖范围、触发方式、自动化边界与缺口。">
+  <title>DeepSeek Harness：开发流程 Skills 覆盖地图</title>
+  <style>
+    :root {
+      --ground: #ffffff;
+      --surface: #f6f9f8;
+      --surface-2: #edf4f2;
+      --line: #dbe7e3;
+      --line-soft: #e9f0ee;
+      --ink: #12201c;
+      --ink-2: #465b54;
+      --ink-3: #758881;
+      --accent: #087f68;
+      --accent-ink: #006b57;
+      --accent-soft: #e6f5f0;
+      --warn: #946516;
+      --warn-soft: #fbf3df;
+      --risk: #ad4540;
+      --risk-soft: #faeceb;
+      --info: #356fa8;
+      --info-soft: #eaf2fa;
+      --manual: #8d65b5;
+      --manual-soft: #f2ecf8;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      --measure: 46rem;
+      --bleed: 76rem;
+      --radius: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ground: #111916;
+        --surface: #17211d;
+        --surface-2: #1d2b26;
+        --line: #2b3c36;
+        --line-soft: #23322d;
+        --ink: #eff8f4;
+        --ink-2: #b5c8c1;
+        --ink-3: #7f968d;
+        --accent: #49c8a7;
+        --accent-ink: #72d9bd;
+        --accent-soft: rgba(73, 200, 167, .12);
+        --warn: #d7a84e;
+        --warn-soft: rgba(215, 168, 78, .12);
+        --risk: #e47c76;
+        --risk-soft: rgba(228, 124, 118, .12);
+        --info: #78ace0;
+        --info-soft: rgba(120, 172, 224, .12);
+        --manual: #bd97e2;
+        --manual-soft: rgba(189, 151, 226, .12);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 0 1.35rem 5rem;
+      background: var(--ground);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.78;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { max-width: var(--bleed); margin: 0 auto; }
+    .col { max-width: var(--measure); margin-inline: auto; }
+    .wide { max-width: var(--bleed); margin-inline: auto; }
+    p, ul, ol { margin: 0 0 1.08rem; }
+    ul, ol { padding-left: 1.25rem; }
+    li { margin-bottom: .42rem; }
+    li::marker { color: var(--ink-3); }
+    strong { color: var(--ink); font-weight: 660; }
+    em { color: var(--accent-ink); font-style: normal; }
+    a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+    a:hover { border-bottom-color: var(--accent); }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+    code, .mono { font-family: var(--mono); font-size: .86em; }
+    p code, li code, td code, .source code {
+      padding: .07em .34em;
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      background: var(--surface-2);
+      color: var(--ink-2);
+      overflow-wrap: anywhere;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--line-soft);
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .7rem;
+      letter-spacing: .05em;
+    }
+    .topline .links { display: flex; flex-wrap: wrap; gap: .45rem 1rem; }
+    .topline a { color: var(--ink-2); border: 0; }
+    .topline a:hover { color: var(--accent-ink); }
+
+    .masthead { padding: 4rem 0 2rem; }
+    .kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem 1rem;
+      margin-bottom: 1.45rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0 0 1.25rem;
+      font-size: clamp(2.15rem, 5.5vw, 3.55rem);
+      font-weight: 670;
+      line-height: 1.08;
+      letter-spacing: -.027em;
+      text-wrap: balance;
+    }
+    .standfirst { margin: 0; color: var(--ink-2); font-size: 1.14rem; line-height: 1.72; }
+    .thesis {
+      margin: 1.8rem 0;
+      padding: 1.35rem 0 1.35rem 1.35rem;
+      border-left: 2px solid var(--accent);
+      font-size: 1.04rem;
+      line-height: 1.76;
+    }
+    .thesis p:last-child { margin-bottom: 0; }
+
+    .takeaways {
+      margin: 2.35rem 0;
+      padding: 1.35rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .section-kicker {
+      display: block;
+      margin-bottom: .42rem;
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .68rem;
+      font-weight: 650;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .takeaways h2 { margin: 0 0 .55rem; font-size: 1.46rem; line-height: 1.3; }
+    .takeaways-intro { margin: 0; color: var(--ink-2); font-size: .91rem; }
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      margin: 1.2rem 0 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+      list-style: none;
+    }
+    .takeaway {
+      display: grid;
+      grid-template-columns: 2.2rem minmax(0, 1fr);
+      gap: .78rem;
+      margin: 0;
+      padding: 1rem 1.05rem;
+      background: var(--ground);
+    }
+    .takeaway:first-child { grid-column: 1 / -1; background: var(--accent-soft); }
+    .takeaway-no { color: var(--accent-ink); font-family: var(--mono); font-size: .72rem; font-weight: 680; }
+    .takeaway h3 { margin: -.1rem 0 .3rem; font-size: .99rem; line-height: 1.4; }
+    .takeaway p { margin: 0; color: var(--ink-2); font-size: .84rem; line-height: 1.6; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin: 2.2rem 0 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+    .stat { padding: 1.05rem 1.15rem 1.15rem; background: var(--ground); }
+    .stat dt { margin-bottom: .48rem; color: var(--ink-3); font-family: var(--mono); font-size: .67rem; letter-spacing: .09em; text-transform: uppercase; }
+    .stat dd { margin: 0; font-size: 1.72rem; font-weight: 650; line-height: 1.08; letter-spacing: -.025em; }
+    .stat .sub { margin-top: .48rem; color: var(--ink-3); font-size: .77rem; line-height: 1.5; }
+
+    .toc {
+      margin: 2rem auto 0;
+      padding: 1.2rem 1.35rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .06rem 1.7rem; margin: 0; padding: 0; list-style: none; }
+    .toc li { margin: 0; }
+    .toc a { display: block; padding: .27rem 0; border: 0; color: var(--ink-2); font-size: .92rem; }
+    .toc a:hover { color: var(--accent-ink); }
+    .toc .n { margin-right: .55rem; color: var(--ink-3); font-family: var(--mono); font-size: .7rem; }
+
+    .report-section { padding-top: 4.2rem; scroll-margin-top: 1rem; }
+    .eyebrow { display: block; margin-bottom: .62rem; color: var(--ink-3); font-family: var(--mono); font-size: .7rem; letter-spacing: .11em; text-transform: uppercase; }
+    h2 { margin: 0 0 1rem; font-size: 1.72rem; line-height: 1.27; letter-spacing: -.014em; text-wrap: balance; }
+    h3 { margin: 2rem 0 .72rem; font-size: 1.08rem; line-height: 1.42; text-wrap: balance; }
+    h4 { margin: 0 0 .5rem; font-size: .97rem; }
+
+    .note { margin: 1.5rem 0; padding: 1rem 1.15rem; border: 1px solid var(--line); border-left: 2px solid var(--accent); border-radius: var(--radius); background: var(--surface); color: var(--ink-2); font-size: .92rem; }
+    .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+    .note.risk { border-left-color: var(--risk); background: var(--risk-soft); }
+    .note.info { border-left-color: var(--info); background: var(--info-soft); }
+    .note p:last-child { margin-bottom: 0; }
+    .tag { display: block; margin-bottom: .34rem; color: var(--ink-3); font-family: var(--mono); font-size: .66rem; letter-spacing: .09em; text-transform: uppercase; }
+
+    .formula {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .5rem;
+      margin: 1.55rem 0;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .formula span { padding: .25rem .58rem; border: 1px solid var(--line); border-radius: 999px; background: var(--ground); color: var(--ink-2); font-family: var(--mono); font-size: .72rem; }
+    .formula i { color: var(--ink-3); font-style: normal; }
+    .formula .active { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+
+    .tablewrap { margin: 1.6rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    th, td { padding: .66rem .8rem; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+    thead th { border-bottom-color: var(--line); background: var(--surface); color: var(--ink-3); font-family: var(--mono); font-size: .66rem; font-weight: 520; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td:first-child { color: var(--ink); font-weight: 620; white-space: nowrap; }
+    .kind { display: inline-block; padding: .08rem .4rem; border: 1px solid currentColor; border-radius: 999px; font-family: var(--mono); font-size: .62rem; white-space: nowrap; }
+    .kind.git { color: var(--accent-ink); }
+    .kind.docs { color: var(--info); }
+    .kind.note-kind { color: var(--warn); }
+    .kind.gui { color: var(--manual); }
+
+    .route-map { display: flex; gap: .7rem; margin: 1.8rem 0 0; padding: .2rem 0 .8rem; overflow-x: auto; scroll-snap-type: x proximity; }
+    .route-node {
+      position: relative;
+      flex: 0 0 10.2rem;
+      min-height: 8.3rem;
+      padding: .85rem;
+      border: 1px solid var(--line);
+      border-top-width: 3px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      scroll-snap-align: start;
+    }
+    .route-node::after { content: "→"; position: absolute; top: 50%; right: -.67rem; z-index: 2; color: var(--ink-3); transform: translateY(-50%); }
+    .route-node:last-child::after { display: none; }
+    .route-node.core { border-top-color: var(--accent); }
+    .route-node.conditional { border-top-color: var(--warn); }
+    .route-node.gap { border-top-color: var(--risk); }
+    .route-node .rn { display: block; margin-bottom: .6rem; color: var(--ink-3); font-family: var(--mono); font-size: .65rem; }
+    .route-node b { display: block; margin-bottom: .3rem; font-size: .86rem; line-height: 1.35; }
+    .route-node small { display: block; color: var(--ink-3); font-size: .7rem; line-height: 1.48; }
+    .legend { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: .85rem; color: var(--ink-3); font-size: .78rem; }
+    .legend span::before { content: ""; display: inline-block; width: .58rem; height: .18rem; margin-right: .38rem; vertical-align: .2em; background: currentColor; }
+    .legend .l-core { color: var(--accent-ink); }
+    .legend .l-conditional { color: var(--warn); }
+    .legend .l-gap { color: var(--risk); }
+
+    .gap-panel { margin: 1.7rem 0; padding: 1.2rem; border: 1px solid var(--risk); border-radius: var(--radius); background: var(--risk-soft); }
+    .gap-code {
+      margin: 0;
+      overflow-x: auto;
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: clamp(.78rem, 2vw, .94rem);
+      line-height: 1.56;
+      white-space: pre;
+    }
+    .gap-code code { color: inherit; font: inherit; }
+
+    .grid2, .grid3 { display: grid; gap: 1rem; margin: 1.65rem 0; }
+    .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { padding: 1.08rem 1.13rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ground); }
+    .card p, .card ul, .card ol { margin-bottom: 0; color: var(--ink-2); font-size: .87rem; line-height: 1.66; }
+    .card .cap { display: block; margin-bottom: .44rem; color: var(--ink-3); font-family: var(--mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; }
+    .card.green { border-top: 3px solid var(--accent); }
+    .card.gold { border-top: 3px solid var(--warn); }
+    .card.blue { border-top: 3px solid var(--info); }
+    .card.purple { border-top: 3px solid var(--manual); }
+
+    .role-card { min-height: 17rem; }
+    .role-card .who { display: inline-block; margin-bottom: .72rem; padding: .1rem .45rem; border: 1px solid currentColor; border-radius: 999px; color: var(--accent-ink); font-family: var(--mono); font-size: .65rem; }
+    .role-card ol { padding-left: 1.1rem; }
+
+    .skill-chain { display: flex; flex-wrap: wrap; align-items: center; gap: .42rem; margin: 1.4rem 0; padding: .95rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .skill-chain span { padding: .2rem .5rem; border: 1px solid var(--line); border-radius: 999px; background: var(--ground); color: var(--ink-2); font-family: var(--mono); font-size: .67rem; }
+    .skill-chain i { color: var(--ink-3); font-style: normal; }
+
+    .codeblock { margin: 1.45rem 0; padding: 1rem 1.1rem; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink-2); font-family: var(--mono); font-size: .76rem; line-height: 1.7; white-space: pre; }
+    .codeblock code { color: inherit; font: inherit; }
+
+    .layer-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 1.6rem 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+    .layer { padding: 1rem; background: var(--ground); }
+    .layer b { display: block; margin-bottom: .45rem; font-size: .9rem; }
+    .layer p { margin: 0; color: var(--ink-2); font-size: .8rem; line-height: 1.58; }
+    .layer:nth-child(1) { border-top: 3px solid var(--info); }
+    .layer:nth-child(2) { border-top: 3px solid var(--accent); }
+    .layer:nth-child(3) { border-top: 3px solid var(--warn); }
+    .layer:nth-child(4) { border-top: 3px solid var(--manual); }
+
+    .source { margin: 1.18rem 0 0; padding: .82rem .94rem; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); color: var(--ink-3); font-family: var(--mono); font-size: .7rem; line-height: 1.65; }
+    .source a { color: var(--ink-2); border-bottom-color: var(--line); }
+    .truth { margin-top: 1.7rem; padding: 1.2rem 1.3rem; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+    .truth p { margin: 0; font-size: 1rem; line-height: 1.72; }
+    footer { margin-top: 4.2rem; padding-top: 1.55rem; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .82rem; line-height: 1.72; }
+    footer p:last-child { margin-bottom: 0; }
+
+    @media (max-width: 900px) {
+      .stats, .layer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid3 { grid-template-columns: 1fr; }
+      .role-card { min-height: auto; }
+    }
+    @media (max-width: 650px) {
+      body { padding: 0 1rem 4rem; font-size: 15.5px; }
+      .topline { align-items: flex-start; flex-direction: column; }
+      .masthead { padding-top: 3.1rem; }
+      .stats, .toc ol, .takeaway-grid, .grid2, .layer-grid { grid-template-columns: 1fr; }
+      .takeaway:first-child { grid-column: auto; }
+      .gap-panel { padding: .9rem; }
+    }
+    @media print {
+      :root { color-scheme: light; }
+      body { padding: 0; font-size: 10.5pt; }
+      .topline, .toc, .route-map { display: none; }
+      .masthead { padding-top: 1rem; }
+      .report-section, .card, .note, .gap-panel { break-inside: avoid; }
+      a { color: inherit; border: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+<div class="page">
+  <nav class="topline" aria-label="研究报告导航">
+    <div class="links">
+      <a href="./01-从-Issue-到-PR·代码开发全流程.html">← 01 · 开发主线</a>
+      <a href="./02-DeepSeek-Harness·文档管理全流程.html">02 · 文档生命周期</a>
+    </div>
+    <span>03 · Development skills map</span>
+  </nav>
+
+  <header class="masthead col">
+    <div class="kicker">
+      <span>DeepSeek Harness</span>
+      <span>11 repository skills</span>
+      <span>Snapshot 141eb6f</span>
+    </div>
+    <h1>十一份 Skill，为什么没有组成一条自动开发流水线</h1>
+    <p class="standfirst">这页不把 Skill 当作独立文件逐篇复述，而是把它们放回同一个 Idea 的开发旅程：哪些节点会加载 Skill，Skill 给 agent 什么判断和动作，哪些事情真正由 Hook / CI 强制，以及从 Issue、Worktree 到 PR 之间还留下了哪些空白。</p>
+
+    <div class="thesis">
+      <p><strong>核心判断：</strong>DeepSeek Harness 的 Skill 系统是一组<strong>按场景加载的工程操作手册</strong>，不是 SDLC orchestrator。它在文档、pre-push、review 和 stacked merge 上很强，但没有通用的 Issue、Worktree、Plan、Coding、Test-design 或 PR-creation Skill；人或外部编排器仍然负责把这些局部工作流接成完整开发流程。</p>
+    </div>
+
+    <section class="takeaways" id="takeaways" aria-labelledby="takeaways-title">
+      <span class="section-kicker">Five takeaways</span>
+      <h2 id="takeaways-title">先记住这五件事</h2>
+      <p class="takeaways-intro">最值得学习的不是 Skill 数量，而是它们解决什么失败模式，以及什么事情被刻意留给门禁和人。</p>
+      <ol class="takeaway-grid">
+        <li class="takeaway"><span class="takeaway-no">01</span><div><h3>没有 Master Skill</h3><p>11 份 Skill 不会自动串成 Issue → Worktree → Plan → Coding → PR；每一份只在自己的触发场景中给 agent 一段局部工作流。</p></div></li>
+        <li class="takeaway"><span class="takeaway-no">02</span><div><h3>Skill 是手册，不是门禁</h3><p>Skill 告诉 agent 如何判断和操作；真正能自动失败的是 Lefthook、测试、doc-sync、CI 和 GitHub merge requirements。</p></div></li>
+        <li class="takeaway"><span class="takeaway-no">03</span><div><h3>覆盖明显后置</h3><p>Idea、Issue、Worktree 和通用 Plan 基本空白；最强覆盖集中在写作质量、Push 前证据、PR Review 与 stacked merge。</p></div></li>
+        <li class="takeaway"><span class="takeaway-no">04</span><div><h3>五份 Skill 都在治理文字</h3><p>文档落位、完整命题、推理残留、双语和网站投影占 5/11，说明 agent 的主要风险之一是写出重复、过期或含混的长期文本。</p></div></li>
+        <li class="takeaway"><span class="takeaway-no">05</span><div><h3>按变更类型选择，不是全部加载</h3><p>GUI 才录 GIF，stack 才走专用 merge，复杂翻译必须手动调用；上下文成本本身也是需要治理的资源。</p></div></li>
+      </ol>
+    </section>
+
+    <dl class="stats" aria-label="Skills 固定版本统计">
+      <div class="stat"><dt>Repository skills</dt><dd>11</dd><div class="sub">全部位于 <code>.agents/skills/</code></div></div>
+      <div class="stat"><dt>SKILL.md words</dt><dd>13,673</dd><div class="sub">当前快照按空白分词合计</div></div>
+      <div class="stat"><dt>Codex metadata</dt><dd>6</dd><div class="sub">带 <code>agents/openai.yaml</code> 的 bundle</div></div>
+      <div class="stat"><dt>Manual only</dt><dd>1</dd><div class="sub"><code>dsh-translate-docs</code> 禁止模型隐式调用</div></div>
+    </dl>
+  </header>
+
+  <nav class="toc col" aria-label="报告目录">
+    <ol>
+      <li><a href="#skill-layer"><span class="n">01</span>Skill 到底是哪一层</a></li>
+      <li><a href="#inventory"><span class="n">02</span>11 份 Skill 全表</a></li>
+      <li><a href="#mainline"><span class="n">03</span>放回开发主线</a></li>
+      <li><a href="#gaps"><span class="n">04</span>它们没有覆盖的地方</a></li>
+      <li><a href="#core"><span class="n">05</span>三个流程核心</a></li>
+      <li><a href="#conditional"><span class="n">06</span>条件型 Skill 簇</a></li>
+      <li><a href="#wiring"><span class="n">07</span>如何被 Agent 看见</a></li>
+      <li><a href="#boundaries"><span class="n">08</span>Skill / Hook / CI / 人</a></li>
+      <li><a href="#verdict"><span class="n">09</span>最终判断</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section class="report-section col" id="skill-layer">
+      <span class="eyebrow">01 · System boundary</span>
+      <h2>Skill 是“agent 应该怎么做”，不是“仓库自动替 agent 做”</h2>
+      <p>每个 bundle 的核心是一份带 YAML frontmatter 的 <code>SKILL.md</code>。其中 <code>description</code> 描述何时应加载；正文再给出权威来源、判断标准、命令、禁止项与汇报义务。Agent 读到任务后选择相关 Skill，随后仍然要自己检查仓库、运行命令并解释结果。</p>
+
+      <div class="formula" aria-label="Skill 到交付的关系">
+        <span>Task context</span><i>→</i><span class="active">Select SKILL.md</span><i>→</i><span>Agent 执行动作</span><i>→</i><span>Hook / CI 验证</span><i>→</i><span>Human judgment</span>
+      </div>
+
+      <div class="grid2">
+        <article class="card blue"><span class="cap">Skill 擅长</span><h4>开放式判断与操作顺序</h4><p>选择最窄测试、判断文档归属、识别推理残留、审查生命周期和并发风险、决定 Agent Note 是否仍有未来价值。</p></article>
+        <article class="card green"><span class="cap">门禁擅长</span><h4>确定性、可重复的失败条件</h4><p>类型检查、覆盖率、链接、格式、双语 pairing、生成漂移、快照、平台矩阵和 GitHub merge requirements。</p></article>
+      </div>
+
+      <div class="note warn"><span class="tag">关键边界</span><p>Skill 可以要求 agent 做一件事，但 <code>SKILL.md</code> 本身不会在 Git push 时运行，也不会因为 Issue 进入 Ready 就创建 branch。只有被加载、被遵循并最终触发真实命令时，它才产生工程效果。</p></div>
+
+      <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.agents/skills">.agents/skills/</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/packages/skill/skill-filesystem/README.md">skill-filesystem README</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/AGENTS.md#L87-L92">AGENTS.md · local checks</a></div>
+    </section>
+
+    <section class="report-section wide" id="inventory">
+      <div class="col">
+        <span class="eyebrow">02 · Inventory</span>
+        <h2>11 份 Skill：三份 Git / PR、五份文字、两份决策治理、一份 GUI 证据</h2>
+        <p>以下四类是本报告为理解开发流程做的归类，不是仓库中的正式目录。仓库把 11 份全部平铺在 <code>.agents/skills/</code> 下，由名称和 description 自行表达触发边界。</p>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Skill</th><th>本报告归类</th><th>何时触发</th><th>它交付什么</th><th>主线位置</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-pre-push-checks/SKILL.md"><code>dsh-pre-push-checks</code></a></td><td><span class="kind git">Git / PR</span></td><td>Push、force-push、标记 Ready 前；<code>gh stack sync</code> 后</td><td>核实 base、计算 change scope、选择最窄证据、检查远端与 CI</td><td>Pre-push</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-code-review/SKILL.md"><code>dsh-code-review</code></a></td><td><span class="kind git">Git / PR</span></td><td>评审 DeepSeek Harness PR</td><td>仓库特有的阻断条件、人工语义检查和 findings</td><td>Review</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-merging-stacked-prs/SKILL.md"><code>dsh-merging-stacked-prs</code></a></td><td><span class="kind git">Git / PR</span></td><td>落地依赖 PR stack</td><td>官方 stack 预检、按范围合并、验证 landed state</td><td>Stack merge</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-prose-standard/SKILL.md"><code>dsh-prose-standard</code></a></td><td><span class="kind docs">Docs / prose</span></td><td>写、审、删 Markdown、JSDoc、注释、Prompt、诊断和 UI 字符串</td><td>完整且简洁的命题，owner-first 更新与实际检查</td><td>Implement / Review</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-doc-standards/SKILL.md"><code>dsh-doc-standards</code></a></td><td><span class="kind docs">Docs / prose</span></td><td>写、移动、审计文档，或 doc budget 变红</td><td>层级、详略、教程/参考类型与 PR 文档卫生</td><td>Implement / Review</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-trim-cot-leakage/SKILL.md"><code>dsh-trim-cot-leakage</code></a></td><td><span class="kind docs">Docs / prose</span></td><td>正式文本像设计会话、评审记录或控制流旁白</td><td>只删推理残留，不误删契约、来源或真实历史证据</td><td>Implement / Review</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-translate-docs/SKILL.md"><code>dsh-translate-docs</code></a></td><td><span class="kind docs">Docs / prose</span></td><td>用户明确点名扩展双语工作流</td><td>变更分类、翻译、pairing、审查与验证</td><td>Implement · manual</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-doc-site-sync/SKILL.md"><code>dsh-doc-site-sync</code></a></td><td><span class="kind docs">Docs / prose</span></td><td>发布、移动或移除网站文档页</td><td>manifest、导航、投影链接、preview 和验证</td><td>Implement / PR</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-find-simplifications/SKILL.md"><code>dsh-find-simplifications</code></a></td><td><span class="kind note-kind">Decision</span></td><td>寻找非显然的删除、折叠、降级与依赖替换候选</td><td>证据化候选、proposed Agent Note 或有语义的 TODO</td><td>Idea / Plan</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-archive-agent-notes/SKILL.md"><code>dsh-archive-agent-notes</code></a></td><td><span class="kind note-kind">Decision</span></td><td>新增、审计、合并、归档或恢复 Agent Note</td><td>替代关系、未来价值判断、冻结 triplet 与 manifest</td><td>Plan / Afterlife</td></tr>
+            <tr><td><a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/record-browser-gif/SKILL.md"><code>record-browser-gif</code></a></td><td><span class="kind gui">GUI evidence</span></td><td>产品用户可见 GUI 行为发生变化</td><td>真实 branch、服务器和模型流的 GIF 证据及 assets branch 发布</td><td>PR evidence</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col note info"><span class="tag">结构性观察</span><p>只有 <code>dsh-pre-push-checks</code> 是作者在普通代码 PR 后半程几乎必经的 Skill；<code>dsh-code-review</code> 属于 reviewer；<code>dsh-merging-stacked-prs</code> 只服务 stack。其他八份都由变更类型条件触发。</p></div>
+    </section>
+
+    <section class="report-section wide" id="mainline">
+      <div class="col">
+        <span class="eyebrow">03 · Idea to merge</span>
+        <h2>放回开发主线后，覆盖呈现“前空、后密、条件分叉”</h2>
+        <p>绿色表示有直接流程 Skill，黄色表示只有特定变更才触发，红色表示没有对应的通用 Skill。这个图描述的是 Skill 覆盖，不代表该节点没有模板、AGENTS.md、脚本或人工流程。</p>
+      </div>
+
+      <div class="route-map" aria-label="开发流程 Skill 覆盖地图">
+        <div class="route-node conditional"><span class="rn">01 · conditional</span><b>Idea</b><small>只有简化调研可用 find-simplifications；普通功能没有</small></div>
+        <div class="route-node gap"><span class="rn">02 · gap</span><b>Issue / Triage</b><small>模板与 policy 存在，但没有创建、分诊或派发 Skill</small></div>
+        <div class="route-node gap"><span class="rn">03 · gap</span><b>Worktree</b><small>没有根据 Issue 自动创建、选 base 或命名的 Skill</small></div>
+        <div class="route-node conditional"><span class="rn">04 · conditional</span><b>Plan / Spec</b><small>无通用 Plan Skill；重大方案使用 proposed Agent Note</small></div>
+        <div class="route-node conditional"><span class="rn">05 · conditional</span><b>Implementation</b><small>无 Coding Skill；文字、文档和 Note Skill 按 diff 触发</small></div>
+        <div class="route-node gap"><span class="rn">06 · gap</span><b>Testing</b><small>有 testing policy，但没有独立 Test-design Skill</small></div>
+        <div class="route-node core"><span class="rn">07 · core</span><b>Pre-push</b><small>dsh-pre-push-checks 选择证据、Push 并查看 CI</small></div>
+        <div class="route-node conditional"><span class="rn">08 · conditional</span><b>PR</b><small>没有通用创建 Skill；GUI PR 额外录真实 GIF</small></div>
+        <div class="route-node core"><span class="rn">09 · core</span><b>Review</b><small>dsh-code-review 负责机器检查之外的语义审查</small></div>
+        <div class="route-node conditional"><span class="rn">10 · stack only</span><b>Merge</b><small>只有 stacked PR 使用专用 landing Skill</small></div>
+      </div>
+      <div class="legend"><span class="l-core">直接覆盖</span><span class="l-conditional">条件覆盖</span><span class="l-gap">没有通用 Skill</span></div>
+
+      <div class="col tablewrap">
+        <table>
+          <thead><tr><th>节点</th><th>Skill 能提供</th><th>仍由其他层负责</th></tr></thead>
+          <tbody>
+            <tr><td>Idea → Ready</td><td>简化型 Idea 可以被系统性挖掘和写成 proposed Note</td><td>价值判断、Issue 模板、Project Inbox / Backlog / Ready</td></tr>
+            <tr><td>Ready → Worktree</td><td>无</td><td>选择 base、创建 branch / worktree、注入远程 Issue 上下文</td></tr>
+            <tr><td>Plan → Implement</td><td>条件型文档、Agent Note 与 prose 工作流</td><td>任务拆分、代码实现、测试设计与 domain-specific 决策</td></tr>
+            <tr><td>Implement → Push</td><td>核实 base、change scope、最窄证据与安全重写</td><td>真实测试执行结果与 Hook 的自动拦截</td></tr>
+            <tr><td>PR → Review</td><td>GUI 证据和仓库特有人工审查清单</td><td>PR policy、CI、Reviewer 判断和批准</td></tr>
+            <tr><td>Review → Merge</td><td>官方 GitHub stack 的安全 landing 流程</td><td>独立 PR 合并、merge requirements 与最终授权</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="report-section col" id="gaps">
+      <span class="eyebrow">04 · Requested gap view</span>
+      <h2>它们没有覆盖的地方</h2>
+      <p>沿着完整开发主线看，缺口很明显。下面保留这份调研最直接的版本：</p>
+
+      <div class="gap-panel">
+        <pre class="gap-code"><code>Idea
+  ↓ 没有通用 Idea Skill
+Issue / Triage
+  ↓ 没有创建、分诊或自动派发 Skill
+Branch / Worktree
+  ↓ 没有自动创建或命名 Skill
+Plan / Spec
+  ↓ 没有通用 Plan Skill，重大方案改用 proposed Agent Note
+Implementation
+  ↓ 没有通用 Coding Skill，依赖 AGENTS.md、代码和子系统文档
+Testing
+  ↓ 没有独立 Test-design Skill
+Pre-push
+  ↓ dsh-pre-push-checks
+PR
+  ↓ 没有通用 PR 创建 Skill
+Review
+  ↓ dsh-code-review
+Merge
+  ↓ 只有 stacked PR 专用 Skill</code></pre>
+      </div>
+
+      <p>所以它们不能自行组成：</p>
+      <div class="formula" aria-label="Skills 无法自行组成的完整开发流程">
+        <span>Issue</span><i>→</i><span>Create worktree</span><i>→</i><span>Plan</span><i>→</i><span>Code</span><i>→</i><span>Test</span><i>→</i><span>PR</span>
+      </div>
+
+      <div class="note warn"><span class="tag">局部例外不等于通用覆盖</span><p><code>dsh-find-simplifications</code> 可以发现简化 Idea 并写 proposed Agent Note，<code>record-browser-gif</code> 可以补 GUI PR 证据；但它们都没有把普通 Feature Issue 自动转成可执行开发任务。</p></div>
+    </section>
+
+    <section class="report-section col" id="core">
+      <span class="eyebrow">05 · Core operational trio</span>
+      <h2>三个最接近“开发流程骨架”的 Skill，分别服务作者、Reviewer 和 Merger</h2>
+
+      <div class="grid3">
+        <article class="card green role-card">
+          <span class="cap">dsh-pre-push-checks</span><span class="who">PR author</span>
+          <h4>把本地 diff 变成可推送证据</h4>
+          <ol><li>确认 checkout 与 branch</li><li>核实 live PR base / stack parent</li><li>运行 change-scope</li><li>按影响面选最窄测试</li><li>Push 后核对远端 SHA 与 CI</li></ol>
+        </article>
+        <article class="card blue role-card">
+          <span class="cap">dsh-code-review</span><span class="who">PR reviewer</span>
+          <h4>检查机器无法证明的语义</h4>
+          <p>追踪接口两侧、生命周期与并发、真实 Loader / bin / worker 入口、模型看到的 Prompt 与工具 schema、测试是否真的会因回归变红，以及 implemented Note 是否符合 shipped reality。</p>
+        </article>
+        <article class="card purple role-card">
+          <span class="cap">dsh-merging-stacked-prs</span><span class="who">Merger</span>
+          <h4>让 GitHub 而不是人维护 stack 状态</h4>
+          <p>重新查询官方 stack，逐层确认非 Draft、Review 和 Checks；使用 <code>gh stack merge</code> 从底向上落地。遇到 blocker 就解决或停止，不退回逐 PR 手工合并。</p>
+        </article>
+      </div>
+
+      <div class="note info"><span class="tag">为什么 pre-push 最核心</span><p>它是唯一被根 <code>AGENTS.md</code> 明确要求在 Push 前使用的 Skill，也是本地判断与自动门禁的接缝：Skill 负责选择证据，Lefthook 负责快速确定性检查，CI 负责穷举和平台矩阵。</p></div>
+
+      <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-pre-push-checks/SKILL.md">dsh-pre-push-checks</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-code-review/SKILL.md">dsh-code-review</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-merging-stacked-prs/SKILL.md">dsh-merging-stacked-prs</a></div>
+    </section>
+
+    <section class="report-section col" id="conditional">
+      <span class="eyebrow">06 · Conditional skill clusters</span>
+      <h2>其余八份不是第二条流水线，而是按 diff 特征插入主线的专科手册</h2>
+
+      <h3>文字与文档簇：五份 Skill 处理五种不同失败</h3>
+      <div class="skill-chain" aria-label="文档 Skill 的职责链">
+        <span>doc-standards · 放哪里</span><i>→</i><span>prose-standard · 写完整</span><i>→</i><span>trim-cot · 去推理残留</span><i>→</i><span>translate · 双语</span><i>→</i><span>doc-site-sync · 发布投影</span>
+      </div>
+      <p>这是一张职责图，不是自动调用链。一次普通 JSDoc 修改可能只需要 prose-standard；新增双语网站页面才可能同时触发 placement、prose、translation 和 site sync。<code>dsh-code-review</code> 还会在 Review 时调用 prose-standard 重新做语义检查。</p>
+
+      <h3>决策治理簇：一份产生简化提案，一份管理 Note 的后半生</h3>
+      <div class="grid2">
+        <article class="card gold"><span class="cap">dsh-find-simplifications</span><h4>从证据生成可执行提案</h4><p>搜索死亡、重复、投机或手写过度的表面；证明候选以后，写 proposed Agent Note、TODO，或合并已经重叠的记录。它是 Idea Skill 的局部特例。</p></article>
+        <article class="card green"><span class="cap">dsh-archive-agent-notes</span><h4>防止决策记录无限增长</h4><p>每次新建 Note 都审查同一决策的旧记录；完整替代则合并或归档，部分替代则交叉链接，已无防错价值的 rejected Note 可以成组三文件删除。</p></article>
+      </div>
+
+      <h3>GUI 证据：不是截图，而是一条可审计的行为链</h3>
+      <p><code>record-browser-gif</code> 要求产品用户可见 GUI PR 使用该分支的真实服务器、真实 API key 和真实模型回合录制，并在 PR 旁标注 commit SHA、服务 tree、模式例外和模型是否实际运行。它附带 11 个 Skill 中唯一的可执行脚本资源 <code>scripts/encode_gif.py</code>，但录制与发布仍需要 agent 操作和外部授权。</p>
+
+      <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-prose-standard/SKILL.md">prose-standard</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-find-simplifications/SKILL.md">find-simplifications</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-archive-agent-notes/SKILL.md">archive-agent-notes</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/record-browser-gif">record-browser-gif bundle</a></div>
+    </section>
+
+    <section class="report-section col" id="wiring">
+      <span class="eyebrow">07 · Discovery and invocation</span>
+      <h2>同一份 SKILL.md 被多个 Agent 入口发现，但没有中央编排器替它们排序</h2>
+      <p>权威目录是 <code>.agents/skills/&lt;name&gt;/SKILL.md</code>。Claude Code 通过受 Git 跟踪的 <code>.claude/skills → ../.agents/skills</code> 软链接读取同一套文件；DeepSeek Harness 自己的 filesystem provider 把 <code>&lt;projectRoot&gt;/.agents/skills</code> 作为 rank 200 的项目技能根。部分 bundle 的 <code>agents/openai.yaml</code> 只提供展示名称、短描述和默认 Prompt，不包含真正执行逻辑。</p>
+
+      <div class="grid3">
+        <article class="card blue"><span class="cap">Catalog time</span><h4>先只看触发描述</h4><p>Agent 看到名称与受长度限制的 description，用任务语义判断是否加载正文。</p></article>
+        <article class="card green"><span class="cap">Load time</span><h4>再读取完整工作流</h4><p>完整 SKILL.md 带来权威来源、步骤、禁区、命令和最终汇报要求。</p></article>
+        <article class="card purple"><span class="cap">Execution time</span><h4>动作仍由 Agent 发起</h4><p>Git、pnpm、浏览器、GitHub 和文件编辑不会因为目录里存在 Skill 就自行发生。</p></article>
+      </div>
+
+      <h3>唯一明确禁止隐式调用的 Skill</h3>
+      <pre class="codeblock"><code>name: dsh-translate-docs
+description: Manually run the extended ... workflow
+disable-model-invocation: true
+user-invocable: true
+
+# agents/openai.yaml
+policy:
+  allow_implicit_invocation: false</code></pre>
+      <p>普通双语更新走轻量规则；只有用户明确点名时才加载这套更长的 briefing / delegation / whole-document 工作流。这是一个重要设计信号：Skill 的上下文、时间和模型 token 成本也必须受控。</p>
+
+      <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.claude/skills">.claude/skills symlink</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/packages/skill/skill-filesystem/README.md#L33-L41">project skill roots</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-translate-docs/SKILL.md">translate SKILL.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-translate-docs/agents/openai.yaml">translate openai.yaml</a></div>
+    </section>
+
+    <section class="report-section col" id="boundaries">
+      <span class="eyebrow">08 · Automation boundary</span>
+      <h2>四层共同完成交付：Skill 给判断，Hook 给快检，CI 给穷举，人给方向</h2>
+
+      <div class="layer-grid" aria-label="开发质量四层分工">
+        <div class="layer"><b>Skill</b><p>选择测试、判断文档、检查语义、规定安全动作。擅长开放式任务，本身不产生 Git 级阻断。</p></div>
+        <div class="layer"><b>Hook / scripts</b><p>在 commit / push 或显式命令时运行快速、确定性的格式、类型、pairing 与安全检查。</p></div>
+        <div class="layer"><b>CI / GitHub</b><p>执行完整覆盖率、平台矩阵、snapshot、doc-sync 和 merge requirements；失败会阻止合并。</p></div>
+        <div class="layer"><b>Human</b><p>选择 Ready、审重大方案、判断风险与语义、授权 Push / PR / Merge，并承担最终责任。</p></div>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>例子</th><th>Skill 做什么</th><th>真正自动执行什么</th><th>人仍需判断什么</th></tr></thead>
+          <tbody>
+            <tr><td>Push</td><td>根据 diff 选择最窄可信证据，禁止“Push 后指望 CI 不同”</td><td>pre-commit 快检、pre-push typecheck、CI 全矩阵</td><td>base 是否正确、哪些回归路径真实受影响</td></tr>
+            <tr><td>Docs</td><td>决定事实 owner、文字是否完整、是否含推理残留</td><td>格式、链接、budget、pairing、生成漂移</td><td>内容是否真实代表代码与设计理由</td></tr>
+            <tr><td>Review</td><td>给出接口、并发、模型视角和测试强度检查表</td><td>已有测试和 CI 状态</td><td>是否为真实问题、严重度与合并结论</td></tr>
+            <tr><td>Stack merge</td><td>规定官方 stack 查询、范围选择和安全停止条件</td><td>GitHub 按依赖顺序、检查要求和重定向规则落地</td><td>是否现在落地整栈或明确的部分边界</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note risk"><span class="tag">不要高估自动化</span><p>“模型可以自动选 Skill”不等于“流程已经自动化”。模型仍然需要完整 Issue 上下文、正确 Worktree、仓库权限和决策授权；选错、漏选或只口头宣称完成，都要靠实际门禁和 Review 发现。</p></div>
+    </section>
+
+    <section class="report-section col" id="verdict">
+      <span class="eyebrow">09 · Final synthesis</span>
+      <h2>Skills 负责把工程经验交给 Agent；外部编排负责把局部经验接成开发系统</h2>
+      <p>这 11 份 Skill 的设计重点不是“让 Agent 从零自主完成项目管理”，而是把高频、仓库特有、容易出错的判断压缩成可复用文本。它们避免根 <code>AGENTS.md</code> 无限膨胀，也让 Claude Code、Codex 与 dsh 自己可以读取同一套操作知识。</p>
+
+      <div class="formula" aria-label="完整开发系统的责任链">
+        <span>Human / orchestrator</span><i>→</i><span>Issue + Worktree context</span><i>→</i><span class="active">Agent + selected Skills</span><i>→</i><span>Hooks + CI</span><i>→</i><span>Human review</span>
+      </div>
+
+      <div class="grid2">
+        <article class="card green"><span class="cap">真正值得复用</span><h4>把失败经验写成触发明确的专科 Skill</h4><p>先由真实事故或反复评审发现模式，再写 Sources of truth、判断标准、禁止捷径与汇报义务；能机械化的部分继续升格为 Gate。</p></article>
+        <article class="card gold"><span class="cap">不该误抄</span><h4>把 Skill 数量当作自动化成熟度</h4><p>更多 Skill 可能意味着更高上下文成本和更多陈旧点。没有 Issue / Worktree / Plan 编排时，11 份好手册依然不是端到端开发系统。</p></article>
+      </div>
+
+      <div class="truth"><p><strong>一句话结论：</strong>DeepSeek Harness 的 Skills 是“面向 Agent 的工程经验层”——它们提高执行质量，但没有替代项目管理、任务编排、自动门禁或人的最终判断。</p></div>
+    </section>
+  </main>
+
+  <footer class="col">
+    <p><strong>证据口径：</strong>固定提交 <a href="https://github.com/deepseek-ai/deepseek-harness/commit/141eb6fef83422698aef7a981029e843e8161534"><code>141eb6f</code></a>（2026-08-19，<code>dsh-v0.1.0-rc.8</code>；调研时也是 <code>master</code> HEAD）。Skill 数量取 <code>.agents/skills/*/SKILL.md</code>；13,673 为 11 份文件按空白分词合计；6 份 <code>agents/openai.yaml</code> 与唯一 manual-only 配置按该提交树统计。</p>
+    <p><strong>边界：</strong>这里只研究仓库内开发者 Agent 使用的 11 份流程 Skill，不把 <code>packages/skill/</code> 产品能力、Cordis preset 自带 Skill、测试 fixture 或历史上已删除的产品 Skill 算入。四个簇和“核心 / 条件 / 缺口”是本报告为开发流程建立的分析分类，不是仓库官方 taxonomy。</p>
+  </footer>
+</div>
+</body>
+</html>

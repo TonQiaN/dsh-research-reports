@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="沿一份开发文档从 Issue、设计、实现、双语同步、CI 到归档的生命周期，分析 DeepSeek Harness 的文档治理体系。">
+  <title>DeepSeek Harness：一份文档如何从 Idea 走到归档</title>
+  <style>
+    :root {
+      --ground: #ffffff;
+      --surface: #f6f9f8;
+      --surface-2: #edf4f2;
+      --line: #dbe7e3;
+      --line-soft: #e9f0ee;
+      --ink: #12201c;
+      --ink-2: #465b54;
+      --ink-3: #758881;
+      --accent: #087f68;
+      --accent-ink: #006b57;
+      --accent-soft: #e6f5f0;
+      --warn: #946516;
+      --warn-soft: #fbf3df;
+      --risk: #ad4540;
+      --risk-soft: #faeceb;
+      --info: #356fa8;
+      --info-soft: #eaf2fa;
+      --manual: #8d65b5;
+      --manual-soft: #f2ecf8;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      --measure: 44rem;
+      --bleed: 74rem;
+      --radius: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ground: #111916;
+        --surface: #17211d;
+        --surface-2: #1d2b26;
+        --line: #2b3c36;
+        --line-soft: #23322d;
+        --ink: #eff8f4;
+        --ink-2: #b5c8c1;
+        --ink-3: #7f968d;
+        --accent: #49c8a7;
+        --accent-ink: #72d9bd;
+        --accent-soft: rgba(73, 200, 167, .12);
+        --warn: #d7a84e;
+        --warn-soft: rgba(215, 168, 78, .12);
+        --risk: #e47c76;
+        --risk-soft: rgba(228, 124, 118, .12);
+        --info: #78ace0;
+        --info-soft: rgba(120, 172, 224, .12);
+        --manual: #bd97e2;
+        --manual-soft: rgba(189, 151, 226, .12);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 0 1.35rem 5rem;
+      background: var(--ground);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.78;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: var(--bleed); margin: 0 auto; }
+    .col { max-width: var(--measure); margin-inline: auto; }
+    p, ul, ol { margin: 0 0 1.08rem; }
+    ul, ol { padding-left: 1.25rem; }
+    li { margin-bottom: .42rem; }
+    li::marker { color: var(--ink-3); }
+    strong { color: var(--ink); font-weight: 660; }
+    em { color: var(--accent-ink); font-style: normal; }
+
+    a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+    a:hover { border-bottom-color: var(--accent); }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+    code, .mono { font-family: var(--mono); font-size: .86em; }
+    p code, li code, td code, .source code {
+      padding: .07em .34em;
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      background: var(--surface-2);
+      color: var(--ink-2);
+      overflow-wrap: anywhere;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--line-soft);
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .7rem;
+      letter-spacing: .06em;
+    }
+    .topline a { color: var(--ink-2); border: 0; }
+    .topline a:hover { color: var(--accent-ink); }
+
+    .masthead { padding: 4rem 0 2rem; }
+    .kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem 1rem;
+      margin-bottom: 1.45rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0 0 1.25rem;
+      font-size: clamp(2.15rem, 5.5vw, 3.45rem);
+      font-weight: 670;
+      line-height: 1.08;
+      letter-spacing: -.027em;
+      text-wrap: balance;
+    }
+    .standfirst { margin: 0; color: var(--ink-2); font-size: 1.14rem; line-height: 1.72; }
+
+    .thesis {
+      margin: 1.8rem 0;
+      padding: 1.35rem 0 1.35rem 1.35rem;
+      border-left: 2px solid var(--accent);
+      font-size: 1.04rem;
+      line-height: 1.76;
+    }
+    .thesis p:last-child { margin-bottom: 0; }
+
+    .takeaways {
+      margin: 2.35rem 0;
+      padding: 1.35rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .takeaways .section-kicker {
+      display: block;
+      margin-bottom: .42rem;
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .68rem;
+      font-weight: 650;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .takeaways h2 { margin: 0 0 .55rem; font-size: 1.46rem; line-height: 1.3; }
+    .takeaways-intro { margin: 0; color: var(--ink-2); font-size: .91rem; }
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      margin: 1.2rem 0 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+      list-style: none;
+    }
+    .takeaway {
+      display: grid;
+      grid-template-columns: 2.2rem minmax(0, 1fr);
+      gap: .78rem;
+      margin: 0;
+      padding: 1rem 1.05rem;
+      background: var(--ground);
+    }
+    .takeaway:first-child { grid-column: 1 / -1; background: var(--accent-soft); }
+    .takeaway-no {
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .72rem;
+      font-weight: 680;
+      letter-spacing: .05em;
+    }
+    .takeaway h3 { margin: -.1rem 0 .3rem; font-size: .99rem; line-height: 1.4; }
+    .takeaway p { margin: 0; color: var(--ink-2); font-size: .84rem; line-height: 1.6; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin: 2.2rem 0 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+    .stat { padding: 1.05rem 1.15rem 1.15rem; background: var(--ground); }
+    .stat dt { margin-bottom: .48rem; color: var(--ink-3); font-family: var(--mono); font-size: .67rem; letter-spacing: .09em; text-transform: uppercase; }
+    .stat dd { margin: 0; font-size: 1.72rem; font-weight: 650; line-height: 1.08; letter-spacing: -.025em; }
+    .stat .sub { margin-top: .48rem; color: var(--ink-3); font-size: .77rem; line-height: 1.5; }
+
+    .toc {
+      margin: 2rem auto 0;
+      padding: 1.2rem 1.35rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .06rem 1.7rem; margin: 0; padding: 0; list-style: none; }
+    .toc li { margin: 0; }
+    .toc a { display: block; padding: .27rem 0; border: 0; color: var(--ink-2); font-size: .92rem; }
+    .toc a:hover { color: var(--accent-ink); }
+    .toc .n { margin-right: .55rem; color: var(--ink-3); font-family: var(--mono); font-size: .7rem; }
+
+    .route-map { display: flex; gap: .7rem; margin: 2rem 0 0; padding: .2rem 0 .8rem; overflow-x: auto; scroll-snap-type: x proximity; }
+    .route-node {
+      position: relative;
+      flex: 0 0 10rem;
+      min-height: 7.5rem;
+      padding: .85rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      scroll-snap-align: start;
+    }
+    .route-node::after { content: "→"; position: absolute; top: 50%; right: -.67rem; z-index: 2; color: var(--ink-3); transform: translateY(-50%); }
+    .route-node:last-child::after { display: none; }
+    .route-node .rn { display: block; margin-bottom: .66rem; color: var(--accent-ink); font-family: var(--mono); font-size: .67rem; font-weight: 650; }
+    .route-node b { display: block; margin-bottom: .3rem; font-size: .86rem; line-height: 1.35; }
+    .route-node small { display: block; color: var(--ink-3); font-size: .71rem; line-height: 1.45; }
+
+    .journey { margin-top: 3.7rem; }
+    .journey-step {
+      display: grid;
+      grid-template-columns: 4.8rem minmax(0, var(--measure));
+      justify-content: center;
+      column-gap: 1.25rem;
+      padding: 0 0 4.1rem;
+      scroll-margin-top: 1rem;
+    }
+    .step-rail { position: relative; display: flex; justify-content: center; }
+    .step-rail::after { content: ""; position: absolute; top: 3.2rem; bottom: -4.1rem; left: 50%; width: 1px; background: var(--line); }
+    .journey-step:last-child .step-rail::after { display: none; }
+    .step-no {
+      display: grid;
+      place-items: center;
+      width: 3.1rem;
+      height: 3.1rem;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      background: var(--ground);
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .78rem;
+      font-weight: 680;
+    }
+    .step-body { min-width: 0; padding-top: .13rem; }
+    .step-meta { display: flex; flex-wrap: wrap; gap: .45rem .72rem; align-items: center; margin-bottom: .78rem; color: var(--ink-3); font-family: var(--mono); font-size: .69rem; }
+    .auto { display: inline-flex; padding: .12rem .45rem; border: 1px solid currentColor; border-radius: 999px; font-weight: 640; letter-spacing: .03em; }
+    .auto.low { color: var(--risk); }
+    .auto.medium { color: var(--warn); }
+    .auto.high { color: var(--accent-ink); }
+    .auto.human { color: var(--manual); }
+    .eyebrow { display: block; margin-bottom: .62rem; color: var(--ink-3); font-family: var(--mono); font-size: .7rem; letter-spacing: .11em; text-transform: uppercase; }
+    h2 { margin: 0 0 .9rem; font-size: 1.66rem; line-height: 1.28; letter-spacing: -.014em; text-wrap: balance; }
+    h3 { margin: 2rem 0 .72rem; font-size: 1.06rem; line-height: 1.42; text-wrap: balance; }
+    h4 { margin: 0 0 .5rem; font-size: .97rem; }
+
+    .note { margin: 1.5rem 0; padding: 1rem 1.15rem; border: 1px solid var(--line); border-left: 2px solid var(--accent); border-radius: var(--radius); background: var(--surface); color: var(--ink-2); font-size: .92rem; }
+    .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+    .note.info { border-left-color: var(--info); background: var(--info-soft); }
+    .note.risk { border-left-color: var(--risk); background: var(--risk-soft); }
+    .note p:last-child { margin-bottom: 0; }
+    .tag { display: block; margin-bottom: .34rem; color: var(--ink-3); font-family: var(--mono); font-size: .66rem; letter-spacing: .09em; text-transform: uppercase; }
+
+    .grid2, .grid3 { display: grid; gap: 1rem; margin: 1.65rem 0; }
+    .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { padding: 1.08rem 1.13rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ground); }
+    .card p, .card ul { margin-bottom: 0; color: var(--ink-2); font-size: .88rem; line-height: 1.66; }
+    .card .cap { display: block; margin-bottom: .44rem; color: var(--ink-3); font-family: var(--mono); font-size: .67rem; letter-spacing: .08em; text-transform: uppercase; }
+    .card.green { border-top: 3px solid var(--accent); }
+    .card.gold { border-top: 3px solid var(--warn); }
+    .card.gray { border-top: 3px solid var(--ink-3); }
+    .card.purple { border-top: 3px solid var(--manual); }
+
+    .tablewrap { margin: 1.6rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+    th, td { padding: .62rem .8rem; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+    thead th { border-bottom-color: var(--line); background: var(--surface); color: var(--ink-3); font-family: var(--mono); font-size: .67rem; font-weight: 520; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td:first-child { color: var(--ink); font-weight: 620; white-space: nowrap; }
+
+    .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 1.6rem 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+    .trio > div { padding: 1rem; background: var(--surface); }
+    .trio b { display: block; margin-bottom: .35rem; color: var(--accent-ink); font-family: var(--mono); font-size: .78rem; overflow-wrap: anywhere; }
+    .trio p { margin: 0; color: var(--ink-2); font-size: .83rem; line-height: 1.55; }
+
+    .state-line { display: flex; flex-wrap: wrap; align-items: center; gap: .42rem; margin: 1.35rem 0; padding: .95rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .state-line span { padding: .2rem .55rem; border: 1px solid var(--line); border-radius: 999px; background: var(--ground); color: var(--ink-2); font-family: var(--mono); font-size: .7rem; }
+    .state-line i { color: var(--ink-3); font-style: normal; }
+    .state-line .active { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+    .state-line .rejected { border-color: var(--risk); color: var(--risk); background: var(--risk-soft); }
+
+    .gate-grid { display: flex; flex-wrap: wrap; gap: .45rem; margin: 1.4rem 0; }
+    .gate { padding: .3rem .56rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); font-family: var(--mono); font-size: .68rem; }
+
+    .handoff { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 1.4rem 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+    .handoff > div { padding: .9rem 1rem; background: var(--surface); }
+    .handoff .output { background: var(--accent-soft); }
+    .handoff .hl { display: block; margin-bottom: .34rem; color: var(--ink-3); font-family: var(--mono); font-size: .64rem; font-weight: 620; letter-spacing: .08em; text-transform: uppercase; }
+    .handoff .output .hl { color: var(--accent-ink); }
+    .handoff p { margin: 0; color: var(--ink-2); font-size: .85rem; line-height: 1.58; }
+
+    .source { margin: 1.18rem 0 0; padding: .82rem .94rem; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); color: var(--ink-3); font-family: var(--mono); font-size: .71rem; line-height: 1.65; }
+    .source a { color: var(--ink-2); border-bottom-color: var(--line); }
+    .truth { margin-top: 1.7rem; padding: 1.2rem 1.3rem; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+    .truth p { margin: 0; font-size: 1rem; line-height: 1.72; }
+
+    footer { margin-top: 4.2rem; padding-top: 1.55rem; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .83rem; line-height: 1.72; }
+    footer p:last-child { margin-bottom: 0; }
+
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      body { padding: 0 1rem 4rem; font-size: 15.5px; }
+      .topline { align-items: flex-start; flex-direction: column; }
+      .masthead { padding-top: 3.1rem; }
+      .stats, .toc ol, .takeaway-grid, .grid2, .trio, .handoff { grid-template-columns: 1fr; }
+      .takeaway:first-child { grid-column: auto; }
+      .journey-step { grid-template-columns: 3.2rem minmax(0, 1fr); column-gap: .75rem; }
+      .step-no { width: 2.65rem; height: 2.65rem; }
+      .step-rail::after { top: 2.75rem; }
+    }
+    @media print {
+      :root { color-scheme: light; }
+      body { padding: 0; font-size: 11pt; }
+      .topline, .toc, .route-map { display: none; }
+      .masthead { padding-top: 1rem; }
+      .journey-step { break-inside: avoid; grid-template-columns: 3rem minmax(0, 1fr); }
+      .step-rail::after { background: #bbb; }
+      a { color: inherit; border: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="topline">
+    <a href="./01-从-Issue-到-PR·代码开发全流程.html">← 01 · 从 Issue 到 PR</a>
+    <span>02 · Documentation lifecycle</span>
+  </div>
+
+  <header class="masthead col">
+    <div class="kicker">
+      <span>DeepSeek Harness</span>
+      <span>Documentation governance</span>
+      <span>Snapshot 141eb6f</span>
+    </div>
+    <h1>一份文档，如何陪着代码从 Idea 走到归档</h1>
+    <p class="standfirst">这页只沿一条线追踪：同一个开发想法如何先成为 Issue，如何决定文档应该放在哪里，何时产生 proposed / implemented Agent Note，怎样与 README、JSDoc、双语对侧和生成型参考一起进入 PR，最后怎样持续维护、被替代或冻结归档。</p>
+
+    <div class="thesis">
+      <p><strong>核心判断：</strong>DeepSeek Harness 不是在开发结束时“补文档”，也不是要求每个任务先写一份完整 Spec。它采用的是<strong>决策驱动、代码同仓、生命周期可验证</strong>的文档体系：Issue 管任务，Agent Note 管理由与取舍，README / JSDoc 管当前契约，Snapshot 管可见行为，Postmortem 管失败历史。</p>
+    </div>
+
+    <section class="takeaways" id="takeaways" aria-labelledby="takeaways-title">
+      <span class="section-kicker">Five takeaways</span>
+      <h2 id="takeaways-title">先记住这五件事</h2>
+      <p class="takeaways-intro">真正值得复用的不是文档数量，而是信息如何归属、怎样随代码交付，以及人和自动化分别负责什么。</p>
+      <ol class="takeaway-grid">
+        <li class="takeaway">
+          <span class="takeaway-no">01</span>
+          <div><h3>文档就是交付物</h3><p>代码、测试与相关文档在同一个 Worktree、同一个分支和同一个 PR 中完成；文档没有跟上，功能就还没有真正完成。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">02</span>
+          <div><h3>一个事实只有一个 Owner</h3><p>Issue 管本次任务，Agent Note 管设计理由，README / JSDoc 管当前契约；其他位置链接过去，不复制出多个真相。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">03</span>
+          <div><h3>风险决定流程重量</h3><p>机械修改直接实现，方向明确的变更补 implemented 记录，跨模块或高风险决策才先写 proposed 并接受审查。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">04</span>
+          <div><h3>机器验一致，人验真相</h3><p>doc-sync 负责格式、链接、双语、生成漂移等机械约束；人负责判断理由是否成立、内容是否真实代表代码。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">05</span>
+          <div><h3>仓库必须成为 Agent 的显式记忆</h3><p>Worktree 只会带入已版本化的规则与文档，不会带入私聊和隐含需求；重要上下文必须写下来，并持续维护、替代或归档。</p></div>
+        </li>
+      </ol>
+    </section>
+
+    <dl class="stats" aria-label="固定版本文档体系规模">
+      <div class="stat"><dt>Issue templates</dt><dd>5</dd><div class="sub">Idea / Feature / Bug / Research / Task</div></div>
+      <div class="stat"><dt>Agent Notes</dt><dd>723</dd><div class="sub">英文记录：25 proposed · 544 implemented · 11 rejected · 143 archived</div></div>
+      <div class="stat"><dt>Bilingual pairs</dt><dd>1,129</dd><div class="sub">非 vendor 的 <code>.zh.md</code> 与 <code>.i18n.yaml</code> 数量一一对应</div></div>
+      <div class="stat"><dt>doc-sync gates</dt><dd>28</dd><div class="sub">格式、链接、生成、类型、双语、网站与归档门禁</div></div>
+    </dl>
+
+    <nav class="toc" aria-label="文档生命周期十个步骤">
+      <ol>
+        <li><a href="#issue"><span class="n">01</span>Issue：记录任务边界</a></li>
+        <li><a href="#placement"><span class="n">02</span>Placement：给每个事实找唯一归属</a></li>
+        <li><a href="#decision"><span class="n">03</span>Decision：选择 Agent Note 路径</a></li>
+        <li><a href="#worktree"><span class="n">04</span>Worktree：带入版本化上下文</a></li>
+        <li><a href="#implementation"><span class="n">05</span>Implementation：代码与文档一起变</a></li>
+        <li><a href="#bilingual"><span class="n">06</span>Bilingual：三文件原子更新</a></li>
+        <li><a href="#generation"><span class="n">07</span>Generation：重建参考与网站投影</a></li>
+        <li><a href="#gates"><span class="n">08</span>Gates：doc-sync 机械验收</a></li>
+        <li><a href="#review"><span class="n">09</span>Review：人工判断语义</a></li>
+        <li><a href="#afterlife"><span class="n">10</span>Afterlife：维护、替代、归档与复盘</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <div class="route-map" aria-label="一份文档的完整生命周期">
+    <div class="route-node"><span class="rn">01</span><b>Issue</b><small>问题、价值、验收边界</small></div>
+    <div class="route-node"><span class="rn">02</span><b>One home</b><small>决定事实应由哪一层拥有</small></div>
+    <div class="route-node"><span class="rn">03</span><b>Agent Note</b><small>机械 / 已决 / 先提案</small></div>
+    <div class="route-node"><span class="rn">04</span><b>Worktree</b><small>规则与现有文档随 branch 到位</small></div>
+    <div class="route-node"><span class="rn">05</span><b>Same diff</b><small>代码、契约、决策和证据一起改</small></div>
+    <div class="route-node"><span class="rn">06</span><b>i18n pair</b><small>英文、中文、hash sidecar</small></div>
+    <div class="route-node"><span class="rn">07</span><b>Projection</b><small>生成参考与公开站点</small></div>
+    <div class="route-node"><span class="rn">08</span><b>doc-sync</b><small>28 项可执行门禁</small></div>
+    <div class="route-node"><span class="rn">09</span><b>Review</b><small>机器验结构，人验语义</small></div>
+    <div class="route-node"><span class="rn">10</span><b>Afterlife</b><small>保持当前、替代、归档或复盘</small></div>
+  </div>
+
+  <main class="journey">
+    <section class="journey-step" id="issue">
+      <div class="step-rail"><span class="step-no">01</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">价值与验收由人确认</span><span>自动化：模板与 Issue policy</span></div>
+        <span class="eyebrow">Idea → work item · 第一份文档不是完整设计稿</span>
+        <h2>先把想法压缩成一个可分诊、可验收的 Issue</h2>
+        <p>仓库提供 Idea、Feature、Bug、Research、Task 五种模板。它们都要求标题是中文行动或结果句，外露正文只保留一句话，详细内容放进默认收起的 <code>&lt;details&gt;</code>。Feature 和 Task 要写验收与测试证据，Bug 要写复现、实际结果与预期结果，Research 要先定义证据标准。</p>
+        <p>因此 Issue 的职责是<strong>建立任务和验收边界</strong>，不是承载长期架构理由。它可以随着讨论变化，也不会被 Git worktree 自动带入；真正需要随代码长期保存的决策，后面进入 Agent Note 或当前状态文档。</p>
+
+        <div class="grid3">
+          <article class="card gray"><span class="cap">Issue 拥有</span><h4>What</h4><p>问题、预期结果、验收条件、证据标准和交付物。</p></article>
+          <article class="card gold"><span class="cap">Issue 不独占</span><h4>Why</h4><p>长期设计理由与被放弃的替代方案交给 Agent Note。</p></article>
+          <article class="card green"><span class="cap">进入下一步</span><h4>Ready context</h4><p>被选中实现、责任清楚，并具备可解释的完成边界。</p></article>
+        </div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>一个想法、故障、研究问题或明确任务。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一份短而结构化、可以被分诊和验收的 Issue。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.github/ISSUE_TEMPLATE">.github/ISSUE_TEMPLATE/</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/issue-management/policy.mjs">.github/issue-management/policy.mjs</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="placement">
+      <div class="step-rail"><span class="step-no">02</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">归属判断不可机械化</span><span>原则：one home per fact</span></div>
+        <span class="eyebrow">Ready Issue → document map · 先决定放哪里，再开始写</span>
+        <h2>同一个事实只允许有一个正式归属，其他地方链接过去</h2>
+        <p><code>docs/AGENTS.md</code> 把文档体系定义成多个有边界的层。写作者先判断文档的主题、读者和用途，再选择 tutorial 或 reference，并把更低层细节移到真正拥有它的地方。 durable prose 只描述当前事实；变更历史留在 commit / PR，决策理由留在 Agent Note，事故时间线留在 Postmortem。</p>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>文档层</th><th>它拥有的事实</th><th>不应该放进去</th></tr></thead>
+            <tbody>
+              <tr><td>根 / 子树 AGENTS.md</td><td>每次工作都需要的长期指令；子树只写本区域特有规则</td><td>教程、故事、重复的 repo-wide 规则</td></tr>
+              <tr><td>architecture / subsystems</td><td>整体组合地图；类型定义与 subsystem 语义</td><td>每个 package 的实现细节、设计历史</td></tr>
+              <tr><td>Package README / JSDoc</td><td>配置、语义、失败、限制、扩展点和调用方契约</td><td>生成目录的重复清单、其他包的责任</td></tr>
+              <tr><td>Agent Notes</td><td>决策理由、替代方案、后果和必需验证</td><td>用户教程、已交付后的计划清单</td></tr>
+              <tr><td>Cookbook / user docs</td><td>可执行步骤与公开产品使用方式</td><td>内部决策史、维护者专用流程</td></tr>
+              <tr><td>Skills / Postmortems</td><td>可复用工作流；事故证据、因果链和防复发措施</td><td>产品运行时契约；普通功能变更史</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note info"><span class="tag">关键治理规则</span><p>“一个事实一个家”并不禁止关键契约在调用点出现，但扩展解释只能有一个 owner。其他文档以可机械检查的相对链接引用它，避免复制后分别老化。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>Ready Issue、受影响的代码面和已有文档。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一张文档责任图：哪些事实更新原 owner，哪些需要新决策记录。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/AGENTS.md">docs/AGENTS.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-doc-standards/SKILL.md">dsh-doc-standards/SKILL.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="decision">
+      <div class="step-rail"><span class="step-no">03</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">重大未决方案先 review</span><span>自动化：分类、格式、状态与配对</span></div>
+        <span class="eyebrow">Document map → decision route · 不是所有任务都先写 Spec</span>
+        <h2>按决策风险选择机械、implemented 或 proposed 三条路</h2>
+
+        <div class="grid3">
+          <article class="card gray"><span class="cap">机械 / 局部</span><h4>Agent Note 免除</h4><p>不改变行为、契约、结构、流程或可被重新讨论的理由。</p></article>
+          <article class="card green"><span class="cap">决策已经明确</span><h4>直接写 implemented</h4><p>代码与决策记录在同一个 PR 里一起接受评审。</p></article>
+          <article class="card gold"><span class="cap">重大且尚未决定</span><h4>先写 proposed</h4><p>实现前评审 Problem、Proposal、Alternatives、Acceptance criteria 和 Risks。</p></article>
+        </div>
+
+        <div class="state-line" aria-label="Agent Note 生命周期">
+          <span>proposed</span><i>→</i><span class="active">implemented</span><i>→</i><span>archived</span><i>／</i><span class="rejected">rejected</span>
+        </div>
+
+        <p>每个非平凡变更必须在同一 PR 新增或更新至少一份 Agent Note，但“这个 diff 是否非平凡”“旧 Note 是否已经拥有该决策”需要语义判断。格式检查只能验证现有 Note 是否放在合法 lifecycle / class 目录、是否包含规定章节，不能自动判断缺失的设计理由。</p>
+
+        <div class="note warn"><span class="tag">Proposed 不是最终文档</span><p>实现完成后不能只改一行状态。<code>Proposal</code> 要重写成当前时态的 <code>Decision</code>，验收与风险要折叠进实际 Consequences、Testing 或 Verification；已经 shipped 的 Note 不再保留迁移计划和未来式清单。</p></div>
+
+        <div class="note info"><span class="tag">Plan / Spec 的开发流程归属</span><p>这里不重复 Plan skill、固定 Spec 骨架和实现前 review 的完整说明；它们由<a href="./01-从-Issue-到-PR·代码开发全流程.html#plan-spec">第一份报告第 05 步：有没有专门的 Plan / Spec Skill？</a>统一解释。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>文档责任图、已有决策记录和方案不确定性。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>可直接实现的决定，或一份已经审过的 proposed Agent Note。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/README.md">.agents/notes/README.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/implemented/AGENTS.md">implemented/AGENTS.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="worktree">
+      <div class="step-rail"><span class="step-no">04</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">Git 自动携带版本化文档</span><span class="auto low">Issue 元数据需另行注入</span></div>
+        <span class="eyebrow">Decision → worktree context · 文档与源码使用同一版本</span>
+        <h2>Branch checkout 的不是裸代码，而是一整套版本化开发上下文</h2>
+        <p>他们没有独立文档仓库。创建 worktree 后，当前 branch 中的根与子树 <code>AGENTS.md</code>、现有 Agent Notes、架构与测试文档、Package README、Skills、生成器和站点 manifest 会与代码一起出现。Agent 读到的规则和它要修改的代码天然处于同一个 commit。</p>
+
+        <div class="grid2">
+          <article class="card green"><span class="cap">Git 已带入</span><h4>长期版本化上下文</h4><ul><li>根与子树 AGENTS.md</li><li>active Agent Notes 与文档树</li><li>Package README / JSDoc owner</li><li>文档 Skills、生成器与门禁源码</li></ul></article>
+          <article class="card purple"><span class="cap">Git 不会带入</span><h4>远程任务上下文</h4><ul><li>Issue 正文、评论和 Project 字段</li><li>PR review thread</li><li>私有讨论和 orchestrator prompt</li><li>尚未提交的临时方案</li></ul></article>
+        </div>
+
+        <p>这保证“文档随代码分支演进”，但不保证 Agent 自动获得完整任务。外部编排器或人仍要把 Ready Issue 注入当前 worktree；一旦开始实现，长期规则和交付文档都在同一 diff 中维护。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已确认的设计路径、目标 branch 和远程 Issue 上下文。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>代码、规则、现有事实与决策记录版本一致的实现环境。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/AGENTS.md">AGENTS.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.agents/skills">.agents/skills/</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/docs">docs/</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="implementation">
+      <div class="step-rail"><span class="step-no">05</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto medium">Agent 可执行大部分更新</span><span class="auto human">文档完整性需语义判断</span></div>
+        <span class="eyebrow">Worktree → complete diff · 文档不是尾声，而是交付物</span>
+        <h2>实现代码时，同时更新契约、决策、公开说明和可执行证据</h2>
+        <p>根规则明确要求 docs accompany every code change。实现者先改真正拥有事实的源，再让派生文档跟随：Package README 写配置、语义、失败、限制与扩展点；JSDoc 写调用方可见的返回、异常、所有权、时序和副作用；核心类型变更同步 subsystem 页面；用户或模型可见行为同步公开文档与真实 runnable-example snapshot。</p>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>代码变化</th><th>同一 diff 中对应的文档责任</th></tr></thead>
+            <tbody>
+              <tr><td>Package 配置或默认值</td><td>Package README、相关 JSDoc；生成型 config catalog 后续重建</td></tr>
+              <tr><td>公共 API / 失败行为</td><td>公开 JSDoc、owner README；必要时 type-equiv / subsystem</td></tr>
+              <tr><td>架构或跨包契约</td><td>architecture / subsystem owner + Agent Note 的理由与后果</td></tr>
+              <tr><td>用户或模型可见输出</td><td>用户文档、稳定可见字符串，以及真实组合的 keyless snapshot</td></tr>
+              <tr><td>操作流程</td><td>Cookbook；长期 agent 执行规则才进入 AGENTS.md 或 Skill</td></tr>
+              <tr><td>proposed 方案完成</td><td>移动到 implemented，重写为实际 shipped 的当前事实</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>文档不保存 Agent 的推理过程、review 对话或代码已经明显表达的控制流；它保存后续维护者仍需要依赖的契约、理由、负面保证、例外与后果。可见文本被视为行为，Snapshot 则成为文档与测试之间的可执行连接。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>版本一致的 worktree、实现决定和文档责任图。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>源码、测试、README/JSDoc、Agent Note 与可见行为证据完整的 diff。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/AGENTS.md">AGENTS.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-prose-standard/SKILL.md">dsh-prose-standard/SKILL.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/testing.md">docs/testing.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="bilingual">
+      <div class="step-rail"><span class="step-no">06</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">完整性、hash 与结构自动检查</span><span class="auto human">翻译语义必须 review</span></div>
+        <span class="eyebrow">Changed prose → atomic pair · 双语不是合并后的翻译任务</span>
+        <h2>每份纳入范围的文档以三文件原子单元进入同一个 PR</h2>
+        <p>英文和简体中文拥有同等权威；一次更新可以从任意一侧开始。它们不放进 locale 目录，也不存进独立翻译仓库，而是与 consistency sidecar 同目录并排：</p>
+
+        <div class="trio" aria-label="双语文档三文件配对">
+          <div><b>foo.md</b><p>英文对侧；普通 authored 文档包含中文切换链接。</p></div>
+          <div><b>foo.zh.md</b><p>中文对侧；标题层级、列表、表格、链接和代码块与另一侧镜像。</p></div>
+          <div><b>foo.i18n.yaml</b><p>保存两侧最后一次确认一致时的完整 Git blob hash。</p></div>
+        </div>
+
+        <p>任意一侧变化后，只对 counterpart 做覆盖该 diff 的最小更新，保留未触碰的已审文案，然后运行 <code>verify-translation-pairing --write &lt;pair&gt;</code> 重新记录两个 hash。配对 merge driver 只能在双方文本合并与结构验证都安全时自动组合 sidecar，否则保留普通冲突。</p>
+
+        <div class="note warn"><span class="tag">绿色门禁的边界</span><p>自动化可以证明“三个文件存在、当前内容等于已确认 hash、结构彼此对应”，但无法证明翻译准确、自然或术语正确。重新记录一份糟糕翻译同样会绿，因此语义一致性属于 reviewer。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已经完成语义更新的英文或中文文档。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>两种语言同步、结构一致且 sidecar 已重新确认的完整 triplet。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/i18n/README.md">docs/i18n/README.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-translate-docs/SKILL.md">dsh-translate-docs/SKILL.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="generation">
+      <div class="step-rail"><span class="step-no">07</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">生成与投影可重建</span><span class="auto human">公开范围由 manifest 决定</span></div>
+        <span class="eyebrow">Canonical sources → derivatives · 派生物不能反过来成为 owner</span>
+        <h2>先更新源码与 owner 文档，再重建目录、图表和公开网站</h2>
+        <p>Tool、config、persistence、Cordis API、module graph 等参考页是从源码或 JSDoc 生成的英文 source。它们不能手改；如果页面过时，要修改真正的代码、注释或生成器，再让 freshness gate 验证重新生成后的结果。生成页有已审中文 counterpart 时，中文仍按普通 pairing 流程更新。</p>
+
+        <div class="state-line" aria-label="文档网站投影流程">
+          <span>canonical Markdown</span><i>→</i><span>website/docs.ts</span><i>→</i><span class="active">website/.generated</span><i>→</i><span>VitePress build</span>
+        </div>
+
+        <p>文档网站同样没有第二套可编辑源。<code>website/docs.ts</code> 是显式公开 allowlist：固定快照中，它只映射 15 个 canonical Markdown source；中文投影到根路由，英文投影到 <code>/en/</code>。<code>website/.generated/</code> 是可丢弃构建树，不能手改或提交。内部 Agent Notes、Postmortems、测试指南和维护流程不会因为位于 <code>docs/</code> 就自动发布。</p>
+
+        <div class="grid2">
+          <article class="card green"><span class="cap">Source of truth</span><h4>仓库 owner</h4><p>源码、JSDoc、Package README、canonical Markdown、生成器和网站 manifest。</p></article>
+          <article class="card gray"><span class="cap">Derivative</span><h4>可重建产物</h4><p>生成型 catalog、graph、网站 projection、snapshot 与 fixture；修改 owner 后再更新。</p></article>
+        </div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已完成双语同步的 owner 文档，以及发生变化的源代码 / 元数据。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>新鲜的生成参考、合法的公开映射和可构建的网站投影。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/AGENTS.md">generated reference taxonomy</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/website/docs.ts">website/docs.ts</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-doc-site-sync/SKILL.md">dsh-doc-site-sync/SKILL.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="gates">
+      <div class="step-rail"><span class="step-no">08</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">28 项 doc-sync 门禁</span><span>本地相关检查 + PR CI 穷举</span></div>
+        <span class="eyebrow">Complete diff → mechanically consistent · 机器验证可形式化的部分</span>
+        <h2>提交前跑相关 doc-sync，PR CI 再执行完整文档矩阵</h2>
+        <p><code>pnpm run doc-sync</code> 在该快照中展开为 28 个 leaf gates。它不只是 Markdown lint，而是同时验证文档与代码、生成源、双语、Agent Note 生命周期和网站构建之间的关系：</p>
+
+        <div class="gate-grid" aria-label="doc-sync 主要门禁">
+          <span class="gate">doc-typecheck</span><span class="gate">export-jsdoc</span><span class="gate">type-equivalence</span><span class="gate">cordis-catalog</span><span class="gate">client-catalog</span><span class="gate">tool-catalog</span><span class="gate">config-catalog</span><span class="gate">persistence-catalog</span><span class="gate">doc-graphs</span><span class="gate">scoped-events</span><span class="gate">markdown-wrap</span><span class="gate">markdown-links</span><span class="gate">public-repository-links</span><span class="gate">doc-refs</span><span class="gate">package-paths</span><span class="gate">config-source-ownership</span><span class="gate">README model experience</span><span class="gate">README limitations</span><span class="gate">mermaid</span><span class="gate">Agent Note class</span><span class="gate">Agent Note format</span><span class="gate">archive seals</span><span class="gate">skill metadata</span><span class="gate">translation prompt</span><span class="gate">translation pairing</span><span class="gate">doc budgets</span><span class="gate">site projection</span><span class="gate">site build</span>
+        </div>
+
+        <p>本地 hook 故意保持很窄：pre-commit 处理 staged pairing record、lint、whitespace 等，pre-push 只跑 typecheck。文档变化由实现者按 <code>dsh-pre-push-checks</code> 选择 <code>doc-sync</code>；CI 的 static lane 再执行完整集合。这避免每次 commit 都重跑大型站点与文档图，同时保证 PR 最终无法绕过。</p>
+
+        <div class="note info"><span class="tag">机器能证明什么</span><p>链接存在、代码块能编译、复制的类型没漂移、生成物新鲜、结构合法、pair hash 匹配、站点能构建。机器不能证明内容放对了地方、理由真实、句子准确或翻译表达了相同含义。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>代码、测试、文档、双语 triplet 和所有派生物构成的完整 branch diff。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>所有可形式化约束都已通过、可以交给语义评审的 PR 内容。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/scripts/run-gates.ts">scripts/run-gates.ts</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/lefthook.yml">lefthook.yml</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/workflows/ci.yml">.github/workflows/ci.yml</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="review">
+      <div class="step-rail"><span class="step-no">09</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">CI 验证机械一致性</span><span class="auto human">Reviewer 验证语义与归属</span></div>
+        <span class="eyebrow">Green gates → trustworthy prose · 绿灯只是语义评审的起点</span>
+        <h2>PR review 不重做机器检查，而是确认文档确实代表代码与最初意图</h2>
+        <p>PR 模板只要求关联 Issue，并在折叠区写“变更”和“验证”；真正的文档验收来自 code-review 规则。Reviewer 要检查新 Markdown、JSDoc、comment、prompt、diagnostic 和 visible string 的准确性、位置与编辑质量，确认 config、default、error、wire field、event 和公开行为已经同步到 owner README / JSDoc。</p>
+
+        <div class="grid2">
+          <article class="card green"><span class="cap">自动检查已经覆盖</span><h4>Structure</h4><ul><li>链接、锚点、格式和预算</li><li>生成目录与源的一致性</li><li>双语 hash 与结构</li><li>站点投影和构建</li></ul></article>
+          <article class="card purple"><span class="cap">人工必须补上</span><h4>Meaning</h4><ul><li>事实是否属于这一层</li><li>理由与替代方案是否真实</li><li>文档是否完整匹配 shipped 行为</li><li>中英文含义与术语是否一致</li></ul></article>
+        </div>
+
+        <p>如果 review 发现文档与代码不符，修复回到原 worktree：先改 owner，再更新 counterpart 和 derivative，重新运行受影响的 doc-sync gates，push 后让 CI 对新的 HEAD 重新评估。一个 re-recorded pairing sidecar 只代表作者声称确认过，不能替代 reviewer 的逐条语义比较。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>机器门禁绿色、Issue 与验证记录齐全的 PR。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>代码、长期契约、设计理由、公开说明和双语含义彼此收敛的可合并变更。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-code-review/SKILL.md">dsh-code-review/SKILL.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/pull_request_template.md">pull_request_template.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-prose-standard/SKILL.md">dsh-prose-standard/SKILL.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="afterlife">
+      <div class="step-rail"><span class="step-no">10</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">未来决策价值由人判断</span><span>自动化：归档 triplet 与 append-only hash seal</span></div>
+        <span class="eyebrow">Merged decision → maintained memory · 合并不是文档生命周期终点</span>
+        <h2>保持当前事实；被替代时保留理由；价值耗尽后才冻结归档</h2>
+        <p>合并后的普通文档和 active implemented Agent Note 都继续描述当前状态：代码路径、symbol、default 或机制变化时，在同一次改动中更新事实，不追加“以前如何、现在如何”的变更史。若原决定被反转，应创建新的 Note 并交叉链接；只有完整替代且新 owner 保存了所有独特理由、替代、后果和覆盖缺口时，旧 active Note 才能整合删除。</p>
+
+        <div class="state-line" aria-label="合并后的文档去向">
+          <span class="active">implemented · keep current</span><i>→</i><span>superseded · cross-link</span><i>→</i><span>archived · frozen</span><i>／</i><span class="rejected">rejected · keep or delete</span>
+        </div>
+
+        <p>归档不是按年龄、字数或配额执行，而是看未来决策价值。仍包含 ownership boundary、negative guarantee、durable / wire semantics、安全规则或重新引入条件的 Note 保持 active；一次性实现细节且未来不再指导决策的 complete implemented Note 才移动到 <code>archived/{class}/</code>。</p>
+
+        <div class="grid2">
+          <article class="card green"><span class="cap">Archive</span><h4>冻结设计历史</h4><p>移动完整英文、中文、sidecar triplet，只添加同一天的 Archived 行并重录 hash。seal 后永不编辑、翻译、移动或删除，也不再是当前 authority。</p></article>
+          <article class="card gold"><span class="cap">Postmortem</span><h4>记录逃逸事故</h4><p>当 bug 微妙、系统性且重发现代价高时，记录事故时间线、根因、为什么所有防线都漏掉，以及新增的永久 guardrails。</p></article>
+        </div>
+
+        <div class="truth"><p><strong>整条文档主线到这里才完整：</strong>Issue 保存一次开发任务的目标，Agent Note 保存可复用的决策记忆，README / JSDoc / docs 保存当前契约，生成参考与网站从这些 owner 投影，doc-sync 保证机械一致，review 保证语义正确；合并后仍有价值的知识持续维护，失去当前 authority 的记录才进入不可变历史。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已经合并、仍会随代码继续演进的文档与设计记录。</p></div>
+          <div class="output"><span class="hl">主线终点</span><p>一个当前事实清楚、历史理由可追溯、旧记录不会伪装成现状的知识库。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/README.md">Agent Note lifecycle and archive policy</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-archive-agent-notes/SKILL.md">dsh-archive-agent-notes/SKILL.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/postmortem/README.md">docs/postmortem/README.md</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="col">
+    <p><strong>证据快照。</strong>本页使用固定 commit <code>141eb6fef83422698aef7a981029e843e8161534</code>（tag <code>dsh-v0.1.0-rc.8</code>，2026-08-19）。规模数据来自该 commit 的递归 Git tree：Agent Note 数字按英文主记录统计并排除 README / AGENTS 指令页；双语数字排除 vendor。</p>
+    <p><strong>证据边界。</strong>仓库可以直接证明文档分层规则、Agent Note lifecycle、双语 pairing、生成器、门禁与 review 指南；它不能证明每一次真实 review 的语义质量，也不能证明团队私有编排器实际给 Agent 注入了哪些未提交上下文。</p>
+  </footer>
+</div>
+</body>
+</html>

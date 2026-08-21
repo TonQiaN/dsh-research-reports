@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>DeepSeek Harness：一个 Idea 如何一直走到 PR</title>
+  <style>
+    :root {
+      --ground: #ffffff;
+      --surface: #f6f9f8;
+      --surface-2: #edf4f2;
+      --line: #dbe7e3;
+      --line-soft: #e9f0ee;
+      --ink: #12201c;
+      --ink-2: #465b54;
+      --ink-3: #758881;
+      --accent: #087f68;
+      --accent-ink: #006b57;
+      --accent-soft: #e6f5f0;
+      --warn: #946516;
+      --warn-soft: #fbf3df;
+      --risk: #ad4540;
+      --risk-soft: #faeceb;
+      --info: #356fa8;
+      --info-soft: #eaf2fa;
+      --manual: #8d65b5;
+      --manual-soft: #f2ecf8;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      --measure: 43rem;
+      --bleed: 72rem;
+      --radius: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ground: #111916;
+        --surface: #17211d;
+        --surface-2: #1d2b26;
+        --line: #2b3c36;
+        --line-soft: #23322d;
+        --ink: #eff8f4;
+        --ink-2: #b5c8c1;
+        --ink-3: #7f968d;
+        --accent: #49c8a7;
+        --accent-ink: #72d9bd;
+        --accent-soft: rgba(73, 200, 167, .12);
+        --warn: #d7a84e;
+        --warn-soft: rgba(215, 168, 78, .12);
+        --risk: #e47c76;
+        --risk-soft: rgba(228, 124, 118, .12);
+        --info: #78ace0;
+        --info-soft: rgba(120, 172, 224, .12);
+        --manual: #bd97e2;
+        --manual-soft: rgba(189, 151, 226, .12);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 0 1.35rem 5rem;
+      background: var(--ground);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.78;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: var(--bleed); margin: 0 auto; }
+    .col { max-width: var(--measure); margin: 0 auto; }
+    .wide { max-width: var(--bleed); margin: 0 auto; }
+
+    p, ul, ol { margin: 0 0 1.08rem; }
+    ul, ol { padding-left: 1.25rem; }
+    li { margin-bottom: .42rem; }
+    li::marker { color: var(--ink-3); }
+    strong { color: var(--ink); font-weight: 650; }
+    em { color: var(--accent-ink); font-style: normal; }
+
+    a {
+      color: var(--accent-ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+    }
+    a:hover { border-bottom-color: var(--accent); }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+    code, .mono { font-family: var(--mono); font-size: .86em; }
+    p code, li code, td code, .source code, .pill code {
+      padding: .07em .34em;
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      background: var(--surface-2);
+      color: var(--ink-2);
+      overflow-wrap: anywhere;
+    }
+
+    .masthead { padding: 4.5rem 0 2rem; }
+    .kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem 1rem;
+      margin-bottom: 1.5rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    .kicker span { white-space: nowrap; }
+    h1 {
+      margin: 0 0 1.25rem;
+      font-size: clamp(2.15rem, 5.5vw, 3.35rem);
+      font-weight: 660;
+      line-height: 1.1;
+      letter-spacing: -.025em;
+      text-wrap: balance;
+    }
+    .standfirst {
+      margin: 0;
+      color: var(--ink-2);
+      font-size: 1.14rem;
+      line-height: 1.72;
+    }
+
+    .toc {
+      margin: 2rem auto 0;
+      padding: 1.25rem 1.35rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .toc ol {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: .08rem 1.7rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .toc li { margin: 0; }
+    .toc a { display: block; padding: .28rem 0; border: 0; color: var(--ink-2); font-size: .93rem; }
+    .toc a:hover { color: var(--accent-ink); }
+    .toc .n { margin-right: .55rem; color: var(--ink-3); font-family: var(--mono); font-size: .72rem; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+      gap: 1px;
+      margin: 2.4rem 0 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+    .stat { padding: 1.05rem 1.15rem 1.15rem; background: var(--ground); }
+    .stat dt {
+      margin-bottom: .48rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .stat dd { margin: 0; font-size: 1.7rem; font-weight: 640; line-height: 1.08; letter-spacing: -.025em; }
+    .stat dd .unit { margin-left: .22rem; color: var(--ink-3); font-size: .78rem; font-weight: 520; letter-spacing: 0; }
+    .stat .sub { margin-top: .48rem; color: var(--ink-3); font-size: .79rem; line-height: 1.52; }
+
+    section { padding-top: 3.6rem; scroll-margin-top: 1rem; }
+    .eyebrow {
+      display: block;
+      margin-bottom: .62rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .71rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h2 { margin: 0 0 1.2rem; font-size: 1.65rem; line-height: 1.28; letter-spacing: -.014em; text-wrap: balance; }
+    h3 { margin: 2.05rem 0 .72rem; font-size: 1.06rem; line-height: 1.4; text-wrap: balance; }
+    h4 { margin: 0 0 .5rem; font-size: .97rem; }
+    hr { margin: 3rem 0 0; border: 0; border-top: 1px solid var(--line); }
+
+    .thesis {
+      margin: 1.8rem 0;
+      padding: 1.35rem 0 1.35rem 1.35rem;
+      border-left: 2px solid var(--accent);
+      color: var(--ink);
+      font-size: 1.05rem;
+      line-height: 1.76;
+    }
+    .thesis p:last-child { margin-bottom: 0; }
+
+    .takeaways {
+      margin: 2.35rem 0;
+      padding: 1.35rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .takeaways .section-kicker {
+      display: block;
+      margin-bottom: .42rem;
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .68rem;
+      font-weight: 650;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .takeaways h2 { margin: 0 0 .55rem; font-size: 1.46rem; line-height: 1.3; }
+    .takeaways-intro { margin: 0; color: var(--ink-2); font-size: .91rem; }
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      margin: 1.2rem 0 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+      list-style: none;
+    }
+    .takeaway {
+      display: grid;
+      grid-template-columns: 2.2rem minmax(0, 1fr);
+      gap: .78rem;
+      margin: 0;
+      padding: 1rem 1.05rem;
+      background: var(--ground);
+    }
+    .takeaway:first-child { grid-column: 1 / -1; background: var(--accent-soft); }
+    .takeaway-no {
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .72rem;
+      font-weight: 680;
+      letter-spacing: .05em;
+    }
+    .takeaway h3 { margin: -.1rem 0 .3rem; font-size: .99rem; line-height: 1.4; }
+    .takeaway p { margin: 0; color: var(--ink-2); font-size: .84rem; line-height: 1.6; }
+
+    .note {
+      margin: 1.6rem 0;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--line);
+      border-left: 2px solid var(--accent);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink-2);
+      font-size: .93rem;
+    }
+    .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+    .note.risk { border-left-color: var(--risk); background: var(--risk-soft); }
+    .note.info { border-left-color: var(--info); background: var(--info-soft); }
+    .note p:last-child { margin-bottom: 0; }
+    .tag {
+      display: block;
+      margin-bottom: .34rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .67rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .verdict {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin: 1.8rem 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+    .verdict article { padding: 1.1rem 1.15rem; background: var(--ground); }
+    .verdict .label { display: block; margin-bottom: .45rem; font-family: var(--mono); font-size: .69rem; letter-spacing: .08em; text-transform: uppercase; }
+    .verdict .yes .label { color: var(--accent-ink); }
+    .verdict .conditional .label { color: var(--warn); }
+    .verdict .no .label { color: var(--risk); }
+    .verdict p { margin: 0; color: var(--ink-2); font-size: .9rem; line-height: 1.65; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: .75rem;
+      margin: 1.9rem 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: phase;
+    }
+    .flow li {
+      position: relative;
+      min-height: 9.5rem;
+      margin: 0;
+      padding: 1rem .9rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      counter-increment: phase;
+    }
+    .flow li::before {
+      content: "0" counter(phase);
+      display: block;
+      margin-bottom: .8rem;
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .72rem;
+      font-weight: 650;
+    }
+    .flow li::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -.72rem;
+      z-index: 2;
+      color: var(--ink-3);
+      transform: translateY(-50%);
+    }
+    .flow li:last-child::after { display: none; }
+    .flow strong { display: block; margin-bottom: .3rem; font-size: .92rem; }
+    .flow span { display: block; color: var(--ink-3); font-size: .78rem; line-height: 1.5; }
+
+    .tablewrap { margin: 1.6rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th, td { padding: .62rem .82rem; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+    thead th {
+      border-bottom-color: var(--line);
+      background: var(--surface);
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .68rem;
+      font-weight: 520;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    td:first-child { color: var(--ink); font-weight: 620; white-space: nowrap; }
+
+    .grid2, .grid3 {
+      display: grid;
+      gap: 1rem;
+      margin: 1.7rem 0;
+    }
+    .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      padding: 1.1rem 1.15rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--ground);
+    }
+    .card p, .card ul { margin-bottom: 0; color: var(--ink-2); font-size: .89rem; line-height: 1.67; }
+    .card .cap { display: block; margin-bottom: .45rem; color: var(--ink-3); font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+    .card.proposed { border-top: 3px solid var(--warn); }
+    .card.implemented { border-top: 3px solid var(--accent); }
+    .card.mechanical { border-top: 3px solid var(--ink-3); }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1px;
+      margin: 1.7rem 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+    .split article { padding: 1.15rem; background: var(--ground); }
+    .split .tracked { border-top: 3px solid var(--accent); }
+    .split .remote { border-top: 3px solid var(--manual); }
+    .split p, .split ul { margin-bottom: 0; color: var(--ink-2); font-size: .9rem; }
+
+    .ladder { display: grid; gap: .55rem; margin: 1.6rem 0; }
+    .rung {
+      display: grid;
+      grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+      gap: 1rem;
+      align-items: start;
+      padding: .78rem .9rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .rung b { font-family: var(--mono); font-size: .77rem; color: var(--accent-ink); }
+    .rung span { color: var(--ink-2); font-size: .88rem; line-height: 1.58; }
+
+    .source {
+      margin: 1.2rem 0 0;
+      padding: .82rem .95rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .72rem;
+      line-height: 1.65;
+    }
+    .source a { color: var(--ink-2); border-bottom-color: var(--line); }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .12rem .45rem;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: .65rem;
+      font-weight: 620;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .status.high { color: var(--accent-ink); }
+    .status.medium { color: var(--warn); }
+    .status.low { color: var(--ink-3); }
+    .status.human { color: var(--manual); }
+
+    .sequence { margin: 1.7rem 0; padding: 0; list-style: none; border-left: 1px solid var(--line); }
+    .sequence li { position: relative; margin: 0; padding: .45rem 0 .65rem 1.25rem; }
+    .sequence li::before { content: ""; position: absolute; left: -4px; top: .95rem; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .sequence b { display: inline-block; min-width: 8rem; font-size: .92rem; }
+    .sequence span { color: var(--ink-2); font-size: .9rem; }
+
+    .truth { margin-top: 1.8rem; padding: 1.25rem 1.3rem; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+    .truth p { margin: 0; font-size: 1.02rem; line-height: 1.72; }
+
+    /* one chronological development journey */
+    .route-map {
+      display: flex;
+      gap: .7rem;
+      margin: 2rem 0 0;
+      padding: .2rem 0 .8rem;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+    }
+    .route-node {
+      position: relative;
+      flex: 0 0 9.6rem;
+      min-height: 7.4rem;
+      padding: .85rem .85rem .8rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      scroll-snap-align: start;
+    }
+    .route-node::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -.67rem;
+      z-index: 2;
+      color: var(--ink-3);
+      transform: translateY(-50%);
+    }
+    .route-node:last-child::after { display: none; }
+    .route-node b { display: block; margin-bottom: .3rem; font-size: .86rem; line-height: 1.35; }
+    .route-node small { display: block; color: var(--ink-3); font-size: .72rem; line-height: 1.45; }
+    .route-node .rn { display: block; margin-bottom: .7rem; color: var(--accent-ink); font-family: var(--mono); font-size: .67rem; font-weight: 650; }
+
+    .journey { margin-top: 3.6rem; }
+    .journey-step {
+      display: grid;
+      grid-template-columns: 4.8rem minmax(0, var(--measure));
+      justify-content: center;
+      column-gap: 1.25rem;
+      padding: 0 0 4rem;
+      scroll-margin-top: 1rem;
+    }
+    .step-rail { position: relative; display: flex; justify-content: center; }
+    .step-rail::after {
+      content: "";
+      position: absolute;
+      top: 3.2rem;
+      bottom: -4rem;
+      left: 50%;
+      width: 1px;
+      background: var(--line);
+    }
+    .journey-step:last-child .step-rail::after { display: none; }
+    .step-no {
+      display: grid;
+      place-items: center;
+      width: 3.1rem;
+      height: 3.1rem;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      background: var(--ground);
+      color: var(--accent-ink);
+      font-family: var(--mono);
+      font-size: .78rem;
+      font-weight: 680;
+    }
+    .step-body { min-width: 0; padding-top: .15rem; }
+    .step-body h2 { margin-bottom: .8rem; }
+    .step-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem .75rem;
+      align-items: center;
+      margin: 0 0 .8rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .7rem;
+    }
+    .auto {
+      display: inline-flex;
+      padding: .12rem .45rem;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-weight: 640;
+      letter-spacing: .03em;
+    }
+    .auto.low { color: var(--risk); }
+    .auto.medium { color: var(--warn); }
+    .auto.high { color: var(--accent-ink); }
+    .auto.human { color: var(--manual); }
+
+    .handoff {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      margin: 1.4rem 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+    .handoff > div { padding: .9rem 1rem; background: var(--surface); }
+    .handoff .hl {
+      display: block;
+      margin-bottom: .34rem;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: .65rem;
+      font-weight: 620;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .handoff p { margin: 0; color: var(--ink-2); font-size: .86rem; line-height: 1.58; }
+    .handoff .output { background: var(--accent-soft); }
+    .handoff .output .hl { color: var(--accent-ink); }
+
+    .status-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .4rem;
+      margin: 1.25rem 0;
+      padding: .95rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .status-line span {
+      padding: .2rem .55rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--ground);
+      color: var(--ink-2);
+      font-family: var(--mono);
+      font-size: .7rem;
+    }
+    .status-line i { color: var(--ink-3); font-style: normal; }
+    .status-line .active { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+
+    .branch-line {
+      margin: 1.3rem 0;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-family: var(--mono);
+      font-size: .78rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .branch-line .accent { color: var(--accent-ink); font-weight: 650; }
+
+    .plan-spec { scroll-margin-top: 1rem; }
+    .spec-format {
+      margin: 1.35rem 0;
+      padding: 1rem 1.1rem;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink-2);
+      font-family: var(--mono);
+      font-size: .77rem;
+      line-height: 1.72;
+      white-space: pre;
+    }
+    .spec-format code { color: inherit; font: inherit; }
+
+    .stop-line {
+      margin-top: 1.8rem;
+      padding: 1.1rem 1.2rem;
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius);
+      background: var(--accent-soft);
+    }
+    .stop-line p { margin: 0; font-size: .94rem; }
+
+    footer { margin-top: 4.5rem; padding-top: 1.6rem; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .84rem; line-height: 1.72; }
+    footer p:last-child { margin-bottom: 0; }
+
+    @media (max-width: 900px) {
+      .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .flow li:nth-child(3)::after { display: none; }
+      .grid3 { grid-template-columns: 1fr; }
+      .verdict { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      body { padding: 0 1rem 4rem; font-size: 15.5px; }
+      .masthead { padding-top: 3.3rem; }
+      .takeaway-grid { grid-template-columns: 1fr; }
+      .takeaway:first-child { grid-column: auto; }
+      .flow { grid-template-columns: 1fr; }
+      .flow li { min-height: auto; }
+      .flow li::after, .flow li:nth-child(3)::after { display: none; }
+      .grid2, .split { grid-template-columns: 1fr; }
+      .rung { grid-template-columns: 1fr; gap: .2rem; }
+      .sequence b { display: block; min-width: 0; }
+      .journey-step { grid-template-columns: 3.2rem minmax(0, 1fr); column-gap: .75rem; }
+      .step-no { width: 2.65rem; height: 2.65rem; }
+      .step-rail::after { top: 2.75rem; }
+      .handoff { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { padding: 0; }
+      a { color: inherit; }
+      .toc { break-after: page; }
+      section, .card, .note, .tablewrap { break-inside: avoid; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead col">
+    <div class="kicker">
+      <span>DeepSeek Harness 开发流程</span>
+      <span>一条主线 · 十个交接点</span>
+      <span>快照 141eb6f · 2026-08-19</span>
+    </div>
+    <h1>一个 Idea，如何一直走到 PR</h1>
+    <p class="standfirst">不把 Issue、worktree、Agent Note、测试和 CI 分成五个主题。这页只跟踪<strong>同一个 Idea</strong>：它怎样被记录、分诊、选中、开出独立 worktree，怎样决定要不要先审方案，怎样被 agent 实现与测试，最后怎样成为一个可进入正式评审的 PR。</p>
+  </header>
+
+  <div class="col">
+    <div class="thesis">
+      <p><strong>核心判断：</strong>这不是一条“每个 Idea 都先写完整 spec，再自动派发给 agent”的流水线。它是一条分级流程：<strong>Issue 在正式评审前必须存在；重大未决方案才先走 proposed Agent Note；代码、测试、文档和决策记录最后在同一 PR 收口。</strong></p>
+    </div>
+
+    <section class="takeaways" id="takeaways" aria-labelledby="takeaways-title">
+      <span class="section-kicker">Five takeaways</span>
+      <h2 id="takeaways-title">先记住这五件事</h2>
+      <p class="takeaways-intro">真正重要的不是 agent 能写多少代码，而是一个想法在什么时候成为承诺、拿到什么上下文，又经过哪些机器和人工门禁。</p>
+      <ol class="takeaway-grid">
+        <li class="takeaway">
+          <span class="takeaway-no">01</span>
+          <div><h3>Idea 不等于承诺，Ready 才等于开始</h3><p>Issue 先进入 Inbox 或 Backlog；只有人确认价值、责任人与验收边界并把它推进 Ready，它才成为真正要实现的开发工作。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">02</span>
+          <div><h3>Issue 是开发契约，不是完整 Spec</h3><p>固定模板把想法写成可分诊、可验收的任务，但长期设计理由另进 Agent Note；仓库没有统一的“创建 Issue 并自动派发 agent”skill。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">03</span>
+          <div><h3>Branch 决定血缘，Worktree 只负责隔离</h3><p>独立 PR 通常基于 master，stacked PR 基于直接父 branch；Worktree 是该 branch 的专用工作空间，本身不是 PR，也不会自动完成任务派发。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">04</span>
+          <div><h3>方案与测试都按风险规划</h3><p>机械修改直接做，已决方案边实现边记录，重大未决方案先审 proposed Agent Note；测试面在计划期命名，但并不强制每项工作采用完整 Spec 或 TDD。</p></div>
+        </li>
+        <li class="takeaway">
+          <span class="takeaway-no">05</span>
+          <div><h3>机器推流程，人守关键门</h3><p>Hooks、状态联动、测试与 CI 负责机械一致性；人负责选择 Ready、审重大方案、判断语义与风险。代码、测试、文档和决策证据最终在同一 PR 收口。</p></div>
+        </li>
+      </ol>
+    </section>
+
+    <nav class="toc" aria-label="一个 Idea 到 PR 的十个步骤">
+      <ol>
+        <li><a href="#idea"><span class="n">01</span>Idea 出现</a></li>
+        <li><a href="#issue"><span class="n">02</span>写成 Issue</a></li>
+        <li><a href="#triage"><span class="n">03</span>分诊到 Ready</a></li>
+        <li><a href="#worktree"><span class="n">04</span>开 branch / worktree</a></li>
+        <li><a href="#design"><span class="n">05</span>判断是否先审方案</a></li>
+        <li><a href="#implementation"><span class="n">06</span>Agent 进入实现</a></li>
+        <li><a href="#evidence"><span class="n">07</span>补齐测试证据</a></li>
+        <li><a href="#push"><span class="n">08</span>本地验收、commit 与 push</a></li>
+        <li><a href="#pr"><span class="n">09</span>建立 PR</a></li>
+        <li><a href="#reviewable"><span class="n">10</span>PR 进入 CI / review 循环</a></li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="wide">
+    <div class="route-map" aria-label="Idea 到 PR 的流程总览">
+      <div class="route-node"><span class="rn">01</span><b>Idea</b><small>价值假设，还没有承诺实现</small></div>
+      <div class="route-node"><span class="rn">02</span><b>Issue</b><small>用固定类型写出验收边界</small></div>
+      <div class="route-node"><span class="rn">03</span><b>Triage</b><small>Inbox → Backlog → Ready</small></div>
+      <div class="route-node"><span class="rn">04</span><b>Worktree</b><small>基于 master 或 stack parent 隔离</small></div>
+      <div class="route-node"><span class="rn">05</span><b>Design</b><small>机械 / implemented / proposed 三路分流</small></div>
+      <div class="route-node"><span class="rn">06</span><b>Implement</b><small>代码、测试、文档、Note 同步改</small></div>
+      <div class="route-node"><span class="rn">07</span><b>Evidence</b><small>unit、real composition、snapshot、e2e</small></div>
+      <div class="route-node"><span class="rn">08</span><b>Push</b><small>change-scope、最窄检查、Git hooks</small></div>
+      <div class="route-node"><span class="rn">09</span><b>PR</b><small>Issue 引用、labels、Priority、验证说明</small></div>
+      <div class="route-node"><span class="rn">10</span><b>Reviewable</b><small>CI 穷举，人工评语义，修复后重跑</small></div>
+    </div>
+  </div>
+
+  <main class="journey">
+    <section class="journey-step" id="idea">
+      <div class="step-rail"><span class="step-no">01</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">人决策</span><span>责任：提出者 / 产品与维护者</span></div>
+        <span class="eyebrow">起点 · 只是一个可能值得做的想法</span>
+        <h2>Idea 出现时，它还不是给 agent 的任务</h2>
+        <p>主线从一个价值假设开始：也许是新功能，也许是 Bug 现象，也许只是一个还需要研究的问题。仓库的 Idea 模板开头就定义它是“尚未承诺实施、但具有行动可能的想法”。</p>
+        <p>这一站没有自动 coding。没有 workflow 在 Idea 出现后自动创建 branch，也没有一份仓库 skill 会自动把它派发给 agent。第一个真正动作是：选择正确 Issue Type，把想法写成可分诊的条目。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>一个价值假设、问题现象或待回答的疑问。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个已判断类型、可以写入模板的 Issue 草稿。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/ISSUE_TEMPLATE/idea.md">.github/ISSUE_TEMPLATE/idea.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.agents/skills">.agents/skills/</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="issue">
+      <div class="step-rail"><span class="step-no">02</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto medium">模板 + 机械校验</span><span>责任：Issue 作者</span></div>
+        <span class="eyebrow">Idea → Issue · 把“想做”改写成“如何判定完成”</span>
+        <h2>选一份固定模板，把 Idea 写成可验收的 Issue</h2>
+        <p>仓库禁用 blank Issue，入口只有五种原生 Type。这一步不是写完整 spec，而是把需求压缩成正确的问题形状：</p>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Type</th><th>这一站需要写清</th></tr></thead>
+            <tbody>
+              <tr><td>Idea</td><td>价值假设、需要验证什么、可能的后续工作。</td></tr>
+              <tr><td>Feature</td><td>预期结果、验收条件、用户/模型可见变化、测试证据。</td></tr>
+              <tr><td>Bug</td><td>复现步骤、实际结果、预期结果、环境与验收条件。</td></tr>
+              <tr><td>Research</td><td>核心问题、证据标准、应交付的结论。</td></tr>
+              <tr><td>Task</td><td>验收条件、交付物与测试证据。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>提交后，<code>policy.mjs</code> 检查标题必须含中文，不得带 Type/Priority/Status/area/Owner 前缀；正文必须有默认收起的 <code>&lt;details&gt;</code>，外露内容不超过 50 单位；Issue 必须进 Project 并拥有合法 Status。多个 Assignee 时还必须显式写 Owner。</p>
+
+        <div class="note info"><span class="tag">没有 Issue 创建 skill</span><p>这一站的固定机制是 GitHub 模板和 policy workflow，不是 <code>dsh-create-issue</code> 之类的 skill。当前 11 份 skill 里没有 Issue 创建或 Issue 到 agent 派发流程。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已选好 Type 的 Issue 草稿。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个通过格式 policy、进入 Project Inbox 的 Issue。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.github/ISSUE_TEMPLATE">.github/ISSUE_TEMPLATE/</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/issue-management/policy.mjs#L127-L154">policy.mjs L127–154</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/issue-management/policy.mjs#L284-L323">policy.mjs L284–323</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="triage">
+      <div class="step-rail"><span class="step-no">03</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">人工优先级判断</span><span>自动化：状态合法性与后续 PR 联动</span></div>
+        <span class="eyebrow">Issue → Ready · 这里才决定是否真的开发</span>
+        <h2>Issue 先进 Inbox，再由人把它推到 Backlog 或 Ready</h2>
+        <p>这是 Idea 到代码之间最重要的人工判断点。Project 的状态集合是 <code>Inbox → Backlog → Ready → In progress → In review → Done / No action</code>。可见 workflow 会维护状态与 Issue/PR 事件的一致性，但不会自动判断一个 Idea 是否值得进 Ready。</p>
+
+        <div class="status-line" aria-label="Issue 生命周期">
+          <span>Inbox</span><i>→</i><span>Backlog</span><i>→</i><span class="active">Ready</span><i>→</i><span>In progress</span><i>→</i><span>In review</span><i>→</i><span>Done / No action</span>
+        </div>
+
+        <p>只有我们正在跟踪的这个 Idea 被选中实现时，它才会带着所有者、可选的 P0–P3 Priority 和验收边界进入 Ready。没被选中的 Idea 可以留在 Backlog，或以 Not planned 关闭并对应 No action。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>Project Inbox 中的合法 Issue。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个已被选中、有责任与验收边界的 Ready Issue。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/issue-management/config.json">.github/issue-management/config.json</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/workflows/issue-lifecycle.yml">.github/workflows/issue-lifecycle.yml</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="worktree">
+      <div class="step-rail"><span class="step-no">04</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto low">创建自动化低</span><span>建好后：worktree-local hooks 自动接线</span></div>
+        <span class="eyebrow">Ready → branch / worktree · 把任务变成独立代码空间</span>
+        <h2>对独立改动，从 master 开；对 stacked PR，从直接父 branch 开</h2>
+        <p>当前默认分支是 <code>master</code>。如果这个 Ready Issue 会形成一个独立 PR，它的基线通常是已核实的最新 <code>master</code>。如果它是一条依赖 stack 的 B 层，则 B 基于 A branch，不能假装 B 可以单独相对 master 开发。</p>
+
+        <div class="branch-line">
+          独立：<span class="accent">master</span> → feature branch → dedicated worktree<br>
+          Stack：<span class="accent">master</span> ← PR-A / worktree-A ← PR-B / worktree-B ← PR-C / worktree-C
+        </div>
+
+        <p>仓库没有“输入 Issue 号，自动创建 branch 和 worktree”的命令，branch 命名也不统一；历史中同时存在 <code>worktree/</code>、<code>codex/</code>、<code>agent/</code>、<code>feat/</code>、<code>fix/</code> 等家族。自动化从创建之后才开始：<code>pnpm install</code> 的 <code>postinstall</code> 会为当前 worktree 安装独立 Lefthook 和翻译 pairing merge driver。</p>
+
+        <div class="note"><span class="tag">概念边界</span><p>Worktree 是本地 checkout 的隔离容器。最后提 PR 的是它所 checkout 的 branch，不是 worktree 目录本身。Stack 中强约定是“每个 PR branch 一个 worktree”。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>Ready Issue 以及它真实的 PR base / stack parent。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个独立 branch、一个专用 worktree，以及已安装的本地安全接线。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/cookbook/responding-to-pr-review-on-a-stack.md#L7-L25">responding-to-pr-review-on-a-stack.md L7–25</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/implemented/process/2026-07-27-worktree-local-lefthook.md">worktree-local Lefthook Agent Note</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="design">
+      <div class="step-rail"><span class="step-no">05</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto human">方案判断由 review 负责</span><span>自动化：Agent Note 格式与配对门禁</span></div>
+        <span class="eyebrow">Worktree → implementation-ready · 不是所有任务都先写 spec</span>
+        <h2>在真正实现前，先判断这个变更属于哪条设计路径</h2>
+        <p>这里不是一刀切的 spec-driven development，而是按决策风险分三路：</p>
+
+        <div class="grid3">
+          <article class="card mechanical"><span class="cap">路径 A · 机械 / 纯局部</span><h4>可跳过 Agent Note</h4><p>不改行为、架构、跨文件约定、流程或理由的改动免除。</p></article>
+          <article class="card implemented"><span class="cap">路径 B · 决策已明确</span><h4>直接实现 + <code>implemented/</code></h4><p>非平凡改动在同 PR 写或更新 Agent Note，方案与代码一起评审。</p></article>
+          <article class="card proposed"><span class="cap">路径 C · 重大且未决</span><h4>先评审 <code>proposed/</code></h4><p>实现前先审 Problem、Proposal、Alternatives considered、Acceptance criteria 和 Risks。</p></article>
+        </div>
+
+        <p><strong>这就是“有没有 Plan Review”的准确答案：</strong>重大未决方案有实现前评审，载体是 proposed Agent Note；但没有所有任务统一经过的 <code>Plan approved</code> 状态，也不要求所有工作先交一个独立 Plan PR。仓库产品里的 Plan mode 是另一个同名功能，与开发审批无关。</p>
+
+        <div class="plan-spec" id="plan-spec">
+          <h3>有没有专门的 Plan / Spec Skill？</h3>
+
+          <div class="note info"><span class="tag">直接答案</span><p><strong>没有通用的 <code>write-plan</code> 或 <code>create-spec</code> skill；有统一的 Spec 载体和格式。</strong>仓库现有 11 个开发 skill 覆盖文档、评审、pre-push、stacked PR、Agent Note 治理和 GUI 证据，但没有一个负责把所有任务自动写成 Plan。重大未决方案使用 <code>proposed Agent Note</code>，它才是这里最接近正式 Spec 的东西。</p></div>
+
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>问题</th><th>仓库里的答案</th></tr></thead>
+              <tbody>
+                <tr><td>专门的 Plan / Spec skill</td><td>没有通用版本；只有面向特定工作的相邻 skill，例如简化提案或 Agent Note 归档。</td></tr>
+                <tr><td>固定格式</td><td>有。<code>verify-agent-note-format</code> 会机械检查 lifecycle、状态和规定章节。</td></tr>
+                <tr><td>每项任务都先写</td><td>不是。只有重大且尚未决定的未来工作先进入 <code>proposed/</code>。</td></tr>
+                <tr><td>单独的 Plan PR</td><td>没有仓库级统一要求；真正要求的是重大方案在实现前先被 review。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>Proposed Agent Note 的固定骨架</h4>
+          <pre class="spec-format"><code># Agent Note: &lt;title&gt;
+
+Status: proposed
+
+## Problem
+## Proposal
+…与方案有关的技术章节…
+## Alternatives considered
+## Acceptance criteria
+## Risks</code></pre>
+
+          <p><code>Proposal</code> 可以包含实现步骤、迁移方式和开放问题；测试需要在这一阶段命名 unit、e2e 与 snapshot 覆盖，但不要求预先枚举每一个 test case，也不强制 TDD。</p>
+
+          <div class="grid2">
+            <article class="card proposed"><span class="cap">实现之前</span><h4>描述准备做什么</h4><p><code>Problem → Proposal → Alternatives → Acceptance criteria → Risks</code>，以未来时态接受方案评审。</p></article>
+            <article class="card implemented"><span class="cap">实现之后</span><h4>改写成已经发生的事实</h4><p><code>Proposal → Decision</code>，验收与风险折入 <code>Consequences / Testing / Verification</code>；implemented Note 不再保留过期的 Plan 清单。</p></article>
+          </div>
+
+          <div class="note warn"><span class="tag">不要混淆</span><p><code>packages/plan/</code> 是 DeepSeek Harness 产品自身的“Plan mode as logged state”，不是维护者开发这个仓库时使用的 Plan 审批 skill，也不代表每个 Issue 都自动进入 spec-driven 流程。</p></div>
+        </div>
+
+        <h3>测试在这一步就开始被规划</h3>
+        <p>新 capability seam、生命周期路径或 transcript 表面，必须在 plan time 命名 unit、e2e 与 snapshot 覆盖，并在实现前确认测试 harness 表达得了。这是“提前规划测试面”，但不是“每个 test case 必须先写红”的强制 TDD。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>Ready Issue + 独立 worktree + 现有设计记录。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个已选定的方案路径、验收条件和测试证据地图。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/tree/141eb6fef83422698aef7a981029e843e8161534/.agents/skills">.agents/skills/</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/README.md#L7-L19">Agent Note lifecycle L7–19</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/README.md#L44-L48">When to write one L44–48</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/README.md#L79-L125">Agent Note format L79–125</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/testing.md#L47-L49">docs/testing.md L47–49</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="implementation">
+      <div class="step-rail"><span class="step-no">06</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto low">启动 agent 的编排不在公开仓库</span><span>仓库自动提供：指令与可执行规则</span></div>
+        <span class="eyebrow">Design → implementation · 现在才进入写代码阶段</span>
+        <h2>Agent 进入 worktree，但 Issue 不会被 Git 自动复制进来</h2>
+        <p>Git worktree 会带来 branch 中已跟踪的上下文：根目录与子树 <code>AGENTS.md</code>、开发与测试文档、已提交的 proposed/implemented Agent Notes，以及 <code>.agents/skills/</code> 中的流程指导。这些是实现者的长期规则。</p>
+        <p>但 GitHub Issue 正文、Project Priority、Issue 评论和未来 PR review thread 不是 Git 文件，不会随 worktree checkout。因此必须由人或外部编排器把这个 Ready Issue 交给 agent。<strong>没有发现 Issue → Markdown spec → agent prompt 的仓库内自动同步器。</strong></p>
+
+        <div class="split">
+          <article class="tracked"><span class="cap">Worktree 已经有</span><h4>版本化上下文</h4><ul><li>AGENTS.md 与子树规则</li><li>相关 Agent Notes 与 docs</li><li>测试政策与仓库 skills</li><li>实际代码、测试和示例</li></ul></article>
+          <article class="remote"><span class="cap">必须另行提供</span><h4>任务元数据</h4><ul><li>Issue 正文与评论</li><li>Project 的 Owner / Priority / Status</li><li>未提交的临时设计讨论</li><li>私有 orchestrator 的 prompt 与任务分解</li></ul></article>
+        </div>
+
+        <p>实现的交付物也不只是源码。非平凡变更要在同一 branch 同步生产代码、单元/集成测试、可见行为快照、README/JSDoc、英中文对侧和 Agent Note。如果之前走的是 proposed 路径，实现完成时将 Note 移入 <code>implemented/</code>，用现在时重写为真正 shipped 的决策。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>任务上下文 + 已选方案 + 测试地图 + 仓库长期规则。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个包含代码、测试、文档与决策记录的完整 worktree diff。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/AGENTS.md#L121-L129">AGENTS.md L121–129</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/notes/README.md#L121-L125">Agent Note lifecycle move L121–125</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="evidence">
+      <div class="step-rail"><span class="step-no">07</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto medium">规则自动，证据选择需判断</span><span>原则：验证外部世界，不信 agent 自报</span></div>
+        <span class="eyebrow">Implementation → evidence · 让每个验收条件有一条会红的证据</span>
+        <h2>实现不算完成；现在按可见面把测试证据补齐</h2>
+        <p>这一站不是无条件跑全仓库。实现者先根据第 05 步的测试地图，为每个改变的行为选择会因该回归而失败的最窄证据：</p>
+
+        <div class="ladder">
+          <div class="rung"><b>Unit</b><span>边界、错误路径、事件顺序、并发竞争与回归约定。</span></div>
+          <div class="rung"><b>Coverage</b><span>CI 对 <code>packages/*/*/src</code> 要求每文件 100%；但 coverage 只证明行被执行，不是产品验收。</span></div>
+          <div class="rung"><b>Real composition</b><span>产品可见插件必须通过 Loader 和真实 app/process 启动；手工 <code>ctx.plugin(...)</code> 不够。</span></div>
+          <div class="rung"><b>Snapshot</b><span>模型、协议或人类可见变化，必须在同 PR 更新真实可运行示例所属的 keyless snapshot。</span></div>
+          <div class="rung"><b>Real API e2e</b><span>需要时用真实 DeepSeek/provider 验证文件写入、多轮、工具调用与取消。</span></div>
+        </div>
+
+        <p>e2e 断言会重新读文件、重新执行命令或检查持久状态，不能只搜索 agent 输出里是否说了“成功”。强回归保护还应在未修复代码上被证明确实会失败。</p>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>完整 worktree diff 和已规划的测试地图。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>每个改变面都有对应本地证据的可提交 branch。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/testing.md#L7-L35">docs/testing.md L7–35</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/testing.md#L47-L49">snapshot requirement L47–49</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-code-review/SKILL.md">dsh-code-review/SKILL.md</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="push">
+      <div class="step-rail"><span class="step-no">08</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">本地 hook 自动</span><span>证据范围：人 / agent 先核实</span></div>
+        <span class="eyebrow">Evidence → pushed branch · 本地收口</span>
+        <h2>先核实 diff 的真实 base，再 commit，最后让 pre-push 检查类型</h2>
+        <p><code>dsh-pre-push-checks</code> 要求先确认当前 checkout 和 branch，核实活跃 PR base 或 stack parent，然后运行 <code>change-scope --base &lt;verified-base&gt;</code>。这个命令故意不猜 base，因为错的 merge base 会让 agent 忽略真正差异。</p>
+        <p>随后执行第 07 步挑出的最窄检查：行为改动跑 owning tests，文档跑 <code>doc-sync</code>，可见输出跑 snapshot，发布路径跑 build/hygiene/built smoke，真 provider 行为在有密钥时跑 e2e。仓库明确反对反射性跑全套；穷举是后面 CI 的工作。</p>
+
+        <div class="grid2">
+          <article class="card"><span class="cap">Commit 时</span><h4>pre-commit 快检</h4><p>staged 翻译 pairing、归档 Note、Oxlint 并回填修复、第三方 notices、whitespace 和 vendor manifest guard。</p></article>
+          <article class="card"><span class="cap">Push 时</span><h4>pre-push 只跑 typecheck</h4><p><code>pnpm run typecheck</code> 是最后的自动本地拦截。测试、snapshot、docs、build 不在 hook 里重复执行。</p></article>
+        </div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已有本地证据的 branch diff。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>有清晰提交历史、通过快速 hooks，并且远程 HEAD 与本地一致的 branch。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-pre-push-checks/SKILL.md">dsh-pre-push-checks/SKILL.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/development.md#L103-L123">docs/development.md L103–123</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/lefthook.yml">lefthook.yml</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="pr">
+      <div class="step-rail"><span class="step-no">09</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">PR policy 自动校验</span><span>责任：PR 作者整理意图与证据</span></div>
+        <span class="eyebrow">Pushed branch → PR · 把实现 diff 与最初 Issue 重新接上</span>
+        <h2>现在从 worktree 对应 branch 建 PR，但 PR 不是上传 worktree</h2>
+        <p>提交对象是远程 branch。PR 模板故意很短：关联 Issue，再在折叠区写“变更”和“验证”。如果这个 PR 解决了我们一直跟踪的 Issue，写 <code>Fixes #NN</code>；只是相关上下文则写 <code>Related to #NN</code>。</p>
+
+        <div class="note warn"><span class="tag">Issue 不一定在写第一行代码前就存在</span><p>Draft PR 和本地实验可以更早开始。但当一个人类作者的非 Draft PR 已请求或收到人工 review 时，policy 必须看到至少一个同仓库 Issue。所以它是 <em>review-time Issue mandatory</em>，而不是可执行规则上的 <em>code-before-everything Issue mandatory</em>。</p></div>
+
+        <h3>进入正式人工评审前，PR 必须收齐这些元数据</h3>
+        <ul>
+          <li>正文至少引用一个同仓库 Issue。</li>
+          <li>恰好一个允许的 <code>kind/*</code>，至少一个 <code>area/*</code>，至多一个 P0–P3。</li>
+          <li>解决型 PR 的 Priority 与 Issue 同步；解决多个时取最高优先级。</li>
+          <li>非平凡变更包含 Agent Note；用户/模型可见变化包含 snapshot；公开行为同步 README/JSDoc 和双语对侧。</li>
+          <li>PR “验证”只写真正跑过的本地命令，未完成的 CI 必须仍然报告为 pending。</li>
+        </ul>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>已 push、已在本地验证的 branch。</p></div>
+          <div class="output"><span class="hl">交给下一步</span><p>一个恢复了“Idea → Issue → 代码证据”链路、元数据齐全的 PR。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/pull_request_template.md">pull_request_template.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/issue-management/policy.mjs#L158-L170">PR policy activation L158–170</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/issue-management/policy.mjs#L331-L379">PR metadata validation L331–379</a></div>
+      </div>
+    </section>
+
+    <section class="journey-step" id="reviewable">
+      <div class="step-rail"><span class="step-no">10</span></div>
+      <div class="step-body">
+        <div class="step-meta"><span class="auto high">CI 穷举</span><span class="auto human">人工 review 语义</span></div>
+        <span class="eyebrow">PR → reviewable PR · 主线在这里完成</span>
+        <h2>PR 创建后，CI 与 review 反复验证它是否真正代表最初 Idea</h2>
+        <p>CI 不是等代码“全部开发完”后只跑一次。PR 后每次 push 都会重新执行对应 workflow：完整 coverage、snapshots、docs、build、平台矩阵、包安装与单独的 real-API e2e。本地检查负责快反馈，CI 负责穷举。</p>
+        <p>人工 review 不重复绿灯已经证明的机械事实，而是核对 Issue 的意图、Agent Note 的决策、生命周期和并发正确性、真实入口、测试是否真能抓住回归、snapshot 差异、文档与双语语义。</p>
+
+        <div class="status-line" aria-label="PR review 期间 Issue 状态循环">
+          <span>PR opened / synchronized</span><i>→</i><span>Issue: In progress</span><i>→</i><span class="active">review requested: In review</span><i>→</i><span>changes requested: In progress</span><i>↺</i>
+        </div>
+
+        <p>如果 review 要求修改，实现者回到原 worktree，修复最先引入问题的那一层 PR，重跑被修改影响的本地证据，push 新 commit，再让 CI 和 review 重新评估当前 HEAD。Stack 中修复从引入层向上传播，每层都必须独立通过。</p>
+
+        <div class="truth"><p><strong>到这里，一条主线才完整：</strong>Idea 没有直接变成 agent prompt；它先变成可验收 Issue，经人工分诊成为 Ready，再开独立 worktree，按决策风险选择是否先审 proposed Agent Note，由人或 agent 同步产出代码、测试、文档与决策记录，通过本地证据和 hooks 后 push，最后用 PR 把实现重新绑回最初 Issue，交给 CI 与人工 review。</p></div>
+
+        <div class="stop-line"><p><strong>本报告在 PR 收口处停止。</strong>后面的合并、master 后置演练和发布是另一条流程，不再打断“Idea 如何到 PR”这条主线。</p></div>
+
+        <div class="handoff">
+          <div><span class="hl">本步输入</span><p>元数据齐全的 PR 和它的当前 head commit。</p></div>
+          <div class="output"><span class="hl">主线终点</span><p>一个关联 Issue、证据齐全、通过 CI，并且人工意见已收敛的 reviewable PR。</p></div>
+        </div>
+
+        <div class="source">证据：<a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/workflows/ci.yml">.github/workflows/ci.yml</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.github/workflows/issue-lifecycle.yml">issue-lifecycle.yml</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/.agents/skills/dsh-code-review/SKILL.md">dsh-code-review/SKILL.md</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/141eb6fef83422698aef7a981029e843e8161534/docs/cookbook/responding-to-pr-review-on-a-stack.md">stack review cookbook</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="col">
+    <p><strong>证据边界。</strong>本页以本地克隆 <code>141eb6fef83422698aef7a981029e843e8161534</code>（tag <code>dsh-v0.1.0-rc.8</code>，2026-08-19）为快照。可以直接证明的是仓库中的模板、policy、Agent Note 规则、测试政策、hooks、PR 规则与 CI 源码。无法从公开投影直接证明的是：团队私有 orchestrator 是否自动向 agent 注入 Issue，每个 agent 实际收到的 prompt，以及实时 GitHub branch protection 配置。因此本页不把这些不可见部分写成已证实的自动化。</p>
+  </footer>
+</div>
+</body>
+</html>
